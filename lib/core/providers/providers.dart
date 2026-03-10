@@ -12,6 +12,8 @@ import '../../features/auth/domain/usecase/login_usecase.dart';
 import '../../features/auth/domain/usecase/logout_usecase.dart';
 import '../../features/auth/presentation/controllers/auth_notifier.dart';
 import '../../features/auth/presentation/controllers/auth_state.dart';
+import '../messages/app_message.dart';
+import '../messages/app_message_notifier.dart';
 import '../network/dio_client.dart';
 import '../network/network_info.dart';
 import '../storage/local_storage.dart';
@@ -63,6 +65,13 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   );
 });
 
+// ─── Global Messages ─────────────────────────────────────────────────────────
+
+final appMessageProvider =
+    StateNotifierProvider<AppMessageNotifier, List<AppMessage>>((ref) {
+  return AppMessageNotifier();
+});
+
 // ─── Auth UseCases ────────────────────────────────────────────────────────────
 
 final loginUseCaseProvider = Provider<LoginUseCase>((ref) {
@@ -80,5 +89,6 @@ final authNotifierProvider =
   return AuthNotifier(
     ref.watch(loginUseCaseProvider),
     ref.watch(logoutUseCaseProvider),
+    ref.watch(appMessageProvider.notifier),
   );
 });
