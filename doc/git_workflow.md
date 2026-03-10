@@ -1,202 +1,267 @@
 # Git Workflow — Beacon App
 
-## Mô hình nhánh
+## Tổng quan
+
+Dự án dùng mô hình **GitHub Flow** mở rộng với nhánh `main` được bảo vệ. Mọi thay đổi đều đi qua Pull Request, không ai push thẳng vào `main`.
 
 ```
-main          ← production, luôn stable, chỉ merge từ develop
-develop       ← nhánh tích hợp, base cho mọi feature
-feature/*     ← tính năng mới
-fix/*         ← bug fix
-hotfix/*      ← fix khẩn cấp trực tiếp từ main
+main (production-ready)
+ ├── feature/tên-tính-năng
+ ├── fix/tên-lỗi
+ ├── hotfix/tên-lỗi-khẩn
+ └── chore/tên-công-việc
 ```
 
 ---
 
-## Luồng làm việc
+## Nhánh
 
-### 1. Bắt đầu tính năng mới
+### Nhánh chính
+
+| Nhánh | Mô tả |
+|-------|-------|
+| `main` | Code luôn ổn định, đã được review và test. Chỉ merge qua PR. |
+
+### Nhánh làm việc (tạo từ `main`, xoá sau khi merge)
+
+| Prefix | Dùng khi | Ví dụ |
+|--------|----------|-------|
+| `feature/` | Tính năng mới | `feature/notifications` |
+| `fix/` | Sửa lỗi thông thường | `fix/auth-token-expired` |
+| `hotfix/` | Lỗi nghiêm trọng trên production | `hotfix/crash-on-login` |
+| `chore/` | Cấu hình, refactor, update deps | `chore/update-dio` |
+
+**Quy tắc đặt tên nhánh:**
+- Chữ thường, dùng dấu `-` thay khoảng trắng
+- Ngắn gọn, mô tả đúng mục đích
+- Không dùng tên cá nhân (~~`john/login`~~)
+
+---
+
+## Quy trình làm việc
+
+### 1. Bắt đầu task mới
 
 ```bash
-# Luôn bắt đầu từ develop mới nhất
-git checkout develop
-git pull origin develop
+# Luôn lấy code mới nhất từ main trước
+git checkout main
+git pull origin main
 
-# Tạo nhánh feature
-git checkout -b feature/ten-tinh-nang
-# Ví dụ: feature/notification-list, feature/student-profile
+# Tạo nhánh mới
+git checkout -b feature/tên-tính-năng
 ```
 
-### 2. Làm việc & commit
+### 2. Trong quá trình làm việc
 
 ```bash
-# Sau mỗi đơn vị công việc nhỏ, commit ngay
+# Commit thường xuyên, mỗi commit là một đơn vị logic nhỏ
 git add .
-git commit -m "type(scope): mô tả ngắn gọn"
+git commit -m "feat(auth): add refresh token logic"
+
+# Push lên remote để backup và team xem tiến độ
+git push origin feature/tên-tính-năng
 ```
 
-**Quy tắc commit message:**
+### 3. Cập nhật code từ main (tránh conflict lớn)
+
+```bash
+# Kéo thay đổi mới nhất từ main vào nhánh hiện tại
+git fetch origin
+git rebase origin/main
+
+# Nếu có conflict: giải quyết từng file, rồi
+git add .
+git rebase --continue
+```
+
+> Dùng `rebase` thay `merge` để giữ lịch sử commit sạch.
+
+### 4. Tạo Pull Request
+
+1. Push nhánh lên remote: `git push origin feature/tên-tính-năng`
+2. Tạo PR trên GitHub: base `main` ← compare `feature/...`
+3. Điền mô tả theo template PR (xem bên dưới)
+4. Chỉ định ít nhất **1 reviewer**
+5. Chờ approve trước khi merge
+
+### 5. Sau khi PR được merge
+
+```bash
+# Xoá nhánh local
+git branch -d feature/tên-tính-năng
+
+# Xoá nhánh remote
+git push origin --delete feature/tên-tính-năng
+
+# Cập nhật main local
+git checkout main
+git pull origin main
+```
+
+---
+
+## Commit Message
+
+Theo chuẩn **Conventional Commits**:
+
+```
+<type>(<scope>): <mô tả ngắn>
+
+[body — giải thích tại sao, không phải làm gì]
+
+[footer — breaking changes, issue references]
+```
+
+### Types
 
 | Type | Dùng khi |
 |------|----------|
 | `feat` | Thêm tính năng mới |
-| `fix` | Sửa bug |
-| `refactor` | Cấu trúc lại code, không thêm feature/fix |
-| `style` | Sửa UI, format, không ảnh hưởng logic |
-| `docs` | Cập nhật tài liệu |
-| `chore` | Cập nhật dependency, config |
-| `test` | Thêm/sửa test |
+| `fix` | Sửa lỗi |
+| `refactor` | Tái cấu trúc code, không thêm tính năng hay sửa lỗi |
+| `chore` | Cấu hình, deps, tooling |
+| `docs` | Chỉ thay đổi tài liệu |
+| `style` | Format, thiếu dấu chấm phẩy, không ảnh hưởng logic |
+| `test` | Thêm hoặc sửa test |
+| `perf` | Cải thiện hiệu năng |
 
-**Ví dụ:**
+### Scopes (theo feature/layer)
+
+`auth` · `dashboard` · `notifications` · `network` · `storage` · `router` · `providers` · `ui`
+
+### Ví dụ commit tốt
+
 ```
-feat(auth): add refresh token logic
-fix(dashboard): correct stats card alignment
-refactor(network): extract error mapping to failures.dart
-docs(readme): update setup instructions
-chore(deps): upgrade go_router to 14.6.3
+feat(auth): add logout use case with token cleanup
+fix(network): map DioException connection error to NetworkFailure
+refactor(auth): inject AppMessageNotifier into AuthNotifier
+chore(deps): upgrade dio to 5.8.0
+docs(api): update endpoint constants comment
 ```
 
-### 3. Push và tạo Pull Request
+### Ví dụ commit xấu ❌
+
+```
+fix bug
+update code
+WIP
+asdfghj
+```
+
+---
+
+## Pull Request Template
+
+Khi tạo PR, mô tả theo cấu trúc:
+
+```markdown
+## Mô tả
+<!-- Tóm tắt thay đổi và lý do -->
+
+## Loại thay đổi
+- [ ] Tính năng mới (feat)
+- [ ] Sửa lỗi (fix)
+- [ ] Refactor
+- [ ] Khác (chore, docs, ...)
+
+## Checklist
+- [ ] Code tự review trước khi tạo PR
+- [ ] Không có lỗi compile
+- [ ] Đã test trên thiết bị / web
+- [ ] Không để lại `print()` hay code debug
+- [ ] Commit message theo convention
+
+## Screenshots (nếu có UI thay đổi)
+```
+
+---
+
+## Quy tắc Review
+
+**Người tạo PR:**
+- PR không nên vượt quá **400 dòng thay đổi** — nếu lớn hơn, tách nhỏ
+- Tự review diff trước khi assign reviewer
+- Respond mọi comment, không được resolve comment của người khác
+
+**Reviewer:**
+- Review trong vòng **1 ngày làm việc**
+- Comment rõ ràng: giải thích lý do, đề xuất cách sửa
+- Dùng prefix để phân biệt mức độ:
+  - `[blocker]` — phải sửa trước khi merge
+  - `[suggestion]` — nên sửa nhưng không bắt buộc
+  - `[question]` — hỏi để hiểu, không yêu cầu thay đổi
+- Approve khi không còn `[blocker]` nào
+
+---
+
+## Xử lý tình huống
+
+### Commit nhầm vào main local
 
 ```bash
-# Push nhánh lên remote
-git push origin feature/ten-tinh-nang
-
-# Tạo PR trên GitHub: feature/ten-tinh-nang → develop
-```
-
-**Checklist trước khi tạo PR:**
-- [ ] Code không có lỗi compile (`flutter analyze`)
-- [ ] Đã test trên thiết bị/emulator
-- [ ] Không commit file thừa (`.env`, build output, ...)
-- [ ] Commit message rõ ràng, đúng format
-
-### 4. Code Review
-
-- Mỗi PR cần ít nhất **1 người review** trước khi merge
-- Reviewer dùng **Comment** để hỏi, **Request changes** nếu cần sửa, **Approve** khi OK
-- Author tự merge sau khi được approve (dùng **Squash and merge**)
-
-### 5. Merge vào develop
-
-```bash
-# Trên GitHub: Squash and merge → develop
-# Sau khi merge, xoá nhánh feature trên remote (GitHub tự hỏi)
-```
-
-### 6. Release lên main
-
-```bash
-# Khi develop ổn định, ready để release
+# Chưa push — di chuyển commit sang nhánh mới
+git checkout -b fix/tên-fix
 git checkout main
-git pull origin main
-git merge develop --no-ff -m "release: v1.x.x"
-git tag v1.x.x
-git push origin main --tags
+git reset --hard origin/main
 ```
 
----
-
-## Fix Bug
-
-### Bug thường (không khẩn cấp)
+### Cần lấy 1 commit từ nhánh khác
 
 ```bash
-# Tạo từ develop
-git checkout develop
-git pull origin develop
-git checkout -b fix/mo-ta-bug
-
-# Sau khi fix → PR vào develop như bình thường
+git cherry-pick <commit-hash>
 ```
 
-### Hotfix (khẩn cấp, production bị lỗi)
+### Hủy thay đổi chưa commit
 
 ```bash
-# Tạo từ main
-git checkout main
-git pull origin main
-git checkout -b hotfix/mo-ta-loi
+# Hủy staged
+git restore --staged .
 
-# Fix xong → merge vào CẢ HAI main và develop
-git checkout main
-git merge hotfix/mo-ta-loi --no-ff
-git tag v1.x.x-hotfix
-
-git checkout develop
-git merge hotfix/mo-ta-loi --no-ff
-
-git push origin main develop --tags
-git branch -d hotfix/mo-ta-loi
-```
-
----
-
-## Xử lý conflict
-
-```bash
-# Khi develop đã có commit mới mà nhánh của mình chưa có
-git checkout feature/ten-tinh-nang
-git fetch origin
-git rebase origin/develop
-
-# Nếu có conflict:
-# 1. Mở file conflict, sửa tay
-# 2. git add <file>
-# 3. git rebase --continue
-
-# Sau rebase, force push (chỉ dùng cho nhánh cá nhân)
-git push origin feature/ten-tinh-nang --force-with-lease
-```
-
----
-
-## Quy tắc chung
-
-| Quy tắc | Chi tiết |
-|---------|----------|
-| **Không push thẳng vào `main` hoặc `develop`** | Luôn qua PR |
-| **Không force push lên `main`/`develop`** | Chỉ force push nhánh cá nhân |
-| **Commit nhỏ, thường xuyên** | 1 commit = 1 việc cụ thể |
-| **Tên nhánh tiếng Anh, kebab-case** | `feature/student-list`, không phải `feature/danh_sach` |
-| **Xoá nhánh sau khi merge** | Tránh rác nhánh cũ |
-| **Không commit secret/token** | Dùng `.env` và thêm vào `.gitignore` |
-
----
-
-## Sơ đồ luồng
-
-```
-main ────────────────────────────────────────── release tag
-  └── develop ──────────────────────────────── tích hợp liên tục
-        ├── feature/auth ──────── PR ──► develop
-        ├── feature/dashboard ─── PR ──► develop
-        └── fix/login-crash ───── PR ──► develop
-```
-
-```
-Hotfix:
-main ──── hotfix/xxx ──┬──► main (tag)
-                       └──► develop
-```
-
----
-
-## Lệnh hữu ích
-
-```bash
-# Xem trạng thái nhánh
-git log --oneline --graph --all
-
-# Huỷ thay đổi chưa commit
+# Hủy cả unstaged
 git restore .
+```
 
-# Stash tạm thời để chuyển nhánh
-git stash
-git stash pop
+### Đổi tên commit cuối (chưa push)
 
-# Xem ai sửa dòng nào trong file
-git blame lib/core/network/dio_client.dart
+```bash
+git commit --amend -m "fix(auth): correct token storage key"
+```
 
-# Undo commit cuối (giữ lại code)
-git reset --soft HEAD~1
+### Gộp nhiều commit nhỏ thành 1 trước khi PR
+
+```bash
+# Gộp 3 commit cuối
+git rebase -i HEAD~3
+# Đổi 'pick' → 'squash' cho các commit muốn gộp
+```
+
+---
+
+## Ví dụ luồng hoàn chỉnh
+
+```bash
+# 1. Tạo nhánh
+git checkout main && git pull origin main
+git checkout -b feature/notifications
+
+# 2. Làm việc
+# ... code ...
+git add .
+git commit -m "feat(notifications): create notification model and datasource"
+
+# ... code tiếp ...
+git commit -m "feat(notifications): add notification list page"
+
+# 3. Sync với main trước khi tạo PR
+git fetch origin
+git rebase origin/main
+
+# 4. Push và tạo PR
+git push origin feature/notifications
+# → Tạo PR trên GitHub
+
+# 5. Sau khi merge
+git checkout main && git pull origin main
+git branch -d feature/notifications
+git push origin --delete feature/notifications
 ```
