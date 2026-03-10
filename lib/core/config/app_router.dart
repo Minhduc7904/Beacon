@@ -1,0 +1,29 @@
+import 'package:go_router/go_router.dart';
+import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/logout_page.dart';
+import '../../features/dashboard/page/dashboard_page.dart';
+import '../pages/not_found_page.dart';
+import 'app_routes.dart';
+
+final appRouter = GoRouter(
+  initialLocation: AppRoutes.login,
+  debugLogDiagnostics: true,
+  errorBuilder: (context, state) => const NotFoundPage(),
+  routes: [
+    GoRoute(
+      path: AppRoutes.login,
+      name: AppRoutes.login,
+      builder: (context, state) => const LoginPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.home,
+      name: AppRoutes.home,
+      builder: (context, state) => const DashboardPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.logout,
+      name: AppRoutes.logout,
+      builder: (context, state) => const LogoutPage(),
+    ),
+  ],
+);
