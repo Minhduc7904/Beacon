@@ -3,83 +3,85 @@ class TimeUtils {
 
   static const int _vnOffsetHours = 7;
 
-  /// Chuyển [DateTime] UTC sang giờ Việt Nam (UTC+7).
-  ///
-  /// Nếu [dateTime] đã là local thì chuyển sang UTC trước.
+  /// Chuyển DateTime bất kỳ sang giờ Việt Nam (UTC+7)
   static DateTime toVietnamTime(DateTime dateTime) {
     final utc = dateTime.isUtc ? dateTime : dateTime.toUtc();
     return utc.add(const Duration(hours: _vnOffsetHours));
   }
 
-  /// Chuyển [DateTime] giờ Việt Nam (UTC+7) về UTC.
+  /// Chuyển giờ Việt Nam (UTC+7) về UTC
   static DateTime toUtc(DateTime vietnamTime) {
     return vietnamTime.subtract(const Duration(hours: _vnOffsetHours));
   }
 
-  /// Parse chuỗi ISO 8601 (có thể kèm 'Z' hoặc không) rồi trả về giờ Việt Nam.
+  /// Parse ISO8601 string rồi trả về giờ Việt Nam
   ///
-  /// Ví dụ: `"2026-03-11T08:00:00Z"` → `2026-03-11 15:00:00`
+  /// Ví dụ:
+  /// "2026-03-11T08:00:00Z" → 2026-03-11 15:00:00
   static DateTime parseToVietnamTime(String isoString) {
     final parsed = DateTime.parse(isoString);
-    // Nếu chuỗi không có 'Z' và không có offset, coi như UTC
-    final utc = parsed.isUtc
-        ? parsed
-        : DateTime.utc(
-            parsed.year,
-            parsed.month,
-            parsed.day,
-            parsed.hour,
-            parsed.minute,
-            parsed.second,
-            parsed.millisecond,
-            parsed.microsecond,
-          );
-    return toVietnamTime(utc);
+    return toVietnamTime(parsed.toUtc());
   }
 
-  /// Chuyển [DateTime] giờ Việt Nam về chuỗi ISO 8601 UTC (kèm 'Z').
+  /// Chuyển giờ Việt Nam → ISO8601 UTC string
   ///
-  /// Ví dụ: `2026-03-11 15:00:00` → `"2026-03-11T08:00:00.000Z"`
+  /// Ví dụ:
+  /// 2026-03-11 15:00:00 → "2026-03-11T08:00:00.000Z"
   static String toIsoUtcString(DateTime vietnamTime) {
-    return toUtc(vietnamTime).toUtc().toIso8601String();
+    return toUtc(vietnamTime).toIso8601String();
   }
 
-  /// Format giờ Việt Nam sang chuỗi đầy đủ ngày giờ.
+  /// Format đầy đủ ngày + giờ
   ///
-  /// Ví dụ: `"11/03/2026 15:00"` hoặc `"11/03/2026 15:00:30"` nếu [withSeconds] = true
+  /// Ví dụ:
+  /// 11/03/2026 15:00
+  /// 11/03/2026 15:00:30
   static String formatVietnamTime(
     DateTime vietnamTime, {
     bool withSeconds = false,
   }) {
-    final d = vietnamTime;
-    final date = '${_pad(d.day)}/${_pad(d.month)}/${d.year}';
-    final time = _formatTime(d, withSeconds: withSeconds);
+    final date = formatDate(vietnamTime);
+    final time = formatTime(vietnamTime, withSeconds: withSeconds);
     return '$date $time';
   }
 
-  /// Chỉ format phần giờ:phút (không có ngày).
+  /// Format giờ
   ///
-  /// Ví dụ: `"15:00"`
+  /// Ví dụ:
+  /// 15:00
+  /// 15:00:30
   static String formatTime(DateTime vietnamTime, {bool withSeconds = false}) {
-    return _formatTime(vietnamTime, withSeconds: withSeconds);
-  }
-
-  /// Chỉ format phần ngày/tháng/năm (không có giờ).
-  ///
-  /// Ví dụ: `"11/03/2026"`
-  static String formatDate(DateTime vietnamTime) {
-    final d = vietnamTime;
-    return '${_pad(d.day)}/${_pad(d.month)}/${d.year}';
-  }
-
-  static String _formatTime(DateTime d, {bool withSeconds = false}) {
     return withSeconds
-        ? '${_pad(d.hour)}:${_pad(d.minute)}:${_pad(d.second)}'
-        : '${_pad(d.hour)}:${_pad(d.minute)}';
+        ? '${_pad(vietnamTime.hour)}:${_pad(vietnamTime.minute)}:${_pad(vietnamTime.second)}'
+        : '${_pad(vietnamTime.hour)}:${_pad(vietnamTime.minute)}';
   }
 
-  /// Trả về DateTime hiện tại theo giờ Việt Nam.
-  static DateTime nowVietnam() => toVietnamTime(DateTime.now().toUtc());
+  /// Format ngày
+  ///
+  /// Ví dụ:
+  /// 11/03/2026
+  static String formatDate(DateTime vietnamTime) {
+    return '${_pad(vietnamTime.day)}/${_pad(vietnamTime.month)}/${vietnamTime.year}';
+  }
+
+  /// Trả về thời gian hiện tại theo giờ Việt Nam
+  static DateTime nowVietnam() {
+    return DateTime.now().toUtc().add(const Duration(hours: _vnOffsetHours));
+  }
+
+  /// Kiểm tra hai DateTime có cùng ngày không
+  static bool isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  /// Tính thời gian còn lại tới [endTime]
+  ///
+  /// Nếu đã hết giờ → Duration.zero
+  static Duration remainingTime(DateTime endTime) {
+    final now = nowVietnam();
+    final diff = endTime.difference(now);
+    return diff.isNegative ? Duration.zero : diff;
+  }
 
   static String _pad(int value) => value.toString().padLeft(2, '0');
 }
