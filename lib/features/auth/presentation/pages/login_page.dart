@@ -37,13 +37,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     ref.listen<AuthState>(authNotifierProvider, (_, state) {
       if (state is AuthSuccess) {
         context.go(AppRoutes.home);
-      } else if (state is AuthError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(state.message),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
     });
 

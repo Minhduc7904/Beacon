@@ -15,9 +15,9 @@ class AuthRepositoryImpl implements AuthRepository {
     required AuthRemoteDatasource remoteDatasource,
     required AuthLocalDatasource localDatasource,
     required NetworkInfo networkInfo,
-  })  : _remoteDatasource = remoteDatasource,
-        _localDatasource = localDatasource,
-        _networkInfo = networkInfo;
+  }) : _remoteDatasource = remoteDatasource,
+       _localDatasource = localDatasource,
+       _networkInfo = networkInfo;
 
   @override
   Future<Either<Failure, AuthResult>> login({

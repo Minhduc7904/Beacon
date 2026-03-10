@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import '../errors/exceptions.dart';
 
 /// Base class cho tất cả Failure trong domain layer.
@@ -35,9 +36,28 @@ class ValidationFailure extends Failure {
 
 // ─── Mapper: Exception → Failure ─────────────────────────────────────────────
 
-extension ExceptionToFailure on Exception { 
+extension ExceptionToFailure on Exception {
   Failure toFailure() {
     final e = this;
+    if (e is DioException) {
+      switch (e.type) {
+        case DioExceptionType.connectionError:
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.receiveTimeout:
+        case DioExceptionType.sendTimeout:
+          return const NetworkFailure(message: 'Không thể kết nối đến máy chủ');
+        case DioExceptionType.badResponse:
+          final statusCode = e.response?.statusCode;
+          if (statusCode == 401) {
+            return const UnauthorizedFailure();
+          }
+          final message = e.response?.data?['message']?.toString() ??
+              'Lỗi máy chủ ($statusCode)';
+          return ServerFailure(message: message, statusCode: statusCode);
+        default:
+          return ServerFailure(message: e.message ?? 'Lỗi không xác định');
+      }
+    }
     if (e is UnauthorizedException) {
       return UnauthorizedFailure(message: e.message);
     }
