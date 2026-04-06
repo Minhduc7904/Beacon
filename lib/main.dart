@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/config/app_router.dart';
+import 'core/observers/app_provider_observer.dart';
 import 'core/providers/providers.dart';
 import 'core/widgets/global_message_overlay.dart';
 
@@ -10,6 +11,7 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   runApp(
     ProviderScope(
+      observers: const [AppProviderObserver()],
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
       ],

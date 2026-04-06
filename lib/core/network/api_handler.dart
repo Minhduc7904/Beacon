@@ -4,6 +4,17 @@ import 'api_response.dart';
 
 class ApiHandler {
   ApiHandler._();
+  /// {
+  /// "success": true,
+  /// "message": "Login successful",
+  /// "data": {
+  ///   "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNjg4ODg4ODg4LCJleHAiOjE2ODg4OTI0ODh9.abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567890",
+  ///   "refreshToken": "def456ghi789jkl012mno345pqr678stu901vwx234yz567890abc123",
+  ///  "user": {
+  ///  "id": "1234567890",
+  /// "email": "
+  /// }
+  /// }
 
   /// Parse [Response] thành [ApiResponse<T>].
   ///
