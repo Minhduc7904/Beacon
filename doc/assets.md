@@ -146,6 +146,65 @@ Image.asset(
 
 ---
 
+## Quy trình đổi logo (UI + App Icon)
+
+Khi bạn muốn đổi logo toàn bộ app, làm theo đúng thứ tự sau:
+
+### Bước 1: Chuẩn bị file logo gốc
+
+- Đặt file logo mới tại: `assets/logo/logo.png`
+- Khuyến nghị ảnh vuông (1024x1024) để generate app icon đẹp hơn.
+
+### Bước 2: Cập nhật logo hiển thị trong UI
+
+Dự án đang dùng các constant sau trong `AppImages`:
+- `AppImages.logo` -> `assets/images/logo.png`
+- `AppImages.logoLight` -> `assets/images/logo_light.png`
+- `AppImages.logoDark` -> `assets/images/logo_dark.png`
+
+Bạn chỉ cần thay 3 file này bằng logo mới:
+- `assets/images/logo.png`
+- `assets/images/logo_light.png`
+- `assets/images/logo_dark.png`
+
+Sau đó các màn đang dùng `AppLogoImage` sẽ tự nhận logo mới.
+
+### Bước 3: Generate lại app icon Android / iOS / Web
+
+Project đã cấu hình `flutter_launcher_icons` trong `pubspec.yaml` với nguồn:
+- `image_path: assets/logo/logo.png`
+
+Chạy lệnh:
+
+```bash
+flutter pub get
+dart run flutter_launcher_icons
+```
+
+Lệnh này sẽ cập nhật icon launcher cho:
+- Android
+- iOS
+- Web
+
+### Bước 4: Verify nhanh
+
+- Chạy app và kiểm tra logo ở Splash/Login.
+- Build lại app và kiểm tra icon ngoài màn hình thiết bị.
+- Nếu icon chưa đổi, clean rồi build lại:
+
+```bash
+flutter clean
+flutter pub get
+flutter run
+```
+
+### Ghi chú quan trọng
+
+- iOS App Store không cho icon có alpha, project đã bật `remove_alpha_ios: true`.
+- Không hardcode đường dẫn logo trong widget, luôn dùng qua `AppImages` hoặc `AppLogoImage`.
+
+---
+
 ## Quy ước đặt tên file
 
 | Loại | Prefix | Ví dụ |
