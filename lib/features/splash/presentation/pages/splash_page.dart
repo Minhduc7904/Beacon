@@ -34,7 +34,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
         accessToken != null && accessToken.isNotEmpty &&
         refreshToken != null && refreshToken.isNotEmpty;
 
-    // context.go(isAuthenticated ? AppRoutes.home : AppRoutes.login);
+    context.go(isAuthenticated ? AppRoutes.home : AppRoutes.login);
   }
 
   @override

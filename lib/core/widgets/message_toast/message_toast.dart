@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../messages/app_message.dart';
+import '../../messages/app_message.dart';
 
 class MessageToast extends StatefulWidget {
   final AppMessage message;
