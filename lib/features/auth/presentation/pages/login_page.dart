@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/config/app_routes.dart';
-import '../../../../core/constants/app_images.dart';
 import '../../../../core/providers/providers.dart';
+import '../../../../core/widgets/image/logo_image.dart';
+import '../../../../core/widgets/text/text.dart';
 import '../controllers/auth_state.dart';
 import '../widgets/login_form.dart';
 
@@ -81,25 +82,18 @@ class _LoginHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Image.asset(
-          AppImages.logo,
-          width: 92,
-          height: 92,
-          fit: BoxFit.contain,
-        ),
+        const AppLogoImage(width: 92, height: 92),
         const SizedBox(height: 16),
-        Text(
+        AppText(
           'Đăng nhập',
-          style: Theme.of(
-            context,
-          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+          preset: AppTextPreset.title2,
+          fontWeight: FontWeight.bold,
         ),
         const SizedBox(height: 8),
-        Text(
+        AppText(
           'Chào mừng bạn trở lại',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+          preset: AppTextPreset.bodyMedium,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.65),
         ),
       ],
     );

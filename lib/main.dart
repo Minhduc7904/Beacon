@@ -5,7 +5,7 @@ import 'core/config/app_router.dart';
 import 'core/observers/app_provider_observer.dart';
 import 'core/providers/providers.dart';
 import 'core/theme/app_theme.dart';
-import 'core/widgets/global_message_overlay.dart';
+import 'core/widgets/message_toast/global_message_overlay.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
