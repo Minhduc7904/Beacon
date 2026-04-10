@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/config/app_routes.dart';
+import '../../../../core/constants/app_images.dart';
 import '../../../../core/providers/providers.dart';
 import '../controllers/auth_state.dart';
 import '../widgets/login_form.dart';
@@ -80,7 +81,12 @@ class _LoginHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const FlutterLogo(size: 72),
+        Image.asset(
+          AppImages.logo,
+          width: 92,
+          height: 92,
+          fit: BoxFit.contain,
+        ),
         const SizedBox(height: 16),
         Text(
           'Đăng nhập',
