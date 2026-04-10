@@ -26,7 +26,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   void _onSubmit() {
-    ref.read(authNotifierProvider.notifier).login(
+    ref
+        .read(authNotifierProvider.notifier)
+        .login(
           username: _usernameController.text.trim(),
           password: _passwordController.text,
         );
@@ -82,16 +84,16 @@ class _LoginHeader extends StatelessWidget {
         const SizedBox(height: 16),
         Text(
           'Đăng nhập',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Text(
           'Chào mừng bạn trở lại',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
         ),
       ],
     );
