@@ -59,4 +59,42 @@ class AppColors {
 
   static const Color outline = sky500;
   static const Color shadow = Color(0x1A090A0A);
+
+  // Button semantic tokens
+  static const Color buttonPrimaryDefault = teal400;
+  static const Color buttonPrimaryPressed = teal500;
+  static const Color buttonPrimaryDisabled = sky400;
+
+  static const Color buttonSecondaryDefault = Color(0xFFCCFFF5);
+  static const Color buttonSecondaryPressed = Color(0xFFA1FFED);
+  static const Color buttonSecondaryDisabled = sky400;
+
+  static const Color buttonOutlineDefault = sky100;
+  static const Color buttonOutlinePressed = sky100;
+  static const Color buttonOutlineDisabled = sky100;
+
+  static const Color buttonOutlineBorderDefault = Color(0xFF66D0BC);
+  static const Color buttonOutlineBorderPressed = Color(0xFF50AE9C);
+  static const Color buttonOutlineBorderDisabled = Color(0xFFCDCFD0);
+
+  static const Color buttonTransparentDefault = sky100;
+  static const Color buttonTransparentPressed = Color(0xFFCCFFF5);
+  static const Color buttonTransparentDisabled = sky100;
+
+  // Button text semantic tokens
+  static const Color buttonPrimaryTextDefault = sky100;
+  static const Color buttonPrimaryTextPressed = sky100;
+  static const Color buttonPrimaryTextDisabled = sky600;
+
+  static const Color buttonSecondaryTextDefault = teal400;
+  static const Color buttonSecondaryTextPressed = teal500;
+  static const Color buttonSecondaryTextDisabled = sky600;
+
+  static const Color buttonOutlineTextDefault = teal400;
+  static const Color buttonOutlineTextPressed = teal500;
+  static const Color buttonOutlineTextDisabled = sky500;
+
+  static const Color buttonTransparentTextDefault = teal400;
+  static const Color buttonTransparentTextPressed = teal400;
+  static const Color buttonTransparentTextDisabled = teal400;
 }
