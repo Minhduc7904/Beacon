@@ -1,36 +1,39 @@
 import 'package:flutter/material.dart' hide Card;
-import '../../../core/widgets/button/button.dart';
-import '../../../core/widgets/card/card.dart';
-import '../../../core/widgets/input/input.dart';
+import '../../../../core/widgets/card/card.dart';
+import '../../../../core/widgets/input/input.dart';
+import '../widgets/button_style_card.dart';
 
 class SharedWidgetsPage extends StatelessWidget {
   const SharedWidgetsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final crossAxisCount = width >= 980
+        ? 3
+        : width >= 680
+            ? 2
+            : 1;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Shared Widgets'), centerTitle: true),
       body: GridView.count(
         padding: const EdgeInsets.all(16),
-        crossAxisCount: 2,
+        crossAxisCount: crossAxisCount,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 1.05,
-        children: const [
+        childAspectRatio: width >= 680 ? 0.95 : 0.72,
+        children: [
           Card(
             title: 'Card',
             description: 'Thẻ dùng để hiển thị thông tin.',
-            child: Text('Nội dung thẻ'),
+            child: const Text('Nội dung thẻ'),
           ),
-          Card(
-            title: 'Primary Button',
-            description: 'Nút chính cho hành động quan trọng.',
-            child: Button(text: 'Xác nhận'),
-          ),
+          const ButtonStyleCard(),
           Card(
             title: 'Text Field',
             description: 'Ô nhập liệu dùng chung.',
-            child: Input(hintText: 'Nhập nội dung...'),
+            child: const Input(hintText: 'Nhập nội dung...'),
           ),
         ],
       ),

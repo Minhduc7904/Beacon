@@ -28,6 +28,8 @@ lib/core/widgets/
 │   └── button.dart
 ├── card/
 │   └── card.dart
+├── dropdown/
+│   └── dropdown.dart
 ├── image/
 │   ├── image.dart
 │   └── logo_image.dart
@@ -103,7 +105,14 @@ class AppBadge extends StatelessWidget {
 File: `lib/core/widgets/button/button.dart`
 
 Mục đích:
-- Bọc `FilledButton` và `FilledButton.icon`.
+- Bọc `FilledButton` với hệ type/state/size chuẩn hoá.
+
+Hỗ trợ hiện tại:
+- `ButtonMode`: `light`, `dark`
+- `ButtonType`: `primary`, `secondary`, `outline`, `transparent`
+- `ButtonSize`: `block`, `large`, `small`
+- `ButtonState`: `defaultState`, `disabled`
+- `ButtonIconPosition`: `side`, `left`, `right`
 
 Ví dụ:
 
@@ -117,6 +126,13 @@ Button(
   text: 'Tiếp tục với Google',
   icon: const Icon(Icons.login),
   onPressed: onLoginGoogle,
+)
+
+Button(
+  text: 'Huỷ',
+  type: ButtonType.outline,
+  size: ButtonSize.small,
+  onPressed: onCancel,
 )
 ```
 
@@ -170,7 +186,31 @@ Lưu ý:
 
 ---
 
-## 4.4 AppImage
+## 4.4 AppDropdown
+
+File: `lib/core/widgets/dropdown/dropdown.dart`
+
+Mục đích:
+- Dropdown custom dùng chung, đọc màu từ theme và hỗ trợ validator như form field.
+
+Ví dụ:
+
+```dart
+AppDropdown<String>(
+  labelText: 'Danh mục',
+  hintText: 'Chọn danh mục',
+  value: selectedCategory,
+  items: const [
+    AppDropdownItem(value: 'news', label: 'Tin tức'),
+    AppDropdownItem(value: 'event', label: 'Sự kiện'),
+  ],
+  onChanged: (value) => setState(() => selectedCategory = value),
+)
+```
+
+---
+
+## 4.5 AppImage
 
 File: `lib/core/widgets/image/image.dart`
 
@@ -197,7 +237,7 @@ AppImage(
 
 ---
 
-## 4.5 AppLogoImage
+## 4.6 AppLogoImage
 
 File: `lib/core/widgets/image/logo_image.dart`
 
@@ -225,7 +265,7 @@ const AppLogoImage(
 
 ---
 
-## 4.6 AppText
+## 4.7 AppText
 
 File: `lib/core/widgets/text/text.dart`
 
