@@ -33,8 +33,8 @@ class DashboardPage extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _WelcomeCard(
-                firstName: user?.firstName ?? '',
-                lastName: user?.lastName ?? '',
+                fullName: user?.fullName ?? '',
+                username: user?.username ?? '',
               ),
               const SizedBox(height: 24),
               Text(
@@ -54,10 +54,10 @@ class DashboardPage extends ConsumerWidget {
 }
 
 class _WelcomeCard extends StatelessWidget {
-  final String firstName;
-  final String lastName;
+  final String fullName;
+  final String username;
 
-  const _WelcomeCard({required this.firstName, required this.lastName});
+  const _WelcomeCard({required this.fullName, required this.username});
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +79,7 @@ class _WelcomeCard extends StatelessWidget {
             radius: 28,
             backgroundColor: Colors.white24,
             child: Text(
-              firstName.isNotEmpty ? firstName[0].toUpperCase() : '?',
+              fullName.isNotEmpty ? fullName[0].toUpperCase() : '?',
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -98,10 +98,16 @@ class _WelcomeCard extends StatelessWidget {
                     ),
               ),
               Text(
-                '$firstName $lastName',
+                fullName,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
+                    ),
+              ),
+              Text(
+                username,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.white70,
                     ),
               ),
             ],

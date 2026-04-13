@@ -31,18 +31,18 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
 
   @override
   Future<AuthResponseModel> register({
-    required String email,
+    required String username,
     required String password,
-    required String firstName,
-    required String lastName,
+    required String fullName,
+    required String? phoneNumber,
   }) async {
     final response = await _dioClient.post(
       ApiEndpoints.register,
       data: {
-        'email': email,
+        'username': username,
         'password': password,
-        'firstName': firstName,
-        'lastName': lastName,
+        'fullName': fullName,
+        'phoneNumber': phoneNumber,
       },
     );
 

@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/logout_page.dart';
+import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/dashboard/page/dashboard_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
@@ -28,6 +29,11 @@ final appRouter = GoRouter(
       path: AppRoutes.login,
       name: AppRoutes.login,
       builder: (context, state) => const LoginPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.register,
+      name: AppRoutes.register,
+      builder: (context, state) => const RegisterPage(),
     ),
     GoRoute(
       path: AppRoutes.home,
