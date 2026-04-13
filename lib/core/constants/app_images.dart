@@ -1,14 +1,15 @@
 class AppImages {
   AppImages._();
 
-  static const String _base = 'images';
-  static const String _icons = 'icons';
-  static const String _animations = 'animations';
+  static const String _base = 'assets/images';
+  static const String _icons = 'assets/icons';
+  static const String _animations = 'assets/animations';
 
   // ─── Logos ────────────────────────────────────────────────
   static const String logo = '$_base/logo/logo.png';
   static const String logoLight = '$_base/logo/logo_light.png';
   static const String logoDark = '$_base/logo/logo_dark.png';
+  static const String logoText = '$_base/logo/logo_text.png';
 
   // ─── Placeholders ─────────────────────────────────────────
   static const String placeholder = '$_base/placeholder.png';

@@ -5,9 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/config/app_routes.dart';
 import '../../../../core/constants/app_images.dart';
 import '../../../../core/providers/providers.dart';
-import '../../../../core/widgets/image/logo_image.dart';
 import '../controllers/onboarding_state.dart';
 import '../widgets/onboarding_action_section.dart';
+import '../widgets/onboarding_content_section.dart';
 import '../widgets/onboarding_progress_indicator.dart';
 import '../widgets/onboarding_slide_content.dart';
 
@@ -31,15 +31,15 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     ),
     _OnboardingSlideData(
       imagePath: AppImages.onboarding2,
-      title: 'Tự lập nhưng không cô độc',
+      title: 'Một chạm báo bình an',
       description:
-          'Tự do sống chất và luôn giữ kết nối thầm lặng với người thân mỗi ngày',
+          'Check-in bằng ảnh hoặc tâm trạng (mood) cực nhanh, hoàn toàn không áp lực',
     ),
     _OnboardingSlideData(
       imagePath: AppImages.onboarding3,
-      title: 'Tự lập nhưng không cô độc',
+      title: '"Lá chắn" tự động 24/7',
       description:
-          'Tự do sống chất và luôn giữ kết nối thầm lặng với người thân mỗi ngày',
+          'Tự động nhắc nhở và thông báo cho người thân khi bạn lỡ hẹn check-in',
     ),
   ];
 
@@ -99,14 +99,20 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 12),
-              const Center(child: AppLogoImage(width: 120, height: 40)),
-              const SizedBox(height: 20),
-              Expanded(
+              const Center(
+                child: Image(image: AssetImage(AppImages.logoText), width: 120),
+              ),
+
+              const SizedBox(height: 24),
+
+              SizedBox(
+                height:
+                    MediaQuery.of(context).size.height *
+                    0.4, // Chiếm 45% chiều cao màn hình
                 child: PageView.builder(
                   controller: _pageController,
                   itemCount: _slides.length,
@@ -116,33 +122,44 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                     });
                   },
                   itemBuilder: (context, index) {
-                    final slide = _slides[index];
                     return OnboardingSlideContent(
-                      imagePath: slide.imagePath,
-                      title: slide.title,
-                      description: slide.description,
+                      imagePath: _slides[index].imagePath,
                     );
                   },
                 ),
               ),
-              const SizedBox(height: 24),
+
+              const SizedBox(height: 12),
               OnboardingProgressIndicator(
                 currentIndex: _currentIndex,
                 total: _slides.length,
               ),
-              const SizedBox(height: 38),
-              OnboardingActionSection(
-                isLoading: isLoading,
-                primaryLabel: _currentIndex == _slides.length - 1
-                    ? 'Bắt đầu ngay'
-                    : 'Tiếp theo',
-                secondaryLabel: _currentIndex == _slides.length - 1
-                    ? 'Quay lại'
-                    : 'Bỏ qua',
-                onPrimaryPressed: _onPrimaryPressed,
-                onSecondaryPressed: _onSecondaryPressed,
+
+              const SizedBox(height: 24),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 28),
+                child: Column(
+                  children: [
+                    OnboardingContentSection(
+                      title: _slides[_currentIndex].title,
+                      description: _slides[_currentIndex].description,
+                    ),
+                    const SizedBox(height: 32),
+                    OnboardingActionSection(
+                      isLoading: isLoading,
+                      primaryLabel: _currentIndex == _slides.length - 1
+                          ? 'Bắt đầu ngay'
+                          : 'Tiếp theo',
+                      secondaryLabel: _currentIndex == _slides.length - 1
+                          ? 'Quay lại'
+                          : 'Bỏ qua',
+                      onPrimaryPressed: _onPrimaryPressed,
+                      onSecondaryPressed: _onSecondaryPressed,
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
             ],
           ),
         ),
