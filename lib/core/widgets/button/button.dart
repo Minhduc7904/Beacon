@@ -16,7 +16,7 @@ enum ButtonIconPosition { side, left, right }
 class Button extends m.StatelessWidget {
   final String text;
   final void Function()? onPressed;
-  final ButtonMode mode;
+  final ButtonMode? mode;
   final ButtonSize size;
   final ButtonType type;
   final ButtonState state;
@@ -29,7 +29,7 @@ class Button extends m.StatelessWidget {
     super.key,
     required this.text,
     this.onPressed,
-    this.mode = ButtonMode.light,
+    this.mode,
     this.size = ButtonSize.block,
     this.type = ButtonType.primary,
     this.state = ButtonState.defaultState,
@@ -50,12 +50,23 @@ class Button extends m.StatelessWidget {
         );
   }
 
+  ButtonMode _resolveMode(m.BuildContext context) {
+    if (mode != null) {
+      return mode!;
+    }
+
+    final brightness = m.Theme.of(context).brightness;
+    return brightness == m.Brightness.dark ? ButtonMode.dark : ButtonMode.light;
+  }
+
   AppButtonColors _resolveColors(m.BuildContext context) {
     final buttonTheme =
         m.Theme.of(context).extension<AppButtonThemeData>() ??
         AppButtonThemeData.light();
 
-    final palette = mode == ButtonMode.dark
+    final resolvedMode = _resolveMode(context);
+
+    final palette = resolvedMode == ButtonMode.dark
         ? buttonTheme.dark
         : buttonTheme.light;
 
@@ -73,13 +84,13 @@ class Button extends m.StatelessWidget {
     final isPressed = state == ButtonState.pressed;
 
     final m.EdgeInsetsGeometry padding = switch (size) {
-      ButtonSize.block => const m.EdgeInsets.symmetric(vertical: 16),
+      ButtonSize.block => const m.EdgeInsets.symmetric(vertical: 24),
       ButtonSize.large => const m.EdgeInsets.symmetric(
-        vertical: 16,
+        vertical: 24,
         horizontal: 32,
       ),
       ButtonSize.small => const m.EdgeInsets.symmetric(
-        vertical: 8,
+        vertical: 16,
         horizontal: 16,
       ),
     };

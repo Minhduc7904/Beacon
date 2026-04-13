@@ -12,10 +12,20 @@ import '../../features/auth/domain/usecase/login_usecase.dart';
 import '../../features/auth/domain/usecase/logout_usecase.dart';
 import '../../features/auth/presentation/controllers/auth_notifier.dart';
 import '../../features/auth/presentation/controllers/auth_state.dart';
+import '../../features/onboarding/data/datasources/onboarding_local_datasource.dart';
+import '../../features/onboarding/data/datasources/onboarding_local_datasource_impl.dart';
+import '../../features/onboarding/data/repositories/onboarding_repository_impl.dart';
+import '../../features/onboarding/domain/repositories/onboarding_repository.dart';
+import '../../features/onboarding/domain/usecase/complete_onboarding_usecase.dart';
+import '../../features/onboarding/domain/usecase/should_show_onboarding_usecase.dart';
+import '../../features/onboarding/presentation/controllers/onboarding_notifier.dart';
+import '../../features/onboarding/presentation/controllers/onboarding_state.dart';
 import '../messages/app_message.dart';
 import '../messages/app_message_notifier.dart';
 import '../network/dio_client.dart';
 import '../network/network_info.dart';
+import '../preferences/app_preferences.dart';
+import '../preferences/app_preferences_impl.dart';
 import '../storage/local_storage.dart';
 import '../storage/shared_prefs_storage.dart';
 
@@ -23,7 +33,9 @@ import '../storage/shared_prefs_storage.dart';
 
 // Overridden in main() with the resolved SharedPreferences instance
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
-  throw UnimplementedError('sharedPreferencesProvider must be overridden in main()');
+  throw UnimplementedError(
+    'sharedPreferencesProvider must be overridden in main()',
+  );
 });
 
 // ─── Storage ──────────────────────────────────────────────────────────────────
@@ -31,6 +43,14 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
 final localStorageProvider = Provider<LocalStorage>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
   return SharedPrefsStorage(prefs);
+});
+
+final appPreferencesProvider = Provider<AppPreferences>((ref) {
+  return AppPreferencesImpl(ref.watch(localStorageProvider));
+});
+
+final isDarkModeProvider = FutureProvider<bool>((ref) async {
+  return ref.watch(appPreferencesProvider).isDarkMode();
 });
 
 // ─── Network ──────────────────────────────────────────────────────────────────
@@ -55,6 +75,14 @@ final authRemoteDatasourceProvider = Provider<AuthRemoteDatasource>((ref) {
   return AuthRemoteDatasourceImpl(ref.watch(dioClientProvider));
 });
 
+// ─── Onboarding Datasource ───────────────────────────────────────────────────
+
+final onboardingLocalDatasourceProvider = Provider<OnboardingLocalDatasource>((
+  ref,
+) {
+  return OnboardingLocalDatasourceImpl(ref.watch(localStorageProvider));
+});
+
 // ─── Auth Repository ──────────────────────────────────────────────────────────
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
@@ -65,12 +93,16 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   );
 });
 
+final onboardingRepositoryProvider = Provider<OnboardingRepository>((ref) {
+  return OnboardingRepositoryImpl(ref.watch(onboardingLocalDatasourceProvider));
+});
+
 // ─── Global Messages ─────────────────────────────────────────────────────────
 
 final appMessageProvider =
     StateNotifierProvider<AppMessageNotifier, List<AppMessage>>((ref) {
-  return AppMessageNotifier();
-});
+      return AppMessageNotifier();
+    });
 
 // ─── Auth UseCases ────────────────────────────────────────────────────────────
 
@@ -82,13 +114,35 @@ final logoutUseCaseProvider = Provider<LogoutUseCase>((ref) {
   return LogoutUseCase(ref.watch(authRepositoryProvider));
 });
 
+final shouldShowOnboardingUseCaseProvider =
+    Provider<ShouldShowOnboardingUseCase>((ref) {
+      return ShouldShowOnboardingUseCase(
+        ref.watch(onboardingRepositoryProvider),
+      );
+    });
+
+final completeOnboardingUseCaseProvider = Provider<CompleteOnboardingUseCase>((
+  ref,
+) {
+  return CompleteOnboardingUseCase(ref.watch(onboardingRepositoryProvider));
+});
+
 // ─── Auth Controller ──────────────────────────────────────────────────────────
 
-final authNotifierProvider =
-    StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
+  ref,
+) {
   return AuthNotifier(
     ref.watch(loginUseCaseProvider),
     ref.watch(logoutUseCaseProvider),
     ref.watch(appMessageProvider.notifier),
   );
 });
+
+final onboardingNotifierProvider =
+    StateNotifierProvider<OnboardingNotifier, OnboardingState>((ref) {
+      return OnboardingNotifier(
+        ref.watch(completeOnboardingUseCaseProvider),
+        ref.watch(appMessageProvider.notifier),
+      );
+    });

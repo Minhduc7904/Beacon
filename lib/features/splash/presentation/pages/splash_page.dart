@@ -21,6 +21,19 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   }
 
   Future<void> _bootstrap() async {
+    final shouldShowOnboarding = await ref
+        .read(shouldShowOnboardingUseCaseProvider)
+        .call();
+
+    if (!mounted) {
+      return;
+    }
+
+    if (shouldShowOnboarding) {
+      context.go(AppRoutes.onboarding);
+      return;
+    }
+
     final localDatasource = ref.read(authLocalDatasourceProvider);
 
     final accessToken = await localDatasource.getAccessToken();
@@ -31,8 +44,10 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     }
 
     final isAuthenticated =
-        accessToken != null && accessToken.isNotEmpty &&
-        refreshToken != null && refreshToken.isNotEmpty;
+        accessToken != null &&
+        accessToken.isNotEmpty &&
+        refreshToken != null &&
+        refreshToken.isNotEmpty;
 
     context.go(isAuthenticated ? AppRoutes.home : AppRoutes.login);
   }
@@ -48,11 +63,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const AppLogoImage(
-                width: 359,
-                height: 380,
-                fit: BoxFit.contain,
-              ),
+              const AppLogoImage(width: 359, height: 380, fit: BoxFit.contain),
             ],
           ),
         ),
