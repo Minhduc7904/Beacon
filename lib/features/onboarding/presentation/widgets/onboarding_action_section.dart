@@ -33,7 +33,7 @@ class OnboardingActionSection extends StatelessWidget {
             }
           },
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
         Center(
           child: TextButton(
             onPressed: () {
