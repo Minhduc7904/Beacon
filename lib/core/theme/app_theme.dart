@@ -53,14 +53,46 @@ class AppButtonColors {
   static AppButtonColors lerp(AppButtonColors a, AppButtonColors b, double t) {
     return AppButtonColors(
       background: Color.lerp(a.background, b.background, t)!,
-      pressedBackground: Color.lerp(a.pressedBackground, b.pressedBackground, t)!,
-      disabledBackground: Color.lerp(a.disabledBackground, b.disabledBackground, t)!,
-      foregroundDefault: Color.lerp(a.foregroundDefault, b.foregroundDefault, t)!,
-      foregroundPressed: Color.lerp(a.foregroundPressed, b.foregroundPressed, t)!,
-      foregroundDisabled: Color.lerp(a.foregroundDisabled, b.foregroundDisabled, t)!,
-      borderColorDefault: Color.lerp(a.borderColorDefault, b.borderColorDefault, t)!,
-      borderColorPressed: Color.lerp(a.borderColorPressed, b.borderColorPressed, t)!,
-      borderColorDisabled: Color.lerp(a.borderColorDisabled, b.borderColorDisabled, t)!,
+      pressedBackground: Color.lerp(
+        a.pressedBackground,
+        b.pressedBackground,
+        t,
+      )!,
+      disabledBackground: Color.lerp(
+        a.disabledBackground,
+        b.disabledBackground,
+        t,
+      )!,
+      foregroundDefault: Color.lerp(
+        a.foregroundDefault,
+        b.foregroundDefault,
+        t,
+      )!,
+      foregroundPressed: Color.lerp(
+        a.foregroundPressed,
+        b.foregroundPressed,
+        t,
+      )!,
+      foregroundDisabled: Color.lerp(
+        a.foregroundDisabled,
+        b.foregroundDisabled,
+        t,
+      )!,
+      borderColorDefault: Color.lerp(
+        a.borderColorDefault,
+        b.borderColorDefault,
+        t,
+      )!,
+      borderColorPressed: Color.lerp(
+        a.borderColorPressed,
+        b.borderColorPressed,
+        t,
+      )!,
+      borderColorDisabled: Color.lerp(
+        a.borderColorDisabled,
+        b.borderColorDisabled,
+        t,
+      )!,
     );
   }
 }
@@ -92,7 +124,11 @@ class AppButtonPalette {
     );
   }
 
-  static AppButtonPalette lerp(AppButtonPalette a, AppButtonPalette b, double t) {
+  static AppButtonPalette lerp(
+    AppButtonPalette a,
+    AppButtonPalette b,
+    double t,
+  ) {
     return AppButtonPalette(
       primary: AppButtonColors.lerp(a.primary, b.primary, t),
       secondary: AppButtonColors.lerp(a.secondary, b.secondary, t),
@@ -103,10 +139,7 @@ class AppButtonPalette {
 }
 
 class AppButtonThemeData extends ThemeExtension<AppButtonThemeData> {
-  const AppButtonThemeData({
-    required this.light,
-    required this.dark,
-  });
+  const AppButtonThemeData({required this.light, required this.dark});
 
   final AppButtonPalette light;
   final AppButtonPalette dark;
@@ -255,9 +288,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      extensions: <ThemeExtension<dynamic>>[
-        AppButtonThemeData.light(),
-      ],
+      extensions: <ThemeExtension<dynamic>>[AppButtonThemeData.light()],
       scaffoldBackgroundColor: AppColors.background,
       textTheme: AppTextTheme.textTheme(fontFamily: fontFamily).apply(
         bodyColor: AppColors.onBackground,
@@ -298,8 +329,77 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(0, 44),
-          textStyle:
-              AppTextTheme.textTheme(fontFamily: fontFamily).labelLarge,
+          textStyle: AppTextTheme.textTheme(fontFamily: fontFamily).labelLarge,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static ThemeData darkTheme({String fontFamily = AppFonts.defaultFamily}) {
+    const colorScheme = ColorScheme(
+      brightness: Brightness.dark,
+      primary: AppColors.teal300,
+      onPrimary: AppColors.ink600,
+      primaryContainer: AppColors.teal500,
+      onPrimaryContainer: AppColors.sky100,
+      secondary: AppColors.coral300,
+      onSecondary: AppColors.ink600,
+      secondaryContainer: AppColors.coral500,
+      onSecondaryContainer: AppColors.sky100,
+      error: AppColors.error,
+      onError: AppColors.onError,
+      surface: AppColors.ink500,
+      onSurface: AppColors.sky200,
+      outline: AppColors.ink300,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: colorScheme,
+      extensions: <ThemeExtension<dynamic>>[AppButtonThemeData.light()],
+      scaffoldBackgroundColor: AppColors.ink600,
+      textTheme: AppTextTheme.textTheme(
+        fontFamily: fontFamily,
+      ).apply(bodyColor: AppColors.sky200, displayColor: AppColors.sky200),
+      appBarTheme: const AppBarTheme(
+        elevation: 0,
+        centerTitle: true,
+        backgroundColor: AppColors.ink500,
+        foregroundColor: AppColors.sky200,
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.ink500,
+        elevation: 0,
+        shadowColor: AppColors.shadow,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: AppColors.ink300),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.ink400,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.ink300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.ink300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.teal300, width: 1.5),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(0, 44),
+          textStyle: AppTextTheme.textTheme(fontFamily: fontFamily).labelLarge,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

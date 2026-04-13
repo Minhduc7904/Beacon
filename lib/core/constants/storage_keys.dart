@@ -7,4 +7,7 @@ class StorageKeys {
 
   // Preferences
   static const String isDarkMode = 'is_dark_mode';
+
+  // Onboarding
+  static const String hasCompletedOnboarding = 'has_completed_onboarding';
 }

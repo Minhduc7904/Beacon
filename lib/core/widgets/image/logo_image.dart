@@ -55,6 +55,16 @@ class AppLogoImage extends StatelessWidget {
       shape: shape,
       borderRadius: borderRadius,
       padding: padding,
+      errorBuilder: (_, exception, stackTrace) {
+        return Image.asset(
+          AppImages.logo,
+          width: width,
+          height: height,
+          fit: fit,
+          color: color,
+          colorBlendMode: colorBlendMode,
+        );
+      },
     );
   }
 }

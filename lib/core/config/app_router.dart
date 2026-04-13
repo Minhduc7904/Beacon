@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/logout_page.dart';
 import '../../features/dashboard/page/dashboard_page.dart';
+import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 import '../../features/widgets/presentation/page/shared_widgets_page.dart';
 import '../pages/not_found_page.dart';
@@ -17,6 +18,11 @@ final appRouter = GoRouter(
       path: AppRoutes.splash,
       name: AppRoutes.splash,
       builder: (context, state) => const SplashPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.onboarding,
+      name: AppRoutes.onboarding,
+      builder: (context, state) => const OnboardingPage(),
     ),
     GoRoute(
       path: AppRoutes.login,

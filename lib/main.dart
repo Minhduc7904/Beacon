@@ -13,23 +13,30 @@ void main() async {
   runApp(
     ProviderScope(
       observers: const [AppProviderObserver()],
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ],
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
       child: const MyApp(),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref
+        .watch(isDarkModeProvider)
+        .maybeWhen(
+          data: (isDarkMode) => isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          orElse: () => ThemeMode.light,
+        );
+
     return MaterialApp.router(
       title: 'Beacon',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme(),
+      darkTheme: AppTheme.darkTheme(),
+      themeMode: themeMode,
       builder: (context, child) => GlobalMessageOverlay(child: child!),
       routerConfig: appRouter,
     );
