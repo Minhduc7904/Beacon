@@ -10,6 +10,7 @@ import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/usecase/login_usecase.dart';
 import '../../features/auth/domain/usecase/logout_usecase.dart';
+import '../../features/auth/domain/usecase/register_usecase.dart';
 import '../../features/auth/presentation/controllers/auth_notifier.dart';
 import '../../features/auth/presentation/controllers/auth_state.dart';
 import '../../features/onboarding/data/datasources/onboarding_local_datasource.dart';
@@ -114,6 +115,10 @@ final logoutUseCaseProvider = Provider<LogoutUseCase>((ref) {
   return LogoutUseCase(ref.watch(authRepositoryProvider));
 });
 
+final registerUseCaseProvider = Provider<RegisterUseCase>((ref) {
+  return RegisterUseCase(ref.watch(authRepositoryProvider));
+});
+
 final shouldShowOnboardingUseCaseProvider =
     Provider<ShouldShowOnboardingUseCase>((ref) {
       return ShouldShowOnboardingUseCase(
@@ -134,6 +139,7 @@ final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
 ) {
   return AuthNotifier(
     ref.watch(loginUseCaseProvider),
+    ref.watch(registerUseCaseProvider),
     ref.watch(logoutUseCaseProvider),
     ref.watch(appMessageProvider.notifier),
   );

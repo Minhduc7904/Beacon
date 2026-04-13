@@ -49,7 +49,18 @@ class _SplashPageState extends ConsumerState<SplashPage> {
         refreshToken != null &&
         refreshToken.isNotEmpty;
 
-    context.go(isAuthenticated ? AppRoutes.home : AppRoutes.login);
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (isAuthenticated) {
+      context.go(AppRoutes.home);
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    context.go(AppRoutes.login);
   }
 
   @override

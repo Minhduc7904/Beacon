@@ -8,6 +8,7 @@ class LoginTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final bool obscureText;
   final bool enabled;
+  final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onFieldSubmitted;
 
@@ -20,6 +21,7 @@ class LoginTextField extends StatelessWidget {
     this.suffixIcon,
     this.obscureText = false,
     this.enabled = true,
+    this.keyboardType,
     this.textInputAction,
     this.onFieldSubmitted,
   });
@@ -30,6 +32,7 @@ class LoginTextField extends StatelessWidget {
       controller: controller,
       obscureText: obscureText,
       enabled: enabled,
+      keyboardType: keyboardType,
       textInputAction: textInputAction,
       onFieldSubmitted: onFieldSubmitted,
       decoration: InputDecoration(

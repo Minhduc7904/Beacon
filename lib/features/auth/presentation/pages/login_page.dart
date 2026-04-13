@@ -66,6 +66,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   isLoading: isLoading,
                   onSubmit: _onSubmit,
                 ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: isLoading
+                      ? null
+                      : () => context.go(AppRoutes.register),
+                  child: const Text('Chưa có tài khoản? Đăng ký'),
+                ),
               ],
             ),
           ),

@@ -1,7 +1,7 @@
 class User {
-  final int userId;
-  final String firstName;
-  final String lastName;
+  final String userId;
+  final String username;
+  final String fullName;
 
-  User({required this.userId, required this.firstName, required this.lastName});
+  User({required this.userId, required this.username, required this.fullName});
 }

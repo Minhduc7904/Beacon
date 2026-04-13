@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class LoginButton extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onPressed;
+  final String label;
 
   const LoginButton({
     super.key,
     required this.isLoading,
     required this.onPressed,
+    this.label = 'Đăng nhập',
   });
 
   @override
@@ -30,8 +32,8 @@ class LoginButton extends StatelessWidget {
                   color: Colors.white,
                 ),
               )
-            : const Text(
-                'Đăng nhập',
+            : Text(
+                label,
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
       ),

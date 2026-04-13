@@ -10,10 +10,10 @@ abstract class AuthRemoteDatasource {
 
   /// Đăng ký tài khoản mới, trả về [AuthResponseModel] gồm tokens và user.
   Future<AuthResponseModel> register({
-    required String email,
+    required String username,
     required String password,
-    required String firstName,
-    required String lastName,
+    required String fullName,
+    required String? phoneNumber,
   });
 
   /// Đăng xuất — gọi API invalidate token phía server.
