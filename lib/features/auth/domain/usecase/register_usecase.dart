@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/errors/failures.dart';
+import '../../../../core/utils/phone_number_utils.dart';
 import '../entities/auth_result.dart';
 import '../repositories/auth_repository.dart';
 
@@ -65,17 +66,14 @@ class RegisterUseCase {
     }
 
     if (params.password != params.confirmPassword) {
-      return const ValidationFailure(
-        message: 'Mật khẩu xác nhận không khớp',
-      );
+      return const ValidationFailure(message: 'Mật khẩu xác nhận không khớp');
     }
 
     final phoneNumber = params.phoneNumber?.trim();
     if (phoneNumber != null && phoneNumber.isNotEmpty) {
-      final digitsOnly = RegExp(r'^\d{9,15}$');
-      if (!digitsOnly.hasMatch(phoneNumber)) {
+      if (!PhoneNumberUtils.isValid(phoneNumber)) {
         return const ValidationFailure(
-          message: 'Số điện thoại phải gồm 9-15 chữ số',
+          message: 'Số điện thoại Việt Nam không hợp lệ',
         );
       }
     }
