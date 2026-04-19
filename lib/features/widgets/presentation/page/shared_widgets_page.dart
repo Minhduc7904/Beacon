@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart' hide Card;
 import '../../../../core/widgets/card/card.dart';
-import '../../../../core/widgets/input/input.dart';
 import '../widgets/app_text_style_card.dart';
 import '../widgets/button_style_card.dart';
+import '../widgets/input_style_card.dart';
 
 class SharedWidgetsPage extends StatelessWidget {
   const SharedWidgetsPage({super.key});
@@ -31,11 +31,7 @@ class SharedWidgetsPage extends StatelessWidget {
             child: const Text('Nội dung thẻ'),
           ),
           const ButtonStyleCard(),
-          Card(
-            title: 'Text Field',
-            description: 'Ô nhập liệu dùng chung.',
-            child: const Input(hintText: 'Nhập nội dung...'),
-          ),
+          const InputStyleCard(),
           const AppTextStyleCard(),
         ],
       ),
