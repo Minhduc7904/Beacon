@@ -34,6 +34,7 @@ class RegisterStepLayout extends StatelessWidget {
     this.continueText = 'Tiếp theo',
     this.isLoading = false,
     this.enabled = true,
+    this.instructionText,
     this.showAgreement = true,
     this.onTermsPressed,
     this.onPrivacyPressed,
@@ -57,6 +58,7 @@ class RegisterStepLayout extends StatelessWidget {
   final String continueText;
   final bool isLoading;
   final bool enabled;
+  final String? instructionText;
   final bool showAgreement;
   final VoidCallback? onTermsPressed;
   final VoidCallback? onPrivacyPressed;
@@ -78,11 +80,13 @@ class RegisterStepLayout extends StatelessWidget {
   }
 
   Widget _buildDefaultInput(bool disableActions) {
+    final hasError = errorText != null && errorText!.trim().isNotEmpty;
+
     return Input(
       controller: inputController,
       onChanged: onInputChanged,
       label: inputLabel,
-      caption: inputCaption,
+      caption: hasError ? errorText : inputCaption,
       rightCaption: inputRightCaption,
       hintText: inputHintText,
       keyboardType: keyboardType,
@@ -91,7 +95,6 @@ class RegisterStepLayout extends StatelessWidget {
       state: _resolveInputState(),
       type: inputType,
       leftIcon: inputIcon,
-      errorText: errorText,
     );
   }
 
@@ -113,12 +116,34 @@ class RegisterStepLayout extends StatelessWidget {
     );
   }
 
+  Widget? _buildInstruction() {
+    final customInstruction = instructionText?.trim();
+    if (customInstruction != null && customInstruction.isNotEmpty) {
+      return AppText(
+        customInstruction,
+        preset: AppTextPreset.bodySmall,
+        color: AppColors.ink400,
+        textAlign: TextAlign.center,
+      );
+    }
+
+    if (showAgreement) {
+      return _RegisterAgreementText(
+        onTermsPressed: onTermsPressed,
+        onPrivacyPressed: onPrivacyPressed,
+      );
+    }
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final disableActions = !enabled || isLoading;
+    final instructionWidget = _buildInstruction();
 
     return Scaffold(
-      backgroundColor: AppColors.sky300,
+      backgroundColor: AppColors.sky200,
       body: SafeArea(
         child: AppScreenLayout(
           child: Stack(
@@ -142,11 +167,8 @@ class RegisterStepLayout extends StatelessWidget {
                   const SizedBox(height: _titleToInputGroupSpacing),
                   _buildInputGroup(disableActions),
                   const SizedBox(height: _inputGroupToActionGroupSpacing),
-                  if (showAgreement) ...[
-                    _RegisterAgreementText(
-                      onTermsPressed: onTermsPressed,
-                      onPrivacyPressed: onPrivacyPressed,
-                    ),
+                  if (instructionWidget case final widget?) ...[
+                    widget,
                     const SizedBox(height: _instructionToButtonSpacing),
                   ],
                   Button(

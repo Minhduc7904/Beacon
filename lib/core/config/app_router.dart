@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/logout_page.dart';
+import '../../features/auth/presentation/pages/register/register_draft_data.dart';
 import '../../features/auth/presentation/pages/register/register_page_email.dart';
+import '../../features/auth/presentation/pages/register/register_page_name.dart';
+import '../../features/auth/presentation/pages/register/register_page_phone_number.dart';
+import '../../features/auth/presentation/pages/register/register_page_password.dart';
+import '../../features/auth/presentation/pages/register/register_page_username.dart';
 import '../../features/dashboard/page/dashboard_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
@@ -40,6 +45,63 @@ final appRouter = GoRouter(
       path: AppRoutes.register,
       name: AppRoutes.registerName,
       builder: (context, state) => const RegisterPageEmail(),
+    ),
+    GoRoute(
+      path: AppRoutes.registerPhoneNumber,
+      name: AppRoutes.registerPhoneNumberName,
+      builder: (context, state) {
+        final draft = state.extra;
+        if (draft is! RegisterDraftData || !draft.hasEmail) {
+          return const RegisterPageEmail();
+        }
+
+        return RegisterPagePhoneNumber(draft: draft);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.registerPassword,
+      name: AppRoutes.registerPasswordName,
+      builder: (context, state) {
+        final draft = state.extra;
+        if (draft is! RegisterDraftData ||
+            !draft.hasEmail ||
+            !draft.hasPhoneNumber) {
+          return const RegisterPageEmail();
+        }
+
+        return RegisterPagePassword(draft: draft);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.registerNameStep,
+      name: AppRoutes.registerNameStepName,
+      builder: (context, state) {
+        final draft = state.extra;
+        if (draft is! RegisterDraftData ||
+            !draft.hasEmail ||
+            !draft.hasPhoneNumber ||
+            !draft.hasPassword) {
+          return const RegisterPageEmail();
+        }
+
+        return RegisterPageName(draft: draft);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.registerUsername,
+      name: AppRoutes.registerUsernameName,
+      builder: (context, state) {
+        final draft = state.extra;
+        if (draft is! RegisterDraftData ||
+            !draft.hasEmail ||
+            !draft.hasPhoneNumber ||
+            !draft.hasPassword ||
+            !draft.hasName) {
+          return const RegisterPageEmail();
+        }
+
+        return RegisterPageUsername(draft: draft);
+      },
     ),
     GoRoute(
       path: AppRoutes.home,

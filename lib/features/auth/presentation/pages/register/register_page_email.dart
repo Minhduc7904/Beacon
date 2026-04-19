@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../../core/config/app_routes.dart';
+import 'register_draft_data.dart';
 import '../../widgets/register/register_step_layout.dart';
 
 class RegisterPageEmail extends StatefulWidget {
@@ -38,6 +41,10 @@ class _RegisterPageEmailState extends State<RegisterPageEmail> {
     });
 
     FocusScope.of(context).unfocus();
+    context.pushNamed(
+      AppRoutes.registerPhoneNumberName,
+      extra: RegisterDraftData(email: email),
+    );
   }
 
   void _onEmailChanged(String _) {

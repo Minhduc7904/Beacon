@@ -23,6 +23,7 @@ class Input extends m.StatelessWidget {
   final String? hintText;
   final m.Widget? labelRightIcon;
   final m.Widget? leftIcon;
+  final m.Widget? rightIcon;
   final m.TextEditingController? controller;
   final m.ValueChanged<String>? onChanged;
   final m.TextInputType keyboardType;
@@ -44,6 +45,7 @@ class Input extends m.StatelessWidget {
     this.hintText,
     this.labelRightIcon,
     this.leftIcon,
+    this.rightIcon,
     this.controller,
     this.onChanged,
     this.keyboardType = m.TextInputType.text,
@@ -104,26 +106,42 @@ class Input extends m.StatelessWidget {
     );
   }
 
-  m.Widget? _buildSuffixIcon() {
+  m.Widget? _resolveRightIcon() {
+    if (rightIcon != null) {
+      return rightIcon;
+    }
+
     if (type != InputType.dropdown) {
       return null;
     }
 
-    return m.Padding(
-      padding: const m.EdgeInsets.only(left: 12, right: 12),
-      child: const AppSvgImage(
-        assetPath: AppImages.icChervDown,
-        width: 24,
-        height: 24,
-      ),
+    return const AppSvgImage(
+      assetPath: AppImages.icChervDown,
+      width: 24,
+      height: 24,
     );
   }
 
-  m.EdgeInsetsGeometry _contentPaddingByType() {
+  m.Widget? _buildSuffixIcon(m.Widget? resolvedRightIcon) {
+    if (resolvedRightIcon == null) {
+      return null;
+    }
+
+    return m.Padding(
+      // Keep clear spacing between input text/placeholder, icon, and right edge.
+      padding: const m.EdgeInsetsDirectional.only(start: 16, end: 16),
+      child: resolvedRightIcon,
+    );
+  }
+
+  m.EdgeInsetsGeometry _contentPaddingByType({required bool hasRightIcon}) {
     return switch (type) {
       InputType.text => const m.EdgeInsets.symmetric(horizontal: 16),
       InputType.leftIcon => const m.EdgeInsets.only(right: 16),
-      InputType.dropdown => const m.EdgeInsets.only(left: 16),
+      InputType.dropdown => m.EdgeInsets.only(
+        left: 16,
+        right: hasRightIcon ? 16 : 0,
+      ),
     };
   }
 
@@ -133,6 +151,8 @@ class Input extends m.StatelessWidget {
     final effectiveState = isDisabled ? InputState.disabled : state;
     final colors = _resolveColors(context);
     final stateColors = _colorsByState(colors, effectiveState);
+    final resolvedRightIcon = _resolveRightIcon();
+    final hasRightIcon = resolvedRightIcon != null;
     final effectiveLabelRaw = label ?? labelText;
     final effectiveLabel =
         (effectiveLabelRaw == null || effectiveLabelRaw.trim().isEmpty)
@@ -158,14 +178,14 @@ class Input extends m.StatelessWidget {
 
       decoration: m.InputDecoration(
         constraints: m.BoxConstraints(minHeight: height, maxHeight: height),
-        contentPadding: _contentPaddingByType(),
+        contentPadding: _contentPaddingByType(hasRightIcon: hasRightIcon),
         prefixIcon: _buildPrefixIcon(),
         prefixIconConstraints: type == InputType.leftIcon
             ? const m.BoxConstraints(minWidth: 48, minHeight: 24)
             : null,
-        suffixIcon: _buildSuffixIcon(),
-        suffixIconConstraints: type == InputType.dropdown
-            ? const m.BoxConstraints(minWidth: 48, minHeight: 24)
+        suffixIcon: _buildSuffixIcon(resolvedRightIcon),
+        suffixIconConstraints: hasRightIcon
+            ? const m.BoxConstraints(minWidth: 56, minHeight: 24)
             : null,
         filled: true,
         fillColor: stateColors.background,
