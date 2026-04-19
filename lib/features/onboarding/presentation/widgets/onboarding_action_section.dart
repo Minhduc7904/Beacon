@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/button/button.dart';
-import '../../../../core/widgets/text/text.dart';
 
 class OnboardingActionSection extends StatelessWidget {
   final bool isLoading;
@@ -34,20 +33,15 @@ class OnboardingActionSection extends StatelessWidget {
           },
         ),
         const SizedBox(height: 12),
-        Center(
-          child: TextButton(
-            onPressed: () {
-              if (!isLoading) {
-                onSecondaryPressed();
-              }
-            },
-            child: AppText(
-              secondaryLabel,
-              preset: AppTextPreset.bodyMedium,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
+        Button(
+          text: secondaryLabel,
+          type: ButtonType.transparent,
+          state: isLoading ? ButtonState.disabled : ButtonState.defaultState,
+          onPressed: () {
+            if (!isLoading) {
+              onSecondaryPressed();
+            }
+          },
         ),
       ],
     );

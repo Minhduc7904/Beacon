@@ -31,7 +31,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     result.fold(
       (failure) {
-        if (failure is ValidationFailure) {
+        if (failure is LoginValidationFailure) {
+          state = AuthValidationError(
+            failure.message,
+            usernameError: failure.usernameError,
+            passwordError: failure.passwordError,
+          );
+        } else if (failure is ValidationFailure) {
           state = AuthValidationError(failure.message);
         } else {
           _messageNotifier.addError(failure.message);

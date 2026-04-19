@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart' as m;
 
-import '../../theme/app_colors.dart';
+import '../../theme/button/button_theme.dart';
 import '../widget_mode_resolver.dart';
 import '../text/text.dart';
 
@@ -13,30 +13,6 @@ enum ButtonType { primary, secondary, outline, transparent }
 enum ButtonState { defaultState, pressed, disabled }
 
 enum ButtonIconPosition { side, left, right }
-
-class _ButtonColors {
-  const _ButtonColors({
-    required this.background,
-    required this.pressedBackground,
-    required this.disabledBackground,
-    required this.foregroundDefault,
-    required this.foregroundPressed,
-    required this.foregroundDisabled,
-    required this.borderColorDefault,
-    required this.borderColorPressed,
-    required this.borderColorDisabled,
-  });
-
-  final m.Color background;
-  final m.Color pressedBackground;
-  final m.Color disabledBackground;
-  final m.Color foregroundDefault;
-  final m.Color foregroundPressed;
-  final m.Color foregroundDisabled;
-  final m.Color borderColorDefault;
-  final m.Color borderColorPressed;
-  final m.Color borderColorDisabled;
-}
 
 class Button extends m.StatelessWidget {
   final String text;
@@ -84,103 +60,17 @@ class Button extends m.StatelessWidget {
     );
   }
 
-  _ButtonColors _resolveColors(m.BuildContext context) {
+  ButtonColors _resolveColors(m.BuildContext context) {
     final resolvedMode = _resolveMode(context);
-
-    if (resolvedMode == ButtonMode.dark) {
-      return switch (type) {
-        ButtonType.primary => const _ButtonColors(
-          background: AppColors.teal400,
-          pressedBackground: AppColors.teal500,
-          disabledBackground: AppColors.sky400,
-          foregroundDefault: AppColors.sky100,
-          foregroundPressed: AppColors.sky100,
-          foregroundDisabled: AppColors.sky600,
-          borderColorDefault: AppColors.teal400,
-          borderColorPressed: AppColors.teal500,
-          borderColorDisabled: AppColors.sky400,
-        ),
-        ButtonType.secondary => const _ButtonColors(
-          background: AppColors.teal100,
-          pressedBackground: AppColors.teal200,
-          disabledBackground: AppColors.sky400,
-          foregroundDefault: AppColors.teal400,
-          foregroundPressed: AppColors.teal500,
-          foregroundDisabled: AppColors.sky600,
-          borderColorDefault: AppColors.teal100,
-          borderColorPressed: AppColors.teal200,
-          borderColorDisabled: AppColors.sky400,
-        ),
-        ButtonType.outline => const _ButtonColors(
-          background: AppColors.sky100,
-          pressedBackground: AppColors.sky100,
-          disabledBackground: AppColors.sky100,
-          foregroundDefault: AppColors.teal400,
-          foregroundPressed: AppColors.teal500,
-          foregroundDisabled: AppColors.sky500,
-          borderColorDefault: AppColors.teal400,
-          borderColorPressed: AppColors.teal500,
-          borderColorDisabled: AppColors.sky500,
-        ),
-        ButtonType.transparent => const _ButtonColors(
-          background: AppColors.sky100,
-          pressedBackground: AppColors.teal100,
-          disabledBackground: AppColors.sky100,
-          foregroundDefault: AppColors.teal400,
-          foregroundPressed: AppColors.teal400,
-          foregroundDisabled: AppColors.teal400,
-          borderColorDefault: AppColors.sky100,
-          borderColorPressed: AppColors.teal100,
-          borderColorDisabled: AppColors.sky100,
-        ),
-      };
-    }
+    final palette = resolvedMode == ButtonMode.dark
+        ? ButtonThemePalette.dark
+        : ButtonThemePalette.light;
 
     return switch (type) {
-      ButtonType.primary => const _ButtonColors(
-        background: AppColors.teal400,
-        pressedBackground: AppColors.teal500,
-        disabledBackground: AppColors.sky400,
-        foregroundDefault: AppColors.sky100,
-        foregroundPressed: AppColors.sky100,
-        foregroundDisabled: AppColors.sky600,
-        borderColorDefault: AppColors.teal400,
-        borderColorPressed: AppColors.teal500,
-        borderColorDisabled: AppColors.sky400,
-      ),
-      ButtonType.secondary => const _ButtonColors(
-        background: AppColors.teal100,
-        pressedBackground: AppColors.teal200,
-        disabledBackground: AppColors.sky400,
-        foregroundDefault: AppColors.teal400,
-        foregroundPressed: AppColors.teal500,
-        foregroundDisabled: AppColors.sky600,
-        borderColorDefault: AppColors.teal100,
-        borderColorPressed: AppColors.teal200,
-        borderColorDisabled: AppColors.sky400,
-      ),
-      ButtonType.outline => const _ButtonColors(
-        background: AppColors.sky100,
-        pressedBackground: AppColors.sky100,
-        disabledBackground: AppColors.sky100,
-        foregroundDefault: AppColors.teal400,
-        foregroundPressed: AppColors.teal500,
-        foregroundDisabled: AppColors.sky500,
-        borderColorDefault: AppColors.teal400,
-        borderColorPressed: AppColors.teal500,
-        borderColorDisabled: AppColors.sky500,
-      ),
-      ButtonType.transparent => const _ButtonColors(
-        background: AppColors.sky100,
-        pressedBackground: AppColors.teal100,
-        disabledBackground: AppColors.sky100,
-        foregroundDefault: AppColors.teal400,
-        foregroundPressed: AppColors.teal400,
-        foregroundDisabled: AppColors.teal400,
-        borderColorDefault: AppColors.sky100,
-        borderColorPressed: AppColors.teal100,
-        borderColorDisabled: AppColors.sky100,
-      ),
+      ButtonType.primary => palette.primary,
+      ButtonType.secondary => palette.secondary,
+      ButtonType.outline => palette.outline,
+      ButtonType.transparent => palette.transparent,
     };
   }
 
@@ -190,15 +80,15 @@ class Button extends m.StatelessWidget {
     final isPressed = state == ButtonState.pressed;
 
     final m.EdgeInsetsGeometry padding = switch (size) {
-      ButtonSize.block => const m.EdgeInsets.symmetric(vertical: 24),
-      ButtonSize.large => const m.EdgeInsets.symmetric(
-        vertical: 24,
-        horizontal: 32,
-      ),
-      ButtonSize.small => const m.EdgeInsets.symmetric(
-        vertical: 16,
-        horizontal: 16,
-      ),
+      ButtonSize.block => const m.EdgeInsets.symmetric(horizontal: 16),
+      ButtonSize.large => const m.EdgeInsets.symmetric(horizontal: 32),
+      ButtonSize.small => const m.EdgeInsets.symmetric(horizontal: 16),
+    };
+
+    final m.Size minimumSize = switch (size) {
+      ButtonSize.block => const m.Size(0, 48),
+      ButtonSize.large => const m.Size(0, 48),
+      ButtonSize.small => const m.Size(0, 32),
     };
 
     final m.BorderSide borderSide = switch (type) {
@@ -252,7 +142,7 @@ class Button extends m.StatelessWidget {
       shadowColor: const m.WidgetStatePropertyAll(m.Colors.transparent),
       surfaceTintColor: const m.WidgetStatePropertyAll(m.Colors.transparent),
       padding: m.WidgetStatePropertyAll(padding),
-      minimumSize: const m.WidgetStatePropertyAll(m.Size(0, 0)),
+      minimumSize: m.WidgetStatePropertyAll(minimumSize),
       tapTargetSize: m.MaterialTapTargetSize.shrinkWrap,
       shape: m.WidgetStatePropertyAll(
         m.RoundedRectangleBorder(borderRadius: m.BorderRadius.circular(999)),

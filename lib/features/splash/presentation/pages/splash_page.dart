@@ -30,7 +30,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     }
 
     if (shouldShowOnboarding) {
-      context.go(AppRoutes.onboarding);
+      context.pushReplacement(AppRoutes.onboarding);
       return;
     }
 
@@ -60,7 +60,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
       return;
     }
 
-    context.go(AppRoutes.login);
+    context.pushReplacement(AppRoutes.onboarding);
   }
 
   @override

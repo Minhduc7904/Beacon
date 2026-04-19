@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'core/config/app_env.dart';
 import 'core/config/app_router.dart';
 import 'core/observers/app_provider_observer.dart';
 import 'core/providers/providers.dart';
-import 'core/theme/app_theme.dart';
+import 'core/theme/app/app_theme.dart';
+import 'core/widgets/dev/dev_settings_bubble.dart';
 import 'core/widgets/message_toast/global_message_overlay.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
   final prefs = await SharedPreferences.getInstance();
   runApp(
     ProviderScope(
@@ -37,7 +41,14 @@ class MyApp extends ConsumerWidget {
       theme: AppTheme.lightTheme(),
       darkTheme: AppTheme.darkTheme(),
       themeMode: themeMode,
-      builder: (context, child) => GlobalMessageOverlay(child: child!),
+      builder: (context, child) {
+        return Stack(
+          children: [
+            GlobalMessageOverlay(child: child!),
+            if (AppEnv.isDev) const DevSettingsBubble(),
+          ],
+        );
+      },
       routerConfig: appRouter,
     );
   }

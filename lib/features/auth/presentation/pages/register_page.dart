@@ -7,8 +7,8 @@ import '../../../../core/providers/providers.dart';
 import '../../../../core/widgets/image/logo_image.dart';
 import '../../../../core/widgets/text/text.dart';
 import '../controllers/auth_state.dart';
-import '../widgets/login_button.dart';
-import '../widgets/login_text_field.dart';
+import '../widgets/login/login_button.dart';
+import '../widgets/login/login_text_field.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
