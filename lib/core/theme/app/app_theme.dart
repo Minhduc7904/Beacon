@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
-import 'app_fonts.dart';
-import 'app_text_theme.dart';
+import '../color/app_colors.dart';
+import '../text/app_fonts.dart';
+import '../text/app_text_theme.dart';
 
 class AppTheme {
   AppTheme._();
@@ -24,11 +24,16 @@ class AppTheme {
       outline: AppColors.outline,
     );
 
+    final appTextTheme = AppFonts.resolveTextTheme(
+      AppTextTheme.textTheme(fontFamily: fontFamily),
+      fontFamily: fontFamily,
+    );
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.background,
-      textTheme: AppTextTheme.textTheme(fontFamily: fontFamily).apply(
+      textTheme: appTextTheme.apply(
         bodyColor: AppColors.onBackground,
         displayColor: AppColors.onBackground,
       ),
@@ -67,7 +72,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(0, 44),
-          textStyle: AppTextTheme.textTheme(fontFamily: fontFamily).labelLarge,
+          textStyle: appTextTheme.labelLarge,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -94,13 +99,19 @@ class AppTheme {
       outline: AppColors.ink300,
     );
 
+    final appTextTheme = AppFonts.resolveTextTheme(
+      AppTextTheme.textTheme(fontFamily: fontFamily),
+      fontFamily: fontFamily,
+    );
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.ink600,
-      textTheme: AppTextTheme.textTheme(
-        fontFamily: fontFamily,
-      ).apply(bodyColor: AppColors.sky200, displayColor: AppColors.sky200),
+      textTheme: appTextTheme.apply(
+        bodyColor: AppColors.sky200,
+        displayColor: AppColors.sky200,
+      ),
       appBarTheme: const AppBarTheme(
         elevation: 0,
         centerTitle: true,
@@ -136,7 +147,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(0, 44),
-          textStyle: AppTextTheme.textTheme(fontFamily: fontFamily).labelLarge,
+          textStyle: appTextTheme.labelLarge,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

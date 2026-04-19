@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,6 +22,7 @@ class OnboardingPage extends ConsumerStatefulWidget {
 
 class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   late final PageController _pageController;
+  Timer? _autoSlideTimer;
   int _currentIndex = 0;
 
   static const _slides = [
@@ -47,10 +50,23 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   void initState() {
     super.initState();
     _pageController = PageController();
+    _autoSlideTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (!mounted || !_pageController.hasClients) {
+        return;
+      }
+
+      final nextIndex = (_currentIndex + 1) % _slides.length;
+      _pageController.animateToPage(
+        nextIndex,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      );
+    });
   }
 
   @override
   void dispose() {
+    _autoSlideTimer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -59,109 +75,101 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     await ref.read(onboardingNotifierProvider.notifier).completeOnboarding();
   }
 
-  Future<void> _goToPage(int index) async {
-    await _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeInOut,
-    );
-  }
-
-  Future<void> _onPrimaryPressed() async {
-    if (_currentIndex < _slides.length - 1) {
-      await _goToPage(_currentIndex + 1);
-      return;
-    }
-
+  Future<void> _onLoginPressed() async {
     await _completeAndGoLogin();
-  }
-
-  Future<void> _onSecondaryPressed() async {
-    if (_currentIndex < _slides.length - 1) {
-      await _completeAndGoLogin();
+    if (!mounted) {
       return;
     }
+    context.pushNamed(AppRoutes.loginName);
+  }
 
-    await _goToPage(0);
+  Future<void> _onRegisterPressed() async {
+    await _completeAndGoLogin();
+    if (!mounted) {
+      return;
+    }
+    context.pushNamed(AppRoutes.registerName);
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<OnboardingState>(onboardingNotifierProvider, (_, state) {
-      if (state is OnboardingCompleted) {
-        context.go(AppRoutes.login);
-      }
-    });
-
     final onboardingState = ref.watch(onboardingNotifierProvider);
     final isLoading = onboardingState is OnboardingLoading;
 
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Center(
-                child: Image(image: AssetImage(AppImages.logoText), width: 120),
-              ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 60, 24, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Center(
+                        child: Image(
+                          image: AssetImage(AppImages.logoText),
+                          width: 120,
+                        ),
+                      ),
 
-              const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-              SizedBox(
-                height:
-                    MediaQuery.of(context).size.height *
-                    0.4, // Chiếm 45% chiều cao màn hình
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: _slides.length,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentIndex = index;
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    return OnboardingSlideContent(
-                      imagePath: _slides[index].imagePath,
-                    );
-                  },
+                      SizedBox(
+                        height:
+                            MediaQuery.of(context).size.height *
+                            0.4, // Chiếm 45% chiều cao màn hình
+                        child: PageView.builder(
+                          controller: _pageController,
+                          itemCount: _slides.length,
+                          onPageChanged: (index) {
+                            setState(() {
+                              _currentIndex = index;
+                            });
+                          },
+                          itemBuilder: (context, index) {
+                            return OnboardingSlideContent(
+                              imagePath: _slides[index].imagePath,
+                            );
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+                      OnboardingProgressIndicator(
+                        currentIndex: _currentIndex,
+                        total: _slides.length,
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      Padding(
+                        padding: const EdgeInsets.only(top: 28),
+                        child: Column(
+                          children: [
+                            OnboardingContentSection(
+                              title: _slides[_currentIndex].title,
+                              description: _slides[_currentIndex].description,
+                            ),
+                            const SizedBox(height: 32),
+                            OnboardingActionSection(
+                              isLoading: isLoading,
+                              primaryLabel: 'Đăng nhập',
+                              secondaryLabel: 'Đăng kí',
+                              onPrimaryPressed: _onLoginPressed,
+                              onSecondaryPressed: _onRegisterPressed,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-
-              const SizedBox(height: 12),
-              OnboardingProgressIndicator(
-                currentIndex: _currentIndex,
-                total: _slides.length,
-              ),
-
-              const SizedBox(height: 24),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 28),
-                child: Column(
-                  children: [
-                    OnboardingContentSection(
-                      title: _slides[_currentIndex].title,
-                      description: _slides[_currentIndex].description,
-                    ),
-                    const SizedBox(height: 32),
-                    OnboardingActionSection(
-                      isLoading: isLoading,
-                      primaryLabel: _currentIndex == _slides.length - 1
-                          ? 'Bắt đầu ngay'
-                          : 'Tiếp theo',
-                      secondaryLabel: _currentIndex == _slides.length - 1
-                          ? 'Quay lại'
-                          : 'Bỏ qua',
-                      onPrimaryPressed: _onPrimaryPressed,
-                      onSecondaryPressed: _onSecondaryPressed,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

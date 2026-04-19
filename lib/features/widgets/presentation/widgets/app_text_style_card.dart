@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart' hide Card;
 
-import '../../../../core/theme/app_text_theme.dart';
+import '../../../../core/theme/text/app_text_theme.dart';
 import '../../../../core/widgets/card/card.dart';
 import '../../../../core/widgets/dropdown/dropdown.dart';
 import '../../../../core/widgets/text/text.dart';

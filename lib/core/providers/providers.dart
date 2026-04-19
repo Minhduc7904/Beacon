@@ -105,6 +105,12 @@ final appMessageProvider =
       return AppMessageNotifier();
     });
 
+// ─── Dev Tools ───────────────────────────────────────────────────────────────
+
+final devShowLayoutGridProvider = StateProvider<bool>((ref) {
+  return false;
+});
+
 // ─── Auth UseCases ────────────────────────────────────────────────────────────
 
 final loginUseCaseProvider = Provider<LoginUseCase>((ref) {
