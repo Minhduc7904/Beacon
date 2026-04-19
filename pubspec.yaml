@@ -50,6 +50,7 @@ dependencies:
 
   # Navigation
   go_router: ^14.6.3
+  flutter_svg: ^2.2.1
 
 dev_dependencies:
   flutter_test:
@@ -90,6 +91,7 @@ flutter:
     - assets/images/
     - assets/images/logo/
     - assets/images/onboarding/
+    # - assets/images/icons/
     - assets/icons/
     - assets/animations/
 

@@ -24,6 +24,7 @@ class AppImages {
   static const String icGoogle = '$_icons/ic_google.svg';
   static const String icApple = '$_icons/ic_apple.svg';
   static const String icFacebook = '$_icons/ic_facebook.svg';
+  static const String icChervDown = '$_icons/ChervDown.svg';
 
   // ─── Lottie Animations ────────────────────────────────────
   static const String loadingAnimation = '$_animations/loading.json';
