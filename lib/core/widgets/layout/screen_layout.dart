@@ -74,9 +74,9 @@ class AppScreenLayout extends StatelessWidget {
                               flex: (columnWidth * 10).round(),
                               child: DecoratedBox(
                                 decoration: BoxDecoration(
-                                  color: Colors.red.withOpacity(0.14),
+                                  color: Colors.red.withValues(alpha: 0.14),
                                   border: Border.all(
-                                    color: Colors.red.withOpacity(0.45),
+                                    color: Colors.red.withValues(alpha: 0.45),
                                   ),
                                 ),
                               ),

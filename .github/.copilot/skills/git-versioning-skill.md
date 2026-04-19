@@ -2,7 +2,7 @@
 
 ## Mục tiêu
 
-Giữ lịch sử commit rõ ràng, dễ review, dễ truy vết và phù hợp `doc/git_workflow.md`.
+Giữ lịch sử commit rõ ràng, dễ review, dễ truy vết và phù hợp `docs/git_workflow.md`.
 
 ## Khi dùng
 
