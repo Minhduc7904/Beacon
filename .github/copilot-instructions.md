@@ -3,7 +3,7 @@
 Mục tiêu của tài liệu này là giúp AI Agent tạo thay đổi **đúng kiến trúc hiện tại**, giảm lệch chuẩn khi thêm tính năng hoặc sửa lỗi.
 
 ## 1) Bối cảnh kỹ thuật của dự án
-- Framework: Flutter (Dart SDK `^3.11.1`)
+- Framework: Flutter (Dart SDK `>=3.10.0 <4.0.0` theo `pubspec.yaml`)
 - State management + DI: Riverpod (`flutter_riverpod`)
 - Routing: GoRouter (`go_router`)
 - Network: Dio (`dio`)
@@ -44,7 +44,7 @@ Mục tiêu của tài liệu này là giúp AI Agent tạo thay đổi **đúng
 - Thêm route mới theo thứ tự:
 	1) khai báo trong `app_routes.dart`
 	2) đăng ký trong `app_router.dart`
-	3) điều hướng bằng `context.go(AppRoutes.xxx)` hoặc `goNamed`.
+	3) điều hướng bằng `context.go(AppRoutes.xxx)` hoặc `goNamed/pushNamed` với `AppRoutes.xxxName`.
 - Route cần xác thực phải có guard phù hợp (hiện có `AuthGuard`).
 
 ## 6) Quy tắc network + error handling
@@ -60,6 +60,7 @@ Mục tiêu của tài liệu này là giúp AI Agent tạo thay đổi **đúng
 - Ưu tiên tái sử dụng shared widgets trong `lib/core/widgets/`.
 - Không thêm màu/spacing tùy tiện nếu đã có theme primitive.
 - Nếu cần thông báo toàn cục, dùng `appMessageProvider.notifier.addSuccess/addError/...`.
+- Với task UI mới hoặc đổi design, ưu tiên đọc `.github/instructions/ui-design.instructions.md` và dùng `ui-design-skill`.
 
 ## 9) Kiểm tra trước khi kết thúc task
 Sau khi sửa code, ưu tiên chạy:
@@ -68,7 +69,7 @@ Sau khi sửa code, ưu tiên chạy:
 3. kiểm tra luồng chính liên quan trên app (login/logout/navigation hoặc flow được chỉnh sửa)
 
 ## 10) Quy tắc commit/PR
-- Theo Conventional Commits (tham chiếu `doc/git_workflow.md`): `feat|fix|refactor|docs|chore|test|perf`.
+- Theo Conventional Commits (tham chiếu `docs/git_workflow.md`): `feat|fix|refactor|docs|chore|test|perf`.
 - Scope bám module/layer (`auth`, `network`, `storage`, `router`, `providers`, `ui`, ...).
 
 ## 11) Không được làm

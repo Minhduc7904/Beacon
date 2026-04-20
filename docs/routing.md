@@ -1,225 +1,107 @@
-# Routing với GoRouter
+# Routing với GoRouter (Beacon)
 
 ## Mục tiêu
 
-Tài liệu này hướng dẫn:
-- Cách khai báo route tập trung.
-- Cách đăng ký route trong GoRouter.
-- Cách điều hướng giữa các màn hình.
-- Ví dụ thực tế theo cấu trúc hiện tại của Beacon App.
-
----
+Tài liệu này mô tả routing theo code hiện tại của Beacon và quy tắc thêm route mới đúng chuẩn.
 
 ## 1) Cấu trúc file routing
 
 ```
 lib/core/config/
-├── app_routes.dart   // Khai báo hằng số path
-└── app_router.dart   // Khởi tạo GoRouter và đăng ký danh sách route
+├── app_routes.dart
+└── app_router.dart
 ```
 
----
+## 2) Source of truth route constants
 
-## 2) Khai báo path route trong `app_routes.dart`
+Tất cả path và route name được khai báo trong `app_routes.dart`.
 
-Mục đích: tránh hardcode chuỗi path nhiều nơi.
+Nhóm route chính đang có:
 
-Ví dụ hiện tại:
+- Splash: `/`
+- Onboarding: `/onboarding`
+- Login: `/login`
+- Register flow: `/register`, `/register/phone-number`, `/register/password`, `/register/name`, `/register/username`
+- Home: `/home`
+- Post preview: `/post-preview`
+- Logout: `/logout`
+- Shared widgets demo: `/widgets`
+
+Ngoài path, mỗi route có `xxxName` để điều hướng bằng `goNamed/pushNamed`.
+
+## 3) Đăng ký route trong app_router
+
+Router hiện tại dùng:
+
+- `initialLocation: AppRoutes.splash`
+- `errorBuilder: NotFoundPage`
+- `observers: [appRouteStackObserver]`
+
+Các guard quan trọng:
+
+- `AuthGuard(child: HomePage())` cho route home
+- `AuthGuard(child: PostPreviewPage(...))` cho route post preview
+
+Các route có validation `state.extra`:
+
+- `post-preview` yêu cầu `extra` là `String filePath` không rỗng
+- register step routes yêu cầu `RegisterDraftData` hợp lệ theo thứ tự bước
+
+## 4) Điều hướng trong UI
+
+Khuyến nghị ưu tiên dùng constants trong `AppRoutes`.
+
+Ví dụ:
 
 ```dart
-class AppRoutes {
-  AppRoutes._();
-
-  static const String login = '/login';
-  static const String home = '/home';
-  static const String logout = '/logout';
-}
+context.go(AppRoutes.home);
+context.goNamed(AppRoutes.logoutName);
+await context.pushNamed(AppRoutes.postPreviewName, extra: filePath);
 ```
 
-Quy ước khuyến nghị:
-- Mỗi route là một hằng số `static const`.
-- Tên ngắn gọn, cùng phong cách đặt tên với màn hình.
-- Không dùng trực tiếp chuỗi `'/xxx'` trong UI.
+Phân biệt nhanh:
 
----
+- `go`: thay thế route hiện tại
+- `push/pushNamed`: đẩy route mới, có thể back
 
-## 3) Đăng ký route trong `app_router.dart`
+## 5) Cách thêm route mới
 
-Ví dụ hiện tại:
+1. Thêm constant path + name trong `app_routes.dart`
+2. Đăng ký `GoRoute` trong `app_router.dart`
+3. Áp guard nếu là route private
+4. Điều hướng bằng `AppRoutes.xxx` hoặc `AppRoutes.xxxName`
 
-```dart
-final appRouter = GoRouter(
-  initialLocation: AppRoutes.login,
-  debugLogDiagnostics: true,
-  errorBuilder: (context, state) => const NotFoundPage(),
-  routes: [
-    GoRoute(
-      path: AppRoutes.login,
-      name: AppRoutes.login,
-      builder: (context, state) => const LoginPage(),
-    ),
-    GoRoute(
-      path: AppRoutes.home,
-      name: AppRoutes.home,
-      builder: (context, state) =>
-          const AuthGuard(child: DashboardPage()),
-    ),
-    GoRoute(
-      path: AppRoutes.logout,
-      name: AppRoutes.logout,
-      builder: (context, state) => const LogoutPage(),
-    ),
-  ],
-);
-```
-
-Ý nghĩa các thành phần chính:
-- `initialLocation`: màn hình vào app lần đầu.
-- `errorBuilder`: fallback khi vào route không tồn tại.
-- `path`: URL path của route.
-- `name`: tên route để dùng với `goNamed` hoặc `pushNamed`.
-- `builder`: tạo widget cho route.
-
-Ghi chú:
-- `home` đang được bọc `AuthGuard` để chặn truy cập khi chưa đăng nhập.
-
----
-
-## 4) Cách thêm route mới
-
-Ví dụ: thêm route `profile`.
-
-### Bước 1: Khai báo trong `app_routes.dart`
+Ví dụ:
 
 ```dart
+// app_routes.dart
 static const String profile = '/profile';
-```
+static const String profileName = 'profile';
 
-### Bước 2: Đăng ký trong `app_router.dart`
-
-```dart
+// app_router.dart
 GoRoute(
   path: AppRoutes.profile,
-  name: AppRoutes.profile,
+  name: AppRoutes.profileName,
   builder: (context, state) => const ProfilePage(),
-),
+)
 ```
 
-### Bước 3: Điều hướng từ UI
+## 6) Các flow thực tế đang dùng
 
-```dart
-context.go(AppRoutes.profile);
-```
+- Login thành công -> `context.go(AppRoutes.home)`
+- Capture xong ảnh ở home -> `pushNamed(AppRoutes.postPreviewName, extra: path)`
+- Logout flow -> điều hướng route logout và quay về login sau khi hoàn tất
 
----
+## 7) Lỗi thường gặp
 
-## 5) Điều hướng trong UI
+- Hardcode path string trực tiếp trong page/widget
+- Quên route name khi dùng `goNamed/pushNamed`
+- Route cần `extra` nhưng không validate kiểu dữ liệu
+- Route private không bọc guard
 
-### `go` (thay thế route hiện tại)
+## 8) Best practices cho Beacon
 
-```dart
-context.go(AppRoutes.home);
-```
-
-Dùng khi:
-- Chuyển màn hình chính sau login.
-- Không muốn quay lại màn trước bằng nút back.
-
-### `push` (đẩy thêm route mới lên stack)
-
-```dart
-context.push(AppRoutes.home);
-```
-
-Dùng khi:
-- Muốn có thể back về màn hình trước đó.
-
-### `goNamed` (điều hướng bằng tên route)
-
-```dart
-context.goNamed(AppRoutes.logout);
-```
-
-Dùng khi:
-- Ưu tiên name thay vì path string.
-- Chuẩn bị tốt cho trường hợp path thay đổi nhưng name giữ nguyên.
-
----
-
-## 6) Ví dụ luồng thực tế trong Beacon App
-
-### Login thành công -> vào Home
-
-```dart
-context.go(AppRoutes.home);
-```
-
-### Nhấn nút logout ở Dashboard -> sang trang Logout
-
-```dart
-context.go(AppRoutes.logout);
-```
-
-### Truy cập route sai -> NotFoundPage
-
-Ví dụ người dùng mở URL không tồn tại:
-
-```
-/abc-xyz
-```
-
-Kết quả:
-- `errorBuilder` trả về `NotFoundPage()`.
-
----
-
-## 7) Ví dụ route có tham số (tham khảo)
-
-Nếu cần route chi tiết theo id, có thể khai báo:
-
-```dart
-GoRoute(
-  path: '/users/:id',
-  name: 'user-detail',
-  builder: (context, state) {
-    final id = state.pathParameters['id']!;
-    return UserDetailPage(userId: id);
-  },
-),
-```
-
-Điều hướng:
-
-```dart
-context.go('/users/123');
-// hoặc
-context.goNamed('user-detail', pathParameters: {'id': '123'});
-```
-
----
-
-## 8) Lỗi thường gặp
-
-- Quên khai báo route trong `routes` của `GoRouter`.
-- Dùng nhầm giữa `go` và `push`, dẫn tới hành vi back không như mong đợi.
-- Hardcode path trong nhiều file, khó bảo trì khi đổi URL.
-- Route cần bảo vệ nhưng quên bọc `AuthGuard`.
-
----
-
-## 9) Best practices đề xuất cho dự án
-
-- Giữ `AppRoutes` là nguồn duy nhất cho path constants.
-- Dùng `goNamed` hoặc `pushNamed` khi số lượng route tăng.
-- Chỉ bật `debugLogDiagnostics` ở môi trường phát triển.
-- Với route private, luôn bọc guard (hoặc dùng redirect tập trung nếu mở rộng sau này).
-
----
-
-## 10) Tóm tắt nhanh
-
-- Khai báo path trong `app_routes.dart`.
-- Đăng ký route trong `app_router.dart`.
-- Điều hướng bằng `context.go`, `context.push`, `context.goNamed`.
-- Dùng `AuthGuard` cho màn hình cần đăng nhập.
-- Dùng `errorBuilder` để xử lý route không hợp lệ.
+- Không hardcode route string ngoài `app_routes.dart`
+- Luôn đăng ký route tại `app_router.dart`
+- Route private phải có guard phù hợp
+- Route phụ thuộc `state.extra` phải validate đầu vào trước khi render page

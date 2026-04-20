@@ -12,6 +12,7 @@ lib/core/
 │   ├── app_message.dart           # Model
 │   └── app_message_notifier.dart  # StateNotifier
 └── widgets/
+  └── message_toast/
     ├── message_toast.dart          # Animated toast widget
     └── global_message_overlay.dart # Overlay bọc toàn bộ app
 ```
@@ -101,11 +102,17 @@ _messageNotifier.addError(failure.message);  // vd: 'Không thể kết nối đ
 
 ## Tích hợp vào App (`main.dart`)
 
-`GlobalMessageOverlay` được wrap quanh toàn bộ router thông qua `builder`:
+`GlobalMessageOverlay` được wrap trong `builder` khi chạy môi trường dev (`AppEnv.isDev`):
 
 ```dart
 MaterialApp.router(
-  builder: (context, child) => GlobalMessageOverlay(child: child!),
+  builder: (context, child) {
+    final appChild = child ?? const SizedBox.shrink();
+    if (!AppEnv.isDev) {
+      return appChild;
+    }
+    return GlobalMessageOverlay(child: appChild);
+  },
   routerConfig: appRouter,
 )
 ```

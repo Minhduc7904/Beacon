@@ -127,7 +127,7 @@ Theo chuẩn **Conventional Commits**:
 
 ### Scopes (theo feature/layer)
 
-`auth` · `dashboard` · `notifications` · `network` · `storage` · `router` · `providers` · `ui`
+`auth` · `home` · `onboarding` · `post_preview` · `network` · `storage` · `router` · `providers` · `ui`
 
 ### Ví dụ commit tốt
 

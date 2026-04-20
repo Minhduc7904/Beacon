@@ -10,6 +10,8 @@ class AppRoutes {
   static const String registerUsernameName = 'register-username';
   static const String registerPhoneNumberName = 'register-phone-number';
   static const String homeName = 'home';
+  static const String profileName = 'profile';
+  static const String editProfileName = 'edit-profile';
   static const String postPreviewName = 'post-preview';
   static const String logoutName = 'logout';
   static const String widgetsName = 'widgets';
@@ -23,6 +25,8 @@ class AppRoutes {
   static const String registerUsername = '/register/username';
   static const String registerPhoneNumber = '/register/phone-number';
   static const String home = '/home';
+  static const String profile = '/profile';
+  static const String editProfile = '/profile/edit';
   static const String postPreview = '/post-preview';
   static const String logout = '/logout';
   static const String widgets = '/widgets';
@@ -37,6 +41,8 @@ class AppRoutes {
     AppRouteItem(title: 'Register Name', path: registerNameStep),
     AppRouteItem(title: 'Register Username', path: registerUsername),
     AppRouteItem(title: 'Home', path: home),
+    AppRouteItem(title: 'Profile', path: profile),
+    AppRouteItem(title: 'Edit Profile', path: editProfile),
     AppRouteItem(title: 'Post Preview', path: postPreview),
     AppRouteItem(title: 'Logout', path: logout),
     AppRouteItem(title: 'Widgets', path: widgets),
