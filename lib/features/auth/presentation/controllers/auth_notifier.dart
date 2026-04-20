@@ -42,6 +42,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         } else {
           _messageNotifier.addError(failure.message);
           state = AuthError(failure.message);
+          state = AuthValidationError(
+            failure.message,
+            passwordError: failure.message,
+          );
         }
       },
       (authResult) {
@@ -52,20 +56,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> register({
+    required String email,
     required String username,
     required String password,
     required String confirmPassword,
-    required String fullName,
-    required String? phoneNumber,
+    required String familyName,
+    required String givenName,
+    required String phoneNumber,
   }) async {
     state = const AuthLoading();
 
     final result = await _registerUseCase(
       RegisterParams(
+        email: email,
         username: username,
         password: password,
         confirmPassword: confirmPassword,
-        fullName: fullName,
+        familyName: familyName,
+        givenName: givenName,
         phoneNumber: phoneNumber,
       ),
     );

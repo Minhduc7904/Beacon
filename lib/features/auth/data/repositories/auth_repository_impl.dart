@@ -20,6 +20,42 @@ class AuthRepositoryImpl implements AuthRepository {
        _networkInfo = networkInfo;
 
   @override
+  Future<Either<Failure, bool>> checkEmailAvailable({
+    required String email,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      final isAvailable = await _remoteDatasource.checkEmailAvailable(
+        email: email,
+      );
+      return Right(isAvailable);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> checkPhoneAvailable({
+    required String phoneNumber,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      final isAvailable = await _remoteDatasource.checkPhoneAvailable(
+        phoneNumber: phoneNumber,
+      );
+      return Right(isAvailable);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, AuthResult>> login({
     required String username,
     required String password,
@@ -50,10 +86,13 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, AuthResult>> register({
+    required String email,
+    required String confirmPassword,
+    required String familyName,
+    required String givenName,
     required String username,
     required String password,
-    required String fullName,
-    required String? phoneNumber,
+    required String phoneNumber,
   }) async {
     if (!await _networkInfo.isConnected) {
       return const Left(NetworkFailure());
@@ -61,9 +100,12 @@ class AuthRepositoryImpl implements AuthRepository {
 
     try {
       final authResponse = await _remoteDatasource.register(
+        email: email,
+        confirmPassword: confirmPassword,
+        familyName: familyName,
+        givenName: givenName,
         username: username,
         password: password,
-        fullName: fullName,
         phoneNumber: phoneNumber,
       );
 

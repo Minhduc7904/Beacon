@@ -11,6 +11,8 @@ import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/usecase/login_usecase.dart';
 import '../../features/auth/domain/usecase/logout_usecase.dart';
 import '../../features/auth/domain/usecase/register_usecase.dart';
+import '../../features/auth/domain/usecase/check_email_availability_usecase.dart';
+import '../../features/auth/domain/usecase/check_phone_availability_usecase.dart';
 import '../../features/auth/presentation/controllers/auth_notifier.dart';
 import '../../features/auth/presentation/controllers/auth_state.dart';
 import '../../features/onboarding/data/datasources/onboarding_local_datasource.dart';
@@ -124,6 +126,16 @@ final logoutUseCaseProvider = Provider<LogoutUseCase>((ref) {
 final registerUseCaseProvider = Provider<RegisterUseCase>((ref) {
   return RegisterUseCase(ref.watch(authRepositoryProvider));
 });
+
+final checkEmailAvailabilityUseCaseProvider =
+    Provider<CheckEmailAvailabilityUseCase>((ref) {
+      return CheckEmailAvailabilityUseCase(ref.watch(authRepositoryProvider));
+    });
+
+final checkPhoneAvailabilityUseCaseProvider =
+    Provider<CheckPhoneAvailabilityUseCase>((ref) {
+      return CheckPhoneAvailabilityUseCase(ref.watch(authRepositoryProvider));
+    });
 
 final shouldShowOnboardingUseCaseProvider =
     Provider<ShouldShowOnboardingUseCase>((ref) {

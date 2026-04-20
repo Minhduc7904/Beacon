@@ -19,6 +19,27 @@ import 'app_routes.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
+CustomTransitionPage<void> _buildSlidePage(
+  GoRouterState state,
+  Widget child,
+) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final tween = Tween<Offset>(
+        begin: const Offset(1, 0),
+        end: Offset.zero,
+      ).chain(CurveTween(curve: Curves.easeOutCubic));
+
+      return SlideTransition(
+        position: animation.drive(tween),
+        child: child,
+      );
+    },
+  );
+}
+
 final appRouter = GoRouter(
   navigatorKey: rootNavigatorKey,
   initialLocation: AppRoutes.splash,
@@ -39,68 +60,70 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.login,
       name: AppRoutes.loginName,
-      builder: (context, state) => const LoginPage(),
+      pageBuilder: (context, state) =>
+          _buildSlidePage(state, const LoginPage()),
     ),
     GoRoute(
       path: AppRoutes.register,
       name: AppRoutes.registerName,
-      builder: (context, state) => const RegisterPageEmail(),
+      pageBuilder: (context, state) =>
+          _buildSlidePage(state, const RegisterPageEmail()),
     ),
     GoRoute(
       path: AppRoutes.registerPhoneNumber,
       name: AppRoutes.registerPhoneNumberName,
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final draft = state.extra;
         if (draft is! RegisterDraftData || !draft.hasEmail) {
-          return const RegisterPageEmail();
+          return _buildSlidePage(state, const RegisterPageEmail());
         }
 
-        return RegisterPagePhoneNumber(draft: draft);
+        return _buildSlidePage(state, RegisterPagePhoneNumber(draft: draft));
       },
     ),
     GoRoute(
       path: AppRoutes.registerPassword,
       name: AppRoutes.registerPasswordName,
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final draft = state.extra;
         if (draft is! RegisterDraftData ||
             !draft.hasEmail ||
             !draft.hasPhoneNumber) {
-          return const RegisterPageEmail();
+          return _buildSlidePage(state, const RegisterPageEmail());
         }
 
-        return RegisterPagePassword(draft: draft);
+        return _buildSlidePage(state, RegisterPagePassword(draft: draft));
       },
     ),
     GoRoute(
       path: AppRoutes.registerNameStep,
       name: AppRoutes.registerNameStepName,
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final draft = state.extra;
         if (draft is! RegisterDraftData ||
             !draft.hasEmail ||
             !draft.hasPhoneNumber ||
             !draft.hasPassword) {
-          return const RegisterPageEmail();
+          return _buildSlidePage(state, const RegisterPageEmail());
         }
 
-        return RegisterPageName(draft: draft);
+        return _buildSlidePage(state, RegisterPageName(draft: draft));
       },
     ),
     GoRoute(
       path: AppRoutes.registerUsername,
       name: AppRoutes.registerUsernameName,
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final draft = state.extra;
         if (draft is! RegisterDraftData ||
             !draft.hasEmail ||
             !draft.hasPhoneNumber ||
             !draft.hasPassword ||
             !draft.hasName) {
-          return const RegisterPageEmail();
+          return _buildSlidePage(state, const RegisterPageEmail());
         }
 
-        return RegisterPageUsername(draft: draft);
+        return _buildSlidePage(state, RegisterPageUsername(draft: draft));
       },
     ),
     GoRoute(

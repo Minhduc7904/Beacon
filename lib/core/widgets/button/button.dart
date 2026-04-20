@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' as m;
 
 import '../../theme/button/button_theme.dart';
+import '../loading/loading.dart';
 import '../widget_mode_resolver.dart';
 import '../text/text.dart';
 
@@ -21,6 +22,8 @@ class Button extends m.StatelessWidget {
   final ButtonSize size;
   final ButtonType type;
   final ButtonState state;
+  final bool isLoading;
+  final String? loadingText;
   final bool hasIcon;
   final m.Widget? icon;
   final ButtonIconPosition iconPosition;
@@ -34,11 +37,21 @@ class Button extends m.StatelessWidget {
     this.size = ButtonSize.block,
     this.type = ButtonType.primary,
     this.state = ButtonState.defaultState,
+    this.isLoading = false,
+    this.loadingText,
     this.hasIcon = false,
     this.icon,
     this.iconPosition = ButtonIconPosition.side,
     this.w,
   });
+
+  ButtonState _effectiveState() {
+    if (isLoading) {
+      return ButtonState.disabled;
+    }
+
+    return state;
+  }
 
   m.Widget get _effectiveIcon {
     return icon ??
@@ -76,8 +89,9 @@ class Button extends m.StatelessWidget {
 
   m.ButtonStyle _buildStyle(m.BuildContext context) {
     final colors = _resolveColors(context);
-    final isDisabled = state == ButtonState.disabled;
-    final isPressed = state == ButtonState.pressed;
+    final effectiveState = _effectiveState();
+    final isDisabled = effectiveState == ButtonState.disabled;
+    final isPressed = effectiveState == ButtonState.pressed;
 
     final m.EdgeInsetsGeometry padding = switch (size) {
       ButtonSize.block => const m.EdgeInsets.symmetric(horizontal: 16),
@@ -158,12 +172,55 @@ class Button extends m.StatelessWidget {
   }
 
   m.Widget _buildButtonContent(m.BuildContext context) {
+    final effectiveState = _effectiveState();
     final colors = _resolveColors(context);
-    final textColor = switch (state) {
+    final textColor = switch (effectiveState) {
       ButtonState.disabled => colors.foregroundDisabled,
       ButtonState.pressed => colors.foregroundPressed,
       ButtonState.defaultState => colors.foregroundDefault,
     };
+
+    final loadingColor = switch (effectiveState) {
+      ButtonState.disabled => colors.loadingDisabled,
+      ButtonState.pressed => colors.loadingPressed,
+      ButtonState.defaultState => colors.loadingDefault,
+    };
+
+    if (isLoading) {
+      final hasLoadingText =
+          loadingText != null && loadingText!.trim().isNotEmpty;
+
+      if (!hasLoadingText) {
+        return AppLoadingIndicator(
+          color: loadingColor,
+          size: size == ButtonSize.small ? 14 : 16,
+          strokeWidth: size == ButtonSize.small ? 1.8 : 2,
+        );
+      }
+
+      return m.Row(
+        mainAxisSize: m.MainAxisSize.min,
+        children: [
+          AppLoadingIndicator(
+            color: loadingColor,
+            size: size == ButtonSize.small ? 14 : 16,
+            strokeWidth: size == ButtonSize.small ? 1.8 : 2,
+          ),
+          const m.SizedBox(width: 8),
+          AppText(
+            loadingText!,
+            textAlign: m.TextAlign.center,
+            color: textColor,
+            fontWeight: m.FontWeight.w500,
+            style: const m.TextStyle(
+              fontSize: 16,
+              fontFamily: 'Inter',
+              height: 1,
+            ),
+          ),
+        ],
+      );
+    }
 
     final textWidget = AppText(
       text,
@@ -231,7 +288,10 @@ class Button extends m.StatelessWidget {
 
   @override
   m.Widget build(m.BuildContext context) {
-    final effectiveOnPressed = state == ButtonState.disabled ? null : onPressed;
+    final effectiveState = _effectiveState();
+    final effectiveOnPressed = effectiveState == ButtonState.disabled
+        ? null
+        : onPressed;
 
     final button = m.FilledButton(
       onPressed: effectiveOnPressed,

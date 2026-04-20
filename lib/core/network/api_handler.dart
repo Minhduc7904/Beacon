@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import '../errors/exceptions.dart';
 import 'api_response.dart';
 
+typedef ApiErrorMessageMapper = String? Function(String code);
+
 class ApiHandler {
   ApiHandler._();
   /// {
@@ -23,6 +25,7 @@ class ApiHandler {
   static ApiResponse<T> handle<T>(
     Response response, {
     T Function(dynamic json)? fromJsonT,
+    ApiErrorMessageMapper? codeMessageMapper,
   }) {
     final statusCode = response.statusCode ?? 0;
     final body = response.data;
@@ -37,10 +40,81 @@ class ApiHandler {
     final apiResponse = ApiResponse<T>.fromJson(body, fromJsonT);
 
     if (!apiResponse.success) {
-      _throwByStatusCode(statusCode, apiResponse.message);
+      final resolvedMessage = _resolveErrorMessage(
+        statusCode: statusCode,
+        code: apiResponse.code,
+        apiMessage: apiResponse.message,
+        codeMessageMapper: codeMessageMapper,
+      );
+      _throwByStatusCode(statusCode, resolvedMessage);
     }
 
     return apiResponse;
+  }
+
+  static Never rethrowDioException(
+    DioException exception, {
+    ApiErrorMessageMapper? codeMessageMapper,
+  }) {
+    final isNetworkLayerError =
+        exception.type == DioExceptionType.connectionError ||
+        exception.type == DioExceptionType.connectionTimeout ||
+        exception.type == DioExceptionType.receiveTimeout ||
+        exception.type == DioExceptionType.sendTimeout;
+
+    if (isNetworkLayerError) {
+      throw const NetworkException(message: 'Không thể kết nối đến máy chủ');
+    }
+
+    final statusCode = exception.response?.statusCode ?? 0;
+    final responseBody = exception.response?.data;
+
+    String apiMessage = '';
+    String? code;
+    if (responseBody is Map<String, dynamic>) {
+      apiMessage = responseBody['message']?.toString() ?? '';
+      code = responseBody['code']?.toString();
+    }
+
+    final resolvedMessage = _resolveErrorMessage(
+      statusCode: statusCode,
+      code: code,
+      apiMessage: apiMessage,
+      codeMessageMapper: codeMessageMapper,
+      fallbackMessage: exception.message,
+    );
+
+    _throwByStatusCode(statusCode, resolvedMessage);
+  }
+
+  static String _resolveErrorMessage({
+    required int statusCode,
+    required String? code,
+    required String apiMessage,
+    ApiErrorMessageMapper? codeMessageMapper,
+    String? fallbackMessage,
+  }) {
+    final normalizedCode = code?.trim();
+    if (normalizedCode != null && normalizedCode.isNotEmpty) {
+      final mappedMessage = codeMessageMapper?.call(normalizedCode)?.trim();
+      if (mappedMessage != null && mappedMessage.isNotEmpty) {
+        return mappedMessage;
+      }
+    }
+
+    if (apiMessage.trim().isNotEmpty) {
+      return apiMessage.trim();
+    }
+
+    if (statusCode == 500 || statusCode == 502 || statusCode == 503) {
+      return 'Internal server error';
+    }
+
+    if (fallbackMessage != null && fallbackMessage.trim().isNotEmpty) {
+      return fallbackMessage.trim();
+    }
+
+    return 'Lỗi không xác định';
   }
 
   static Never _throwByStatusCode(int statusCode, String message) {

@@ -2,6 +2,12 @@ import '../models/auth_response_model.dart';
 import '../models/tokens_model.dart';
 
 abstract class AuthRemoteDatasource {
+  /// Kiểm tra email còn khả dụng để đăng ký.
+  Future<bool> checkEmailAvailable({required String email});
+
+  /// Kiểm tra số điện thoại còn khả dụng để đăng ký.
+  Future<bool> checkPhoneAvailable({required String phoneNumber});
+
   /// Đăng nhập, trả về [AuthResponseModel] gồm tokens và user.
   Future<AuthResponseModel> login({
     required String username,
@@ -10,10 +16,13 @@ abstract class AuthRemoteDatasource {
 
   /// Đăng ký tài khoản mới, trả về [AuthResponseModel] gồm tokens và user.
   Future<AuthResponseModel> register({
+    required String email,
+    required String confirmPassword,
+    required String familyName,
+    required String givenName,
     required String username,
     required String password,
-    required String fullName,
-    required String? phoneNumber,
+    required String phoneNumber,
   });
 
   /// Đăng xuất — gọi API invalidate token phía server.

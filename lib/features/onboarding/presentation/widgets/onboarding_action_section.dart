@@ -24,8 +24,9 @@ class OnboardingActionSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Button(
-          text: isLoading ? 'Đang xử lý...' : primaryLabel,
-          state: isLoading ? ButtonState.disabled : ButtonState.defaultState,
+          text: primaryLabel,
+          isLoading: isLoading,
+          loadingText: 'Đang xử lý...',
           onPressed: () {
             if (!isLoading) {
               onPrimaryPressed();

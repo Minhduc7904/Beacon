@@ -9,7 +9,16 @@ class ApiEndpoints {
 
   // Auth
   static const String login = '/auth/login';
+  static const String checkEmail = '/auth/check-email';
+  static const String checkPhone = '/auth/check-phone';
   static const String register = '/auth/register';
   static const String logout = '/auth/logout';
   static const String refreshToken = '/auth/refresh-token';
+
+  // Health
+  static const String health = '/health';
+  static const String healthLive = '/health/live';
+  static const String healthReady = '/health/ready';
+  static const String healthDb = '/health/db';
+  static const String healthMinio = '/health/minio';
 }
