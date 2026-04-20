@@ -21,6 +21,14 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (err.response?.statusCode == 401) {
+      // ignore: avoid_print
+      print('[AuthInterceptor] 401 Unauthorized');
+      // ignore: avoid_print
+      print(
+        '[AuthInterceptor] URL: ${err.requestOptions.baseUrl}${err.requestOptions.path}',
+      );
+      // ignore: avoid_print
+      print('[AuthInterceptor] Response body: ${err.response?.data}');
       // TODO: trigger token refresh logic or redirect to login
     }
     handler.next(err);

@@ -9,8 +9,25 @@ import '../controllers/auth_state.dart';
 import '../widgets/login/login_brand_text.dart';
 import '../widgets/login/login_form.dart';
 
+class LoginAutoFillData {
+  const LoginAutoFillData({
+    required this.username,
+    required this.password,
+    this.autoSubmit = false,
+  });
+
+  final String username;
+  final String password;
+  final bool autoSubmit;
+}
+
 class LoginPage extends ConsumerStatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({
+    super.key,
+    this.autoFillData,
+  });
+
+  final LoginAutoFillData? autoFillData;
 
   @override
   ConsumerState<LoginPage> createState() => _LoginPageState();
@@ -20,6 +37,33 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _didApplyAutoFill = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _applyAutoFillIfNeeded();
+  }
+
+  void _applyAutoFillIfNeeded() {
+    final autoFillData = widget.autoFillData;
+    if (_didApplyAutoFill || autoFillData == null) {
+      return;
+    }
+
+    _didApplyAutoFill = true;
+    _usernameController.text = autoFillData.username;
+    _passwordController.text = autoFillData.password;
+
+    if (autoFillData.autoSubmit) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        _onSubmit();
+      });
+    }
+  }
 
   @override
   void dispose() {

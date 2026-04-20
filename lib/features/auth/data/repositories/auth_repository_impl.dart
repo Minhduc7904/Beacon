@@ -75,6 +75,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await _localDatasource.saveRefreshToken(authResponse.tokens.refreshToken);
 
       final result = AuthResult(
+        message: authResponse.message,
         tokens: authResponse.tokens,
         user: authResponse.user,
       );
@@ -114,6 +115,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await _localDatasource.saveRefreshToken(authResponse.tokens.refreshToken);
 
       final result = AuthResult(
+        message: authResponse.message,
         tokens: authResponse.tokens,
         user: authResponse.user,
       );

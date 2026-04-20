@@ -81,8 +81,30 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.login,
       name: AppRoutes.loginName,
-      pageBuilder: (context, state) =>
-          _buildSlidePage(state, const LoginPage()),
+      pageBuilder: (context, state) {
+        LoginAutoFillData? autoFillData;
+        final extra = state.extra;
+        if (extra is Map<String, dynamic>) {
+          final username = extra['username'];
+          final password = extra['password'];
+          final autoSubmit = extra['autoSubmit'];
+
+          if (username is String &&
+              password is String &&
+              username.trim().isNotEmpty) {
+            autoFillData = LoginAutoFillData(
+              username: username,
+              password: password,
+              autoSubmit: autoSubmit == true,
+            );
+          }
+        }
+
+        return _buildSlidePage(
+          state,
+          LoginPage(autoFillData: autoFillData),
+        );
+      },
     ),
     GoRoute(
       path: AppRoutes.register,
@@ -150,14 +172,36 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.home,
       name: AppRoutes.homeName,
-      builder: (context, state) => const AuthGuard(child: HomePage()),
+      builder: (context, state) {
+        var autoCaptureOnOpen = false;
+        final extra = state.extra;
+
+        if (extra is Map<String, dynamic>) {
+          autoCaptureOnOpen = extra['autoCaptureOnOpen'] == true;
+        }
+
+        return AuthGuard(
+          child: HomePage(autoCaptureOnOpen: autoCaptureOnOpen),
+        );
+      },
     ),
     GoRoute(
       path: AppRoutes.postPreview,
       name: AppRoutes.postPreviewName,
       pageBuilder: (context, state) {
-        final filePath = state.extra;
-        if (filePath is! String || filePath.trim().isEmpty) {
+        String? filePath;
+
+        final extra = state.extra;
+        if (extra is String) {
+          filePath = extra;
+        } else if (extra is Map<String, dynamic>) {
+          final path = extra['filePath'];
+          if (path is String) {
+            filePath = path;
+          }
+        }
+
+        if (filePath == null || filePath.trim().isEmpty) {
           return _buildSlidePage(state, const NotFoundPage());
         }
 

@@ -72,12 +72,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
               givenName: profile.givenName,
             );
 
-            final displayName = profile.fullName.isNotEmpty
-                ? profile.fullName
-                : authResult.user.fullName;
+            final apiSuccessMessage = authResult.message.trim();
+            final successMessage = apiSuccessMessage.isNotEmpty
+                ? apiSuccessMessage
+                : 'Đăng nhập thành công';
 
-            _messageNotifier.addSuccess('Chào mừng $displayName!');
-            state = AuthSuccess(user);
+            _messageNotifier.addSuccess(successMessage);
+            state = AuthSuccess(user, successMessage: successMessage);
           },
         );
       },
@@ -117,8 +118,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
         }
       },
       (authResult) {
-        _messageNotifier.addSuccess('Đăng ký thành công!');
-        state = AuthSuccess(authResult.user);
+        final apiSuccessMessage = authResult.message.trim();
+        final successMessage = apiSuccessMessage.isNotEmpty
+            ? apiSuccessMessage
+            : 'Đăng ký thành công!';
+        _messageNotifier.addSuccess(successMessage);
+        state = AuthSuccess(authResult.user, successMessage: successMessage);
       },
     );
   }
