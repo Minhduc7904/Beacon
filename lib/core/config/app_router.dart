@@ -23,9 +23,25 @@ import 'app_routes.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
+String _resolvePageName(GoRouterState state) {
+  final routeName = state.name?.trim();
+  if (routeName != null && routeName.isNotEmpty) {
+    return routeName;
+  }
+
+  final path = state.uri.path.trim();
+  if (path.isNotEmpty) {
+    return path;
+  }
+
+  return state.uri.toString();
+}
+
 CustomTransitionPage<void> _buildSlidePage(GoRouterState state, Widget child) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
+    name: _resolvePageName(state),
+    arguments: state.extra,
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       final tween = Tween<Offset>(
@@ -44,6 +60,8 @@ CustomTransitionPage<void> _buildCenterScalePage(
 ) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
+    name: _resolvePageName(state),
+    arguments: state.extra,
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       final scale = Tween<double>(

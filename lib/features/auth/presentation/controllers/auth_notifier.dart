@@ -26,6 +26,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     this._messageNotifier,
   ) : super(const AuthInitial());
 
+  static const String _registerUsernameExistsMessage =
+      'Tên đăng nhập đã được sử dụng';
+
+  bool _isRegisterUsernameConflictMessage(String message) {
+    final normalized = message.trim().toLowerCase();
+    return normalized == _registerUsernameExistsMessage.toLowerCase() ||
+        normalized == 'username is already taken.';
+  }
+
   Future<void> login({
     required String username,
     required String password,
@@ -114,6 +123,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
           state = AuthValidationError(failure.message);
         } else {
           _messageNotifier.addError(failure.message);
+          if (_isRegisterUsernameConflictMessage(failure.message)) {
+            state = AuthValidationError(
+              failure.message,
+              usernameError: failure.message,
+            );
+            return;
+          }
+
           state = AuthError(failure.message);
         }
       },

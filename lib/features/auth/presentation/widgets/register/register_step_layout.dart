@@ -167,11 +167,6 @@ class RegisterStepLayout extends StatelessWidget {
         child: AppScreenLayout(
           child: Stack(
             children: [
-              Positioned(
-                top: 16,
-                left: 0,
-                child: AppBackButton(onPressed: onBackPressed),
-              ),
               Positioned.fill(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
@@ -229,6 +224,11 @@ class RegisterStepLayout extends StatelessWidget {
                     );
                   },
                 ),
+              ),
+              Positioned(
+                top: 16,
+                left: 0,
+                child: AppBackButton(onPressed: onBackPressed),
               ),
             ],
           ),
