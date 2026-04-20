@@ -17,11 +17,11 @@ Giúp agent luôn đọc đúng file nguồn sự thật trước khi sinh code.
 3. `.github/.copilot/instructions/architecture-rules.md`
 4. `lib/core/providers/providers.dart`
 5. `lib/core/config/app_routes.dart` + `lib/core/config/app_router.dart`
-6. Các doc trong `doc/` liên quan task
+6. Các docs trong `docs/` liên quan task
 
 ## Quy tắc thực thi
 
-- Nếu doc và code lệch nhau: ưu tiên code thực tế.
+- Nếu docs và code lệch nhau: ưu tiên code thực tế.
 - Sau khi code xong: báo cáo rõ giả định và điểm lệch đã xử lý.
 
 ## Done khi

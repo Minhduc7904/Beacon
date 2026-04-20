@@ -141,6 +141,23 @@ class RegisterStepLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     final disableActions = !enabled || isLoading;
     final instructionWidget = _buildInstruction();
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final isKeyboardVisible = keyboardInset > 0;
+    final effectiveTitleTopSpacing = isKeyboardVisible
+        ? (_titleTopSpacing - (keyboardInset * 0.35)).clamp(
+            96.0,
+            _titleTopSpacing,
+          )
+        : _titleTopSpacing;
+    final effectiveTitleToInputSpacing = isKeyboardVisible
+        ? 24.0
+        : _titleToInputGroupSpacing;
+    final effectiveInputToActionSpacing = isKeyboardVisible
+        ? 24.0
+        : _inputGroupToActionGroupSpacing;
+    final effectiveInstructionToButtonSpacing = isKeyboardVisible
+        ? 12.0
+        : _instructionToButtonSpacing;
 
     return Scaffold(
       backgroundColor: AppColors.sky200,
@@ -153,34 +170,63 @@ class RegisterStepLayout extends StatelessWidget {
                 left: 0,
                 child: AppBackButton(onPressed: onBackPressed),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: _titleTopSpacing),
-                  AppText(
-                    title,
-                    preset: AppTextPreset.title2,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.teal500,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: _titleToInputGroupSpacing),
-                  _buildInputGroup(disableActions),
-                  const SizedBox(height: _inputGroupToActionGroupSpacing),
-                  if (instructionWidget case final widget?) ...[
-                    widget,
-                    const SizedBox(height: _instructionToButtonSpacing),
-                  ],
-                  Button(
-                    text: continueText,
-                    size: ButtonSize.block,
-                    type: ButtonType.primary,
-                    state: disableActions
-                        ? ButtonState.disabled
-                        : ButtonState.defaultState,
-                    onPressed: disableActions ? null : onContinuePressed,
-                  ),
-                ],
+              Positioned.fill(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      physics: isKeyboardVisible
+                          ? const ClampingScrollPhysics()
+                          : const NeverScrollableScrollPhysics(),
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: AnimatedPadding(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOut,
+                          padding: EdgeInsets.only(
+                            bottom: isKeyboardVisible ? 16 : 0,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              SizedBox(height: effectiveTitleTopSpacing),
+                              AppText(
+                                title,
+                                preset: AppTextPreset.title2,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.teal500,
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: effectiveTitleToInputSpacing),
+                              _buildInputGroup(disableActions),
+                              SizedBox(height: effectiveInputToActionSpacing),
+                              if (instructionWidget case final widget?) ...[
+                                widget,
+                                SizedBox(
+                                  height: effectiveInstructionToButtonSpacing,
+                                ),
+                              ],
+                              Button(
+                                text: continueText,
+                                size: ButtonSize.block,
+                                type: ButtonType.primary,
+                                state: disableActions
+                                    ? ButtonState.disabled
+                                    : ButtonState.defaultState,
+                                onPressed: disableActions
+                                    ? null
+                                    : onContinuePressed,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
             ],
           ),
