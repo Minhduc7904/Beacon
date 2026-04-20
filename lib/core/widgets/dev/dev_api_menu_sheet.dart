@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -96,11 +97,30 @@ class _DevApiMenuSheetState extends ConsumerState<DevApiMenuSheet> {
       method: DevApiHttpMethod.post,
       sampleInput: '{"refreshToken":""}',
     ),
+    DevApiItem(
+      title: 'Upload Post Media',
+      path: ApiEndpoints.postMediaUpload,
+      method: DevApiHttpMethod.post,
+      sampleInput: '{"filePath":""}',
+    ),
+    DevApiItem(
+      title: 'Get Media By Id',
+      path: ApiEndpoints.mediaByIdTemplate,
+      method: DevApiHttpMethod.get,
+      sampleInput: '{"id":""}',
+    ),
+    DevApiItem(
+      title: 'Soft Delete Media',
+      path: ApiEndpoints.mediaSoftDeleteTemplate,
+      method: DevApiHttpMethod.delete,
+      sampleInput: '{"id":""}',
+    ),
   ];
 
   final _bearerController = TextEditingController();
   final _inputController = TextEditingController(text: _apiItems.first.sampleInput);
   late DevApiItem _selectedApi;
+  String? _selectedMediaFilePath;
   bool _isCalling = false;
   String _output = '';
 
@@ -131,26 +151,54 @@ class _DevApiMenuSheetState extends ConsumerState<DevApiMenuSheet> {
     if (_isCalling) {
       return;
     }
-
-    final input = _inputController.text.trim();
     Map<String, dynamic> payload = <String, dynamic>{};
 
-    if (input.isNotEmpty) {
-      try {
-        final decoded = jsonDecode(input);
-        if (decoded is! Map<String, dynamic>) {
-          setState(() {
-            _output = 'Input phải là JSON object hợp lệ.';
-          });
-          return;
-        }
-        payload = decoded;
-      } catch (_) {
+    if (_isMediaUploadEndpoint) {
+      final filePath = _selectedMediaFilePath?.trim() ?? '';
+      if (filePath.isEmpty) {
         setState(() {
-          _output = 'Input JSON không hợp lệ.';
+          _output = 'Vui lòng chọn ảnh trước khi upload.';
         });
         return;
       }
+
+      payload = {'filePath': filePath};
+    } else {
+      final input = _inputController.text.trim();
+
+      if (input.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(input);
+          if (decoded is! Map<String, dynamic>) {
+            setState(() {
+              _output = 'Input phải là JSON object hợp lệ.';
+            });
+            return;
+          }
+          payload = decoded;
+        } catch (_) {
+          setState(() {
+            _output = 'Input JSON không hợp lệ.';
+          });
+          return;
+        }
+      }
+    }
+
+    if (_requiresIdPathParam &&
+        (payload['id']?.toString().trim().isEmpty ?? true)) {
+      setState(() {
+        _output = 'Input cần có trường "id" cho endpoint này.';
+      });
+      return;
+    }
+
+    if (_isMediaUploadEndpoint &&
+        (payload['filePath']?.toString().trim().isEmpty ?? true)) {
+      setState(() {
+        _output = 'Input cần có trường "filePath" cho endpoint upload ảnh.';
+      });
+      return;
     }
 
     final bearer = _bearerController.text.trim();
@@ -194,37 +242,138 @@ class _DevApiMenuSheetState extends ConsumerState<DevApiMenuSheet> {
     }
   }
 
+  Future<void> _pickMediaFile() async {
+    if (_isCalling) {
+      return;
+    }
+
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: false,
+      type: FileType.image,
+    );
+
+    if (!mounted || result == null || result.files.isEmpty) {
+      return;
+    }
+
+    final filePath = result.files.single.path?.trim() ?? '';
+    if (filePath.isEmpty) {
+      setState(() {
+        _output = 'Không đọc được đường dẫn ảnh đã chọn.';
+      });
+      return;
+    }
+
+    setState(() {
+      _selectedMediaFilePath = filePath;
+      _output = '';
+    });
+  }
+
+  Future<void> _pickAndUploadMedia() async {
+    await _pickMediaFile();
+    final filePath = _selectedMediaFilePath?.trim() ?? '';
+    if (filePath.isEmpty) {
+      return;
+    }
+
+    await _callApi();
+  }
+
   Future<Response<dynamic>> _sendRequest({
     required Dio dio,
     required Options options,
     required Map<String, dynamic> payload,
-  }) {
+  }) async {
+    final path = _resolvePath(payload);
+    final requestPayload = _stripPathParams(payload);
+    final requestData = await _buildRequestData(requestPayload);
+    final requestOptions = _resolveRequestOptions(options);
+
     switch (_selectedApi.method) {
       case DevApiHttpMethod.get:
         return dio.get(
-          _selectedApi.path,
-          queryParameters: payload.isEmpty ? null : payload,
-          options: options,
+          path,
+          queryParameters: requestPayload.isEmpty ? null : requestPayload,
+          options: requestOptions,
         );
       case DevApiHttpMethod.post:
         return dio.post(
-          _selectedApi.path,
-          data: payload.isEmpty ? null : payload,
-          options: options,
+          path,
+          data: requestData,
+          options: requestOptions,
         );
       case DevApiHttpMethod.put:
         return dio.put(
-          _selectedApi.path,
-          data: payload.isEmpty ? null : payload,
-          options: options,
+          path,
+          data: requestData,
+          options: requestOptions,
         );
       case DevApiHttpMethod.delete:
         return dio.delete(
-          _selectedApi.path,
-          data: payload.isEmpty ? null : payload,
-          options: options,
+          path,
+          data: requestData,
+          options: requestOptions,
         );
     }
+  }
+
+  bool get _isMediaUploadEndpoint =>
+      _selectedApi.path == ApiEndpoints.postMediaUpload;
+
+  bool get _requiresIdPathParam =>
+      _selectedApi.path == ApiEndpoints.mediaByIdTemplate ||
+      _selectedApi.path == ApiEndpoints.mediaSoftDeleteTemplate;
+
+  String _resolvePath(Map<String, dynamic> payload) {
+    if (_selectedApi.path == ApiEndpoints.mediaByIdTemplate) {
+      return ApiEndpoints.mediaById(payload['id'].toString().trim());
+    }
+
+    if (_selectedApi.path == ApiEndpoints.mediaSoftDeleteTemplate) {
+      return ApiEndpoints.mediaSoftDelete(payload['id'].toString().trim());
+    }
+
+    return _selectedApi.path;
+  }
+
+  Map<String, dynamic> _stripPathParams(Map<String, dynamic> payload) {
+    if (!_requiresIdPathParam && !_isMediaUploadEndpoint) {
+      return payload;
+    }
+
+    final sanitized = Map<String, dynamic>.from(payload);
+    if (_requiresIdPathParam) {
+      sanitized.remove('id');
+    }
+    return sanitized;
+  }
+
+  Future<dynamic> _buildRequestData(Map<String, dynamic> payload) async {
+    if (_selectedApi.method == DevApiHttpMethod.get) {
+      return null;
+    }
+
+    if (_isMediaUploadEndpoint) {
+      final filePath = payload['filePath']?.toString().trim() ?? '';
+      final fileName = filePath.split(RegExp(r'[\\/]')).last;
+      final multipartFile = await MultipartFile.fromFile(
+        filePath,
+        filename: fileName.isEmpty ? 'upload.jpg' : fileName,
+      );
+
+      return FormData.fromMap({'file': multipartFile});
+    }
+
+    return payload.isEmpty ? null : payload;
+  }
+
+  Options _resolveRequestOptions(Options options) {
+    if (_isMediaUploadEndpoint) {
+      return options.copyWith(contentType: 'multipart/form-data');
+    }
+
+    return options;
   }
 
   String _buildSuccessOutput(Response<dynamic> response) {
@@ -302,6 +451,9 @@ class _DevApiMenuSheetState extends ConsumerState<DevApiMenuSheet> {
                   setState(() {
                     _selectedApi = next;
                     _inputController.text = next.sampleInput;
+                    if (_selectedApi.path != ApiEndpoints.postMediaUpload) {
+                      _selectedMediaFilePath = null;
+                    }
                   });
                 },
               ),
@@ -315,17 +467,58 @@ class _DevApiMenuSheetState extends ConsumerState<DevApiMenuSheet> {
                 ),
               ),
               const SizedBox(height: 12),
-              TextField(
-                controller: _inputController,
-                minLines: 4,
-                maxLines: 8,
-                decoration: InputDecoration(
-                  labelText: _selectedApi.method == DevApiHttpMethod.get
-                      ? 'Query input (JSON object)'
-                      : 'Body input (JSON object)',
-                  border: const OutlineInputBorder(),
+              if (_isMediaUploadEndpoint)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        _selectedMediaFilePath == null
+                            ? 'Chưa chọn ảnh'
+                            : 'Ảnh đã chọn:\n$_selectedMediaFilePath',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _isCalling ? null : _pickMediaFile,
+                              icon: const Icon(Icons.photo_library_outlined),
+                              label: const Text('Chọn ảnh'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: _isCalling ? null : _pickAndUploadMedia,
+                              icon: const Icon(Icons.cloud_upload_outlined),
+                              label: const Text('Chọn & Upload'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                )
+              else
+                TextField(
+                  controller: _inputController,
+                  minLines: 4,
+                  maxLines: 8,
+                  decoration: InputDecoration(
+                    labelText: _selectedApi.method == DevApiHttpMethod.get
+                        ? 'Query input (JSON object)'
+                        : 'Body input (JSON object)',
+                    border: const OutlineInputBorder(),
+                  ),
                 ),
-              ),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -338,8 +531,18 @@ class _DevApiMenuSheetState extends ConsumerState<DevApiMenuSheet> {
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Icon(Icons.play_arrow_rounded),
-                      label: Text(_isCalling ? 'Đang gọi...' : 'Gọi API'),
+                          : Icon(
+                              _isMediaUploadEndpoint
+                                  ? Icons.cloud_upload_outlined
+                                  : Icons.play_arrow_rounded,
+                            ),
+                      label: Text(
+                        _isCalling
+                            ? 'Đang gọi...'
+                            : _isMediaUploadEndpoint
+                            ? 'Upload ảnh đã chọn'
+                            : 'Gọi API',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),

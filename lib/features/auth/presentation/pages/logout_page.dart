@@ -25,7 +25,7 @@ class _LogoutPageState extends ConsumerState<LogoutPage> {
   Widget build(BuildContext context) {
     ref.listen<AuthState>(authNotifierProvider, (_, state) {
       if (state is AuthInitial || state is AuthError) {
-        context.go(AppRoutes.login);
+        context.go(AppRoutes.onboarding);
       }
     });
 

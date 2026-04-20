@@ -21,4 +21,12 @@ class ApiEndpoints {
   static const String healthReady = '/health/ready';
   static const String healthDb = '/health/db';
   static const String healthMinio = '/health/minio';
+
+  // Media
+  static const String postMediaUpload = '/media';
+  static const String mediaByIdTemplate = '/media/{id}';
+  static const String mediaSoftDeleteTemplate = '/media/{id}/soft';
+
+  static String mediaById(String id) => '/media/$id';
+  static String mediaSoftDelete(String id) => '/media/$id/soft';
 }

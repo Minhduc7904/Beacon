@@ -15,6 +15,13 @@ import '../../features/auth/domain/usecase/check_email_availability_usecase.dart
 import '../../features/auth/domain/usecase/check_phone_availability_usecase.dart';
 import '../../features/auth/presentation/controllers/auth_notifier.dart';
 import '../../features/auth/presentation/controllers/auth_state.dart';
+import '../../features/home/data/datasources/home_remote_datasource.dart';
+import '../../features/home/data/datasources/home_remote_datasource_impl.dart';
+import '../../features/home/data/repositories/home_repository_impl.dart';
+import '../../features/home/domain/repositories/home_repository.dart';
+import '../../features/home/domain/usecase/upload_post_media_usecase.dart';
+import '../../features/home/presentation/controllers/home_notifier.dart';
+import '../../features/home/presentation/controllers/home_state.dart';
 import '../../features/onboarding/data/datasources/onboarding_local_datasource.dart';
 import '../../features/onboarding/data/datasources/onboarding_local_datasource_impl.dart';
 import '../../features/onboarding/data/repositories/onboarding_repository_impl.dart';
@@ -78,6 +85,10 @@ final authRemoteDatasourceProvider = Provider<AuthRemoteDatasource>((ref) {
   return AuthRemoteDatasourceImpl(ref.watch(dioClientProvider));
 });
 
+final homeRemoteDatasourceProvider = Provider<HomeRemoteDatasource>((ref) {
+  return HomeRemoteDatasourceImpl(ref.watch(dioClientProvider));
+});
+
 // ─── Onboarding Datasource ───────────────────────────────────────────────────
 
 final onboardingLocalDatasourceProvider = Provider<OnboardingLocalDatasource>((
@@ -92,6 +103,13 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepositoryImpl(
     remoteDatasource: ref.watch(authRemoteDatasourceProvider),
     localDatasource: ref.watch(authLocalDatasourceProvider),
+    networkInfo: ref.watch(networkInfoProvider),
+  );
+});
+
+final homeRepositoryProvider = Provider<HomeRepository>((ref) {
+  return HomeRepositoryImpl(
+    remoteDatasource: ref.watch(homeRemoteDatasourceProvider),
     networkInfo: ref.watch(networkInfoProvider),
   );
 });
@@ -150,6 +168,10 @@ final completeOnboardingUseCaseProvider = Provider<CompleteOnboardingUseCase>((
   return CompleteOnboardingUseCase(ref.watch(onboardingRepositoryProvider));
 });
 
+final uploadPostMediaUseCaseProvider = Provider<UploadPostMediaUseCase>((ref) {
+  return UploadPostMediaUseCase(ref.watch(homeRepositoryProvider));
+});
+
 // ─── Auth Controller ──────────────────────────────────────────────────────────
 
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
@@ -170,3 +192,12 @@ final onboardingNotifierProvider =
         ref.watch(appMessageProvider.notifier),
       );
     });
+
+final homeNotifierProvider = StateNotifierProvider<HomeNotifier, HomeState>((
+  ref,
+) {
+  return HomeNotifier(
+    ref.watch(uploadPostMediaUseCaseProvider),
+    ref.watch(appMessageProvider.notifier),
+  );
+});

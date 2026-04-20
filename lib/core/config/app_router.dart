@@ -8,7 +8,7 @@ import '../../features/auth/presentation/pages/register/register_page_name.dart'
 import '../../features/auth/presentation/pages/register/register_page_phone_number.dart';
 import '../../features/auth/presentation/pages/register/register_page_password.dart';
 import '../../features/auth/presentation/pages/register/register_page_username.dart';
-import '../../features/dashboard/page/dashboard_page.dart';
+import '../../features/home/presentation/pages/home.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 import '../../features/widgets/presentation/page/shared_widgets_page.dart';
@@ -19,10 +19,7 @@ import 'app_routes.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
-CustomTransitionPage<void> _buildSlidePage(
-  GoRouterState state,
-  Widget child,
-) {
+CustomTransitionPage<void> _buildSlidePage(GoRouterState state, Widget child) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
     child: child,
@@ -32,10 +29,7 @@ CustomTransitionPage<void> _buildSlidePage(
         end: Offset.zero,
       ).chain(CurveTween(curve: Curves.easeOutCubic));
 
-      return SlideTransition(
-        position: animation.drive(tween),
-        child: child,
-      );
+      return SlideTransition(position: animation.drive(tween), child: child);
     },
   );
 }
@@ -129,7 +123,7 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.home,
       name: AppRoutes.homeName,
-      builder: (context, state) => const AuthGuard(child: DashboardPage()),
+      builder: (context, state) => const AuthGuard(child: HomePage()),
     ),
     GoRoute(
       path: AppRoutes.logout,

@@ -81,7 +81,9 @@ class ApiHandler {
       code: code,
       apiMessage: apiMessage,
       codeMessageMapper: codeMessageMapper,
-      fallbackMessage: exception.message,
+      fallbackMessage: exception.type == DioExceptionType.badResponse
+          ? null
+          : exception.message,
     );
 
     _throwByStatusCode(statusCode, resolvedMessage);
@@ -104,6 +106,19 @@ class ApiHandler {
 
     if (apiMessage.trim().isNotEmpty) {
       return apiMessage.trim();
+    }
+
+    switch (statusCode) {
+      case 400:
+        return 'Yêu cầu không hợp lệ';
+      case 401:
+        return 'Phiên đăng nhập đã hết hạn';
+      case 403:
+        return 'Bạn không có quyền thực hiện thao tác này';
+      case 404:
+        return 'Không tìm thấy dữ liệu';
+      case 422:
+        return 'Dữ liệu gửi lên không hợp lệ';
     }
 
     if (statusCode == 500 || statusCode == 502 || statusCode == 503) {
