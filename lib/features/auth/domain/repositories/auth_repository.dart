@@ -5,7 +5,9 @@ import '../entities/user_profile.dart';
 
 abstract class AuthRepository {
   Future<Either<Failure, bool>> checkEmailAvailable({required String email});
-  Future<Either<Failure, bool>> checkPhoneAvailable({required String phoneNumber});
+  Future<Either<Failure, bool>> checkPhoneAvailable({
+    required String phoneNumber,
+  });
 
   Future<Either<Failure, AuthResult>> login({
     required String username,
@@ -25,4 +27,15 @@ abstract class AuthRepository {
   Future<Either<Failure, String>> logout();
 
   Future<Either<Failure, UserProfile>> getMe();
+
+  Future<Either<Failure, UserProfile>> updateMe({
+    String? familyName,
+    String? givenName,
+    String? email,
+    String? phoneNumber,
+  });
+
+  Future<Either<Failure, UserProfile>> updateMyAvatar({
+    required String filePath,
+  });
 }

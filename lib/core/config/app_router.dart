@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/auth/domain/entities/user_profile.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/logout_page.dart';
+import '../../features/auth/presentation/pages/profile/edit_profile_page.dart';
+import '../../features/auth/presentation/pages/profile/profile_page.dart';
 import '../../features/auth/presentation/pages/register/register_draft_data.dart';
 import '../../features/auth/presentation/pages/register/register_page_email.dart';
 import '../../features/auth/presentation/pages/register/register_page_name.dart';
@@ -43,19 +46,18 @@ CustomTransitionPage<void> _buildCenterScalePage(
     key: state.pageKey,
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      final scale = Tween<double>(begin: 0.9, end: 1.0).chain(
-        CurveTween(curve: Curves.easeOutCubic),
-      );
-      final fade = Tween<double>(begin: 0.0, end: 1.0).chain(
-        CurveTween(curve: Curves.easeOut),
-      );
+      final scale = Tween<double>(
+        begin: 0.9,
+        end: 1.0,
+      ).chain(CurveTween(curve: Curves.easeOutCubic));
+      final fade = Tween<double>(
+        begin: 0.0,
+        end: 1.0,
+      ).chain(CurveTween(curve: Curves.easeOut));
 
       return FadeTransition(
         opacity: animation.drive(fade),
-        child: ScaleTransition(
-          scale: animation.drive(scale),
-          child: child,
-        ),
+        child: ScaleTransition(scale: animation.drive(scale), child: child),
       );
     },
   );
@@ -182,6 +184,27 @@ final appRouter = GoRouter(
 
         return AuthGuard(
           child: HomePage(autoCaptureOnOpen: autoCaptureOnOpen),
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.profile,
+      name: AppRoutes.profileName,
+      pageBuilder: (context, state) =>
+          _buildSlidePage(state, const AuthGuard(child: ProfilePage())),
+    ),
+    GoRoute(
+      path: AppRoutes.editProfile,
+      name: AppRoutes.editProfileName,
+      pageBuilder: (context, state) {
+        final profile = state.extra;
+        if (profile is! UserProfile) {
+          return _buildSlidePage(state, const NotFoundPage());
+        }
+
+        return _buildSlidePage(
+          state,
+          AuthGuard(child: EditProfilePage(profile: profile)),
         );
       },
     ),
