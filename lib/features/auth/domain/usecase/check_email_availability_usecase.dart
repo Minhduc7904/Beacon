@@ -1,6 +1,10 @@
 import 'package:dartz/dartz.dart';
 
+import '../../../../core/constants/api_error_codes.dart';
+import '../../../../core/constants/validation_messages.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../../core/utils/email_utils.dart';
+import '../../data/mappers/auth_error_code_mapper.dart';
 import '../repositories/auth_repository.dart';
 
 class CheckEmailAvailabilityParams {
@@ -14,28 +18,39 @@ class CheckEmailAvailabilityUseCase {
 
   CheckEmailAvailabilityUseCase(this._repository);
 
-  Future<Either<Failure, bool>> call(CheckEmailAvailabilityParams params) {
-    final email = params.email.trim();
+  Future<Either<Failure, String>> call(
+    CheckEmailAvailabilityParams params,
+  ) async {
+    final email = EmailUtils.sanitize(params.email);
 
     if (email.isEmpty) {
       return Future.value(
-        const Left(ValidationFailure(message: 'Vui lòng nhập địa chỉ email')),
-      );
-    }
-
-    final isValidEmail = RegExp(
-      r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
-      caseSensitive: false,
-    ).hasMatch(email);
-
-    if (!isValidEmail) {
-      return Future.value(
         const Left(
-          ValidationFailure(message: 'Vui lòng nhập địa chỉ email hợp lệ'),
+          ValidationFailure(message: ErrorMessages.emailRequired),
         ),
       );
     }
 
-    return _repository.checkEmailAvailable(email: email);
+    if (!EmailUtils.isValid(email)) {
+      return Future.value(
+        const Left(
+          ValidationFailure(message: ErrorMessages.emailInvalidFormat),
+        ),
+      );
+    }
+
+    final result = await _repository.checkEmailAvailable(email: email);
+
+    return result.fold(Left.new, (isAvailable) {
+      if (!isAvailable) {
+        final mappedMessage = AuthErrorCodeMapper.mapRegisterCode(
+          ApiErrorCodes.emailAlreadyExists,
+        );
+
+        return Left(ValidationFailure(message: mappedMessage));
+      }
+
+      return Right(email);
+    });
   }
 }

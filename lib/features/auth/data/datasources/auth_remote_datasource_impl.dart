@@ -114,31 +114,39 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     required String password,
     required String phoneNumber,
   }) async {
-    final response = await _dioClient.post(
-      ApiEndpoints.register,
-      data: {
-        'email': email,
-        'username': username,
-        'password': password,
-        'confirmPassword': confirmPassword,
-        'familyName': familyName,
-        'givenName': givenName,
-        'phoneNumber': phoneNumber,
-      },
-    );
+    try {
+      final response = await _dioClient.post(
+        ApiEndpoints.register,
+        data: {
+          'email': email,
+          'username': username,
+          'password': password,
+          'confirmPassword': confirmPassword,
+          'familyName': familyName,
+          'givenName': givenName,
+          'phoneNumber': phoneNumber,
+        },
+      );
 
-    final result = ApiHandler.handle<AuthResponseModel>(
-      response,
-      fromJsonT: (json) =>
-          AuthResponseModel.fromJson(json as Map<String, dynamic>),
-    );
+      final result = ApiHandler.handle<AuthResponseModel>(
+        response,
+        fromJsonT: (json) =>
+            AuthResponseModel.fromJson(json as Map<String, dynamic>),
+        codeMessageMapper: AuthErrorCodeMapper.mapRegisterCode,
+      );
 
-    final data = result.data!;
-    return AuthResponseModel(
-      message: result.message,
-      tokens: data.tokens,
-      user: data.user,
-    );
+      final data = result.data!;
+      return AuthResponseModel(
+        message: result.message,
+        tokens: data.tokens,
+        user: data.user,
+      );
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: AuthErrorCodeMapper.mapRegisterCode,
+      );
+    }
   }
 
   @override

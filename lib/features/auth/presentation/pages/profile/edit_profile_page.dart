@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/constants/validation_messages.dart';
 import '../../../../../core/widgets/button/button.dart';
 import '../../../../../core/widgets/input/input.dart';
 import '../../../../../core/widgets/layout/screen_layout.dart';
@@ -75,53 +76,50 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         _phone != _initialPhone;
   }
 
-  bool _validate() {
-    String? familyNameError;
-    String? givenNameError;
-    String? emailError;
-    String? phoneError;
+  void _clearInlineErrors() {
+    _familyNameError = null;
+    _givenNameError = null;
+    _emailError = null;
+    _phoneError = null;
+  }
 
-    if (_familyName.isEmpty) {
-      familyNameError = 'Họ không được để trống';
-    }
-
-    if (_givenName.isEmpty) {
-      givenNameError = 'Tên không được để trống';
-    }
-
-    if (_email.isEmpty) {
-      emailError = 'Email không được để trống';
-    } else {
-      final isValidEmail = RegExp(
-        r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
-        caseSensitive: false,
-      ).hasMatch(_email);
-      if (!isValidEmail) {
-        emailError = 'Email không đúng định dạng';
-      }
-    }
-
-    if (_phone.isEmpty) {
-      phoneError = 'Số điện thoại không được để trống';
-    }
+  void _applyValidationError(String? message) {
+    final normalized = message?.trim() ?? '';
 
     setState(() {
-      _familyNameError = familyNameError;
-      _givenNameError = givenNameError;
-      _emailError = emailError;
-      _phoneError = phoneError;
-    });
+      _clearInlineErrors();
 
-    return familyNameError == null &&
-        givenNameError == null &&
-        emailError == null &&
-        phoneError == null;
+      switch (normalized) {
+        case ErrorMessages.familyNameRequired:
+          _familyNameError = normalized;
+          break;
+        case ErrorMessages.givenNameRequired:
+          _givenNameError = normalized;
+          break;
+        case ErrorMessages.emailRequired:
+        case ErrorMessages.emailInvalidFormat:
+          _emailError = normalized;
+          break;
+        case ErrorMessages.phoneRequired:
+        case ErrorMessages.phoneInvalidVietnam:
+        case ErrorMessages.phoneInvalidE164:
+          _phoneError = normalized;
+          break;
+        default:
+          // Keep generic failures on global message channel.
+          break;
+      }
+    });
   }
 
   Future<void> _onSavePressed(ProfileState state) async {
-    if (state.isUpdatingProfile || !_hasChanges || !_validate()) {
+    if (state.isUpdatingProfile || !_hasChanges) {
       return;
     }
+
+    setState(() {
+      _clearInlineErrors();
+    });
 
     final params = UpdateMeParams(
       familyName: _familyName != _initialFamilyName ? _familyName : null,
@@ -136,7 +134,15 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
     if (mounted && success) {
       context.pop();
+      return;
     }
+
+    if (!mounted) {
+      return;
+    }
+
+    final errorMessage = ref.read(profileNotifierProvider).errorMessage;
+    _applyValidationError(errorMessage);
   }
 
   InputState _resolveState(String value, String? error) {

@@ -1,6 +1,9 @@
 import 'package:dartz/dartz.dart';
 
+import '../../../../core/constants/validation_messages.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../../core/utils/email_utils.dart';
+import '../../../../core/utils/phone_number_utils.dart';
 import '../entities/user_profile.dart';
 import '../repositories/auth_repository.dart';
 
@@ -39,48 +42,75 @@ class UpdateMeUseCase {
     return _repository.updateMe(
       familyName: params.familyName?.trim(),
       givenName: params.givenName?.trim(),
-      email: params.email?.trim(),
-      phoneNumber: params.phoneNumber?.trim(),
+      email: _normalizeEmail(params.email),
+      phoneNumber: _normalizePhoneNumber(params.phoneNumber),
     );
   }
 
   ValidationFailure? _validate(UpdateMeParams params) {
     if (!params.hasChanges) {
       return const ValidationFailure(
-        message: 'Không có thông tin nào được thay đổi',
+        message: ErrorMessages.noProfileChanges,
       );
     }
 
     if (params.familyName != null && params.familyName!.trim().isEmpty) {
-      return const ValidationFailure(message: 'Họ không được để trống');
+      return const ValidationFailure(message: ErrorMessages.familyNameRequired);
     }
 
     if (params.givenName != null && params.givenName!.trim().isEmpty) {
-      return const ValidationFailure(message: 'Tên không được để trống');
+      return const ValidationFailure(message: ErrorMessages.givenNameRequired);
     }
 
     if (params.email != null) {
-      final email = params.email!.trim();
+      final email = EmailUtils.sanitize(params.email!);
       if (email.isEmpty) {
-        return const ValidationFailure(message: 'Email không được để trống');
+        return const ValidationFailure(message: ErrorMessages.emailRequired);
       }
 
-      final isValidEmail = RegExp(
-        r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
-        caseSensitive: false,
-      ).hasMatch(email);
-
-      if (!isValidEmail) {
-        return const ValidationFailure(message: 'Email không đúng định dạng');
+      if (!EmailUtils.isValid(email)) {
+        return const ValidationFailure(
+          message: ErrorMessages.emailInvalidFormat,
+        );
       }
     }
 
-    if (params.phoneNumber != null && params.phoneNumber!.trim().isEmpty) {
-      return const ValidationFailure(
-        message: 'Số điện thoại không được để trống',
-      );
+    if (params.phoneNumber != null) {
+      final phoneNumber = params.phoneNumber!.trim();
+      if (phoneNumber.isEmpty) {
+        return const ValidationFailure(message: ErrorMessages.phoneRequired);
+      }
+
+      if (!PhoneNumberUtils.isValidVietnamMobile(phoneNumber)) {
+        return const ValidationFailure(
+          message: ErrorMessages.phoneInvalidVietnam,
+        );
+      }
+
+      if (PhoneNumberUtils.toE164Vietnam(phoneNumber) == null) {
+        return const ValidationFailure(
+          message: ErrorMessages.phoneInvalidE164,
+        );
+      }
     }
 
     return null;
+  }
+
+  String? _normalizeEmail(String? email) {
+    if (email == null) {
+      return null;
+    }
+
+    return EmailUtils.sanitize(email).toLowerCase();
+  }
+
+  String? _normalizePhoneNumber(String? phoneNumber) {
+    if (phoneNumber == null) {
+      return null;
+    }
+
+    final normalized = PhoneNumberUtils.toE164Vietnam(phoneNumber);
+    return normalized ?? phoneNumber.trim();
   }
 }

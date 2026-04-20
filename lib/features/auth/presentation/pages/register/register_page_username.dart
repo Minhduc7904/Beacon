@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/config/app_routes.dart';
 import '../../../../../core/providers/providers.dart';
-import '../../../../../core/widgets/input/input.dart';
 import '../../controllers/auth_state.dart';
 import '../../widgets/register/register_step_layout.dart';
 import 'register_draft_data.dart';
@@ -86,18 +85,6 @@ class _RegisterPageUsernameState extends ConsumerState<RegisterPageUsername> {
     setState(() {});
   }
 
-  InputState _resolveState() {
-    if (_usernameError != null && _usernameError!.trim().isNotEmpty) {
-      return InputState.error;
-    }
-
-    if (_usernameController.text.trim().isNotEmpty) {
-      return InputState.filled;
-    }
-
-    return InputState.defaultState;
-  }
-
   @override
   Widget build(BuildContext context) {
     ref.listen<AuthState>(authNotifierProvider, (_, state) {
@@ -111,8 +98,10 @@ class _RegisterPageUsernameState extends ConsumerState<RegisterPageUsername> {
       }
 
       if (state is AuthValidationError) {
+        final usernameError = state.usernameError?.trim() ?? '';
         setState(() {
-          _usernameError = state.message;
+          _usernameError =
+              usernameError.isNotEmpty ? usernameError : state.message;
         });
       }
     });
@@ -124,20 +113,13 @@ class _RegisterPageUsernameState extends ConsumerState<RegisterPageUsername> {
       title: 'Tên người dùng',
       inputController: _usernameController,
       inputHintText: 'Nhập tên người dùng',
+      errorText: _usernameError,
       continueText: 'Hoàn tất',
       isLoading: isLoading,
       loadingText: 'Đang đăng ký...',
       showAgreement: false,
       instructionText: 'Tên người dùng sẽ được hiển thị với bạn bè của bạn',
-      inputFields: [
-        Input(
-          controller: _usernameController,
-          hintText: 'Nhập tên người dùng',
-          state: _resolveState(),
-          caption: _usernameError,
-          onChanged: _onUsernameChanged,
-        ),
-      ],
+      onInputChanged: _onUsernameChanged,
       onContinuePressed: _onCompletePressed,
     );
   }
