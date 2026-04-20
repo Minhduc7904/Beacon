@@ -49,6 +49,39 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, AuthResult>> register({
+    required String username,
+    required String password,
+    required String fullName,
+    required String? phoneNumber,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      final authResponse = await _remoteDatasource.register(
+        username: username,
+        password: password,
+        fullName: fullName,
+        phoneNumber: phoneNumber,
+      );
+
+      await _localDatasource.saveAccessToken(authResponse.tokens.accessToken);
+      await _localDatasource.saveRefreshToken(authResponse.tokens.refreshToken);
+
+      final result = AuthResult(
+        tokens: authResponse.tokens,
+        user: authResponse.user,
+      );
+
+      return Right(result);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, String>> logout() async {
     try {
       final accessToken = await _localDatasource.getAccessToken();

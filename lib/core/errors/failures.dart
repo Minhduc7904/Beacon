@@ -40,22 +40,39 @@ extension ExceptionToFailure on Exception {
   Failure toFailure() {
     final e = this;
     if (e is DioException) {
+      final responseMessage = e.response?.data?['message']?.toString().trim();
+
       switch (e.type) {
         case DioExceptionType.connectionError:
         case DioExceptionType.connectionTimeout:
         case DioExceptionType.receiveTimeout:
         case DioExceptionType.sendTimeout:
-          return const NetworkFailure(message: 'Không thể kết nối đến máy chủ');
+          return NetworkFailure(
+            message: (responseMessage != null && responseMessage.isNotEmpty)
+                ? responseMessage
+                : 'Không thể kết nối đến máy chủ',
+          );
         case DioExceptionType.badResponse:
           final statusCode = e.response?.statusCode;
+          final message =
+              (responseMessage != null && responseMessage.isNotEmpty)
+              ? responseMessage
+              : 'Lỗi máy chủ ($statusCode)';
+
           if (statusCode == 401) {
-            return const UnauthorizedFailure();
+            return UnauthorizedFailure(message: message);
           }
-          final message = e.response?.data?['message']?.toString() ??
-              'Lỗi máy chủ ($statusCode)';
-          return ServerFailure(message: message, statusCode: statusCode);
+
+          return ServerFailure(
+            message: message,
+            statusCode: statusCode,
+          );
         default:
-          return ServerFailure(message: e.message ?? 'Lỗi không xác định');
+          return ServerFailure(
+            message: (responseMessage != null && responseMessage.isNotEmpty)
+                ? responseMessage
+                : (e.message ?? 'Lỗi không xác định'),
+          );
       }
     }
     if (e is UnauthorizedException) {

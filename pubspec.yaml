@@ -50,6 +50,9 @@ dependencies:
 
   # Navigation
   go_router: ^14.6.3
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.2.1
+  flutter_dotenv: ^5.1.0
 
 dev_dependencies:
   flutter_test:
@@ -61,6 +64,19 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: assets/logo/logo.png
+    background_color: "#FFFFFF"
+    theme_color: "#50AE9C"
+  image_path: assets/logo/logo.png
+  min_sdk_android: 21
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -74,9 +90,32 @@ flutter:
   uses-material-design: true
 
   assets:
+    - .env
     - assets/images/
+    - assets/images/logo/
+    - assets/images/onboarding/
+    # - assets/images/icons/
     - assets/icons/
     - assets/animations/
+
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Variable.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Variable.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-Variable.ttf
+          weight: 700
+        - asset: assets/fonts/Inter-Italic-Variable.ttf
+          style: italic
+          weight: 400
+        - asset: assets/fonts/Inter-Italic-Variable.ttf
+          style: italic
+          weight: 500
+        - asset: assets/fonts/Inter-Italic-Variable.ttf
+          style: italic
+          weight: 700
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

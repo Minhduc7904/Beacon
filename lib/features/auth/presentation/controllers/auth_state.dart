@@ -24,5 +24,12 @@ class AuthError extends AuthState {
 
 class AuthValidationError extends AuthState {
   final String message;
-  const AuthValidationError(this.message);
+  final String? usernameError;
+  final String? passwordError;
+
+  const AuthValidationError(
+    this.message, {
+    this.usernameError,
+    this.passwordError,
+  });
 }
