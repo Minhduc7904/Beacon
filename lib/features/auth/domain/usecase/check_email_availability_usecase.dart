@@ -43,9 +43,7 @@ class CheckEmailAvailabilityUseCase {
 
     return result.fold(Left.new, (isAvailable) {
       if (!isAvailable) {
-        final mappedMessage = AuthErrorCodeMapper.mapRegisterCode(
-          ApiErrorCodes.emailAlreadyExists,
-        );
+        final mappedMessage = ErrorMessages.registerEmailExists;
 
         return Left(ValidationFailure(message: mappedMessage));
       }
