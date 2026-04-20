@@ -25,9 +25,7 @@ class CheckPhoneAvailabilityUseCase {
 
     if (phoneNumber.isEmpty) {
       return Future.value(
-        const Left(
-          ValidationFailure(message: ErrorMessages.phoneRequired),
-        ),
+        const Left(ValidationFailure(message: ErrorMessages.phoneRequired)),
       );
     }
 
@@ -42,9 +40,7 @@ class CheckPhoneAvailabilityUseCase {
     final e164Phone = PhoneNumberUtils.toE164Vietnam(phoneNumber);
     if (e164Phone == null) {
       return Future.value(
-        const Left(
-          ValidationFailure(message: ErrorMessages.phoneInvalidE164),
-        ),
+        const Left(ValidationFailure(message: ErrorMessages.phoneInvalidE164)),
       );
     }
 
@@ -54,9 +50,7 @@ class CheckPhoneAvailabilityUseCase {
 
     return result.fold(Left.new, (isAvailable) {
       if (!isAvailable) {
-        final mappedMessage = AuthErrorCodeMapper.mapRegisterCode(
-          ApiErrorCodes.phoneAlreadyExists,
-        );
+        final mappedMessage = ErrorMessages.registerPhoneExists;
 
         return Left(ValidationFailure(message: mappedMessage));
       }
