@@ -4,16 +4,44 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/providers.dart';
 import '../../../../core/theme/color/app_colors.dart';
+import '../../../../core/widgets/dev/test/test_post_media_send_signal_provider.dart';
 import '../controllers/post_preview_image_path_provider.dart';
 
-class PostPreviewSendButton extends ConsumerWidget {
+class PostPreviewSendButton extends ConsumerStatefulWidget {
   const PostPreviewSendButton({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PostPreviewSendButton> createState() =>
+      _PostPreviewSendButtonState();
+}
+
+class _PostPreviewSendButtonState extends ConsumerState<PostPreviewSendButton> {
+  int _lastHandledSendSignal = -1;
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(postPreviewNotifierProvider);
     final notifier = ref.read(postPreviewNotifierProvider.notifier);
     final filePath = ref.watch(postPreviewImagePathProvider);
+    final sendSignal = ref.watch(testPostMediaSendSignalProvider);
+
+    if (_lastHandledSendSignal == -1) {
+      _lastHandledSendSignal = sendSignal;
+    } else if (sendSignal != _lastHandledSendSignal) {
+      _lastHandledSendSignal = sendSignal;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+
+        final latestState = ref.read(postPreviewNotifierProvider);
+        if (latestState.isUploading) {
+          return;
+        }
+
+        ref.read(postPreviewNotifierProvider.notifier).postMedia(filePath);
+      });
+    }
 
     ref.listen(postPreviewNotifierProvider, (previous, next) {
       if (previous?.uploadedMedia == null && next.uploadedMedia != null) {

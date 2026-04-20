@@ -6,12 +6,14 @@ class DevMainMenuSheet extends StatelessWidget {
     required this.showLayoutMenu,
     required this.onOpenRoutes,
     required this.onOpenApi,
+    required this.onOpenTest,
     required this.onOpenLayout,
   });
 
   final bool showLayoutMenu;
   final VoidCallback onOpenRoutes;
   final VoidCallback onOpenApi;
+  final VoidCallback onOpenTest;
   final VoidCallback onOpenLayout;
 
   @override
@@ -32,6 +34,11 @@ class DevMainMenuSheet extends StatelessWidget {
             leading: const Icon(Icons.cloud_rounded),
             title: const Text('API'),
             onTap: onOpenApi,
+          ),
+          ListTile(
+            leading: const Icon(Icons.science_rounded),
+            title: const Text('Test'),
+            onTap: onOpenTest,
           ),
           if (showLayoutMenu)
             ListTile(

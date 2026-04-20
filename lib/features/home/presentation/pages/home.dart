@@ -9,7 +9,12 @@ import '../widgets/home_action_button.dart';
 import '../widgets/home_camera_box.dart';
 
 class HomePage extends ConsumerStatefulWidget {
-  const HomePage({super.key});
+  const HomePage({
+    super.key,
+    this.autoCaptureOnOpen = false,
+  });
+
+  final bool autoCaptureOnOpen;
 
   @override
   ConsumerState<HomePage> createState() => _HomePageState();
@@ -17,6 +22,8 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage>
     with WidgetsBindingObserver {
+  bool _didAutoCapture = false;
+
   @override
   void initState() {
     super.initState();
@@ -56,12 +63,44 @@ class _HomePageState extends ConsumerState<HomePage>
           return;
         }
 
-        await context.pushNamed(AppRoutes.postPreviewName, extra: nextPath);
+        await context.pushNamed(
+          AppRoutes.postPreviewName,
+          extra: <String, dynamic>{
+            'filePath': nextPath,
+          },
+        );
         if (!mounted) {
           return;
         }
 
         ref.read(homeNotifierProvider.notifier).clearCapturedImage();
+      });
+
+      if (!widget.autoCaptureOnOpen || _didAutoCapture) {
+        return;
+      }
+
+      final controller = ref.read(homeNotifierProvider.notifier).cameraController;
+      final canAutoCapture =
+          controller != null &&
+          controller.value.isInitialized &&
+          !next.isCameraInitializing &&
+          !next.isCapturing &&
+          !next.hasCapturedImage;
+
+      if (!canAutoCapture) {
+        return;
+      }
+
+      _didAutoCapture = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+
+        ref.read(homeNotifierProvider.notifier).capturePhoto(
+              minimumPublishDelay: const Duration(milliseconds: 300),
+            );
       });
     });
 

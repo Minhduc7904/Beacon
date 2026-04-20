@@ -90,7 +90,12 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
         codeMessageMapper: AuthErrorCodeMapper.mapLoginCode,
       );
 
-      return result.data!;
+      final data = result.data!;
+      return AuthResponseModel(
+        message: result.message,
+        tokens: data.tokens,
+        user: data.user,
+      );
     } on DioException catch (e) {
       ApiHandler.rethrowDioException(
         e,
@@ -128,7 +133,12 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
           AuthResponseModel.fromJson(json as Map<String, dynamic>),
     );
 
-    return result.data!;
+    final data = result.data!;
+    return AuthResponseModel(
+      message: result.message,
+      tokens: data.tokens,
+      user: data.user,
+    );
   }
 
   @override
