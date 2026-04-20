@@ -1,0 +1,1 @@
+enum DevNavigationMode { push, go }

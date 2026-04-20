@@ -36,4 +36,26 @@ class PhoneNumberUtils {
 
     return false;
   }
+
+  static String? toE164Vietnam(String input) {
+    final sanitized = sanitize(input);
+
+    if (!isValidVietnamMobile(sanitized)) {
+      return null;
+    }
+
+    if (sanitized.startsWith('+84')) {
+      return sanitized;
+    }
+
+    if (sanitized.startsWith('84')) {
+      return '+$sanitized';
+    }
+
+    if (sanitized.startsWith('0')) {
+      return '+84${sanitized.substring(1)}';
+    }
+
+    return null;
+  }
 }

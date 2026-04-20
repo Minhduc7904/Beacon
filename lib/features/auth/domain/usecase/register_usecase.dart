@@ -6,17 +6,21 @@ import '../entities/auth_result.dart';
 import '../repositories/auth_repository.dart';
 
 class RegisterParams {
+  final String email;
   final String username;
   final String password;
   final String confirmPassword;
-  final String fullName;
-  final String? phoneNumber;
+  final String familyName;
+  final String givenName;
+  final String phoneNumber;
 
   const RegisterParams({
+    required this.email,
     required this.username,
     required this.password,
     required this.confirmPassword,
-    required this.fullName,
+    required this.familyName,
+    required this.givenName,
     required this.phoneNumber,
   });
 }
@@ -31,16 +35,39 @@ class RegisterUseCase {
     if (validationError != null) return Future.value(Left(validationError));
 
     return _repository.register(
+      email: params.email,
+      confirmPassword: params.confirmPassword,
+      familyName: params.familyName,
+      givenName: params.givenName,
       username: params.username,
       password: params.password,
-      fullName: params.fullName,
       phoneNumber: params.phoneNumber,
     );
   }
 
   ValidationFailure? _validate(RegisterParams params) {
-    if (params.fullName.trim().isEmpty) {
-      return const ValidationFailure(message: 'Họ và tên không được để trống');
+    final email = params.email.trim();
+    if (email.isEmpty) {
+      return const ValidationFailure(message: 'Email không được để trống');
+    }
+
+    final isValidEmail = RegExp(
+      r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+      caseSensitive: false,
+    ).hasMatch(email);
+
+    if (!isValidEmail) {
+      return const ValidationFailure(message: 'Email không đúng định dạng');
+    }
+
+    if (params.familyName.trim().isEmpty) {
+      return const ValidationFailure(
+        message: 'Họ và tên đệm không được để trống',
+      );
+    }
+
+    if (params.givenName.trim().isEmpty) {
+      return const ValidationFailure(message: 'Tên riêng không được để trống');
     }
 
     if (params.username.trim().isEmpty) {
@@ -69,13 +96,21 @@ class RegisterUseCase {
       return const ValidationFailure(message: 'Mật khẩu xác nhận không khớp');
     }
 
-    final phoneNumber = params.phoneNumber?.trim();
-    if (phoneNumber != null && phoneNumber.isNotEmpty) {
-      if (!PhoneNumberUtils.isValid(phoneNumber)) {
-        return const ValidationFailure(
-          message: 'Số điện thoại Việt Nam không hợp lệ',
-        );
-      }
+    final phoneNumber = params.phoneNumber.trim();
+    if (phoneNumber.isEmpty) {
+      return const ValidationFailure(message: 'Số điện thoại không được để trống');
+    }
+
+    if (!PhoneNumberUtils.isValidVietnamMobile(phoneNumber)) {
+      return const ValidationFailure(
+        message: 'Số điện thoại Việt Nam không hợp lệ',
+      );
+    }
+
+    if (PhoneNumberUtils.toE164Vietnam(phoneNumber) == null) {
+      return const ValidationFailure(
+        message: 'Số điện thoại chưa đúng định dạng E.164',
+      );
     }
 
     return null;

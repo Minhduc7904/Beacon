@@ -102,10 +102,9 @@ class _LoginFormState extends State<LoginForm> {
                   ),
                   const SizedBox(height: 32),
                   Button(
-                    text: widget.isLoading ? 'Đang đăng nhập...' : 'Đăng nhập',
-                    state: widget.isLoading
-                        ? ButtonState.disabled
-                        : ButtonState.defaultState,
+                    text: 'Đăng nhập',
+                    isLoading: widget.isLoading,
+                    loadingText: 'Đang đăng nhập...',
                     onPressed: widget.onSubmit,
                   ),
                   if (widget.footer != null) ...[

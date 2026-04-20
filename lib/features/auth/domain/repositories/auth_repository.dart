@@ -3,16 +3,22 @@ import '../../../../core/errors/failures.dart';
 import '../entities/auth_result.dart';
 
 abstract class AuthRepository {
+  Future<Either<Failure, bool>> checkEmailAvailable({required String email});
+  Future<Either<Failure, bool>> checkPhoneAvailable({required String phoneNumber});
+
   Future<Either<Failure, AuthResult>> login({
     required String username,
     required String password,
   });
 
   Future<Either<Failure, AuthResult>> register({
+    required String email,
+    required String confirmPassword,
+    required String familyName,
+    required String givenName,
     required String username,
     required String password,
-    required String fullName,
-    required String? phoneNumber,
+    required String phoneNumber,
   });
 
   Future<Either<Failure, String>> logout();

@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/config/app_routes.dart';
+import '../../../../../core/providers/providers.dart';
 import 'register_draft_data.dart';
 import '../../widgets/register/register_step_layout.dart';
+import '../../../domain/usecase/check_email_availability_usecase.dart';
 
-class RegisterPageEmail extends StatefulWidget {
+class RegisterPageEmail extends ConsumerStatefulWidget {
   const RegisterPageEmail({super.key});
 
   @override
-  State<RegisterPageEmail> createState() => _RegisterPageEmailState();
+  ConsumerState<RegisterPageEmail> createState() => _RegisterPageEmailState();
 }
 
-class _RegisterPageEmailState extends State<RegisterPageEmail> {
+class _RegisterPageEmailState extends ConsumerState<RegisterPageEmail> {
   final _emailController = TextEditingController();
   String? _errorText;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -22,28 +26,59 @@ class _RegisterPageEmailState extends State<RegisterPageEmail> {
     super.dispose();
   }
 
-  void _onContinuePressed() {
-    final email = _emailController.text.trim();
-    final isValidEmail = RegExp(
-      r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
-      caseSensitive: false,
-    ).hasMatch(email);
+  Future<void> _onContinuePressed() async {
+    if (_isLoading) {
+      return;
+    }
 
-    if (!isValidEmail) {
+    final email = _emailController.text.trim();
+
+    if (email.isEmpty) {
       setState(() {
-        _errorText = 'Vui lòng nhập địa chỉ email hợp lệ';
+        _errorText = 'Vui lòng nhập địa chỉ email';
       });
       return;
     }
 
     setState(() {
       _errorText = null;
+      _isLoading = true;
     });
 
-    FocusScope.of(context).unfocus();
-    context.pushNamed(
-      AppRoutes.registerPhoneNumberName,
-      extra: RegisterDraftData(email: email),
+    final result = await ref
+        .read(checkEmailAvailabilityUseCaseProvider)
+        .call(CheckEmailAvailabilityParams(email: email));
+
+    if (!mounted) {
+      return;
+    }
+
+    result.fold(
+      (failure) {
+        setState(() {
+          _errorText = failure.message;
+          _isLoading = false;
+        });
+      },
+      (isAvailable) {
+        if (!isAvailable) {
+          setState(() {
+            _errorText = 'Email đã được sử dụng';
+            _isLoading = false;
+          });
+          return;
+        }
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        FocusScope.of(context).unfocus();
+        context.pushNamed(
+          AppRoutes.registerPhoneNumberName,
+          extra: RegisterDraftData(email: email),
+        );
+      },
     );
   }
 
@@ -66,6 +101,9 @@ class _RegisterPageEmailState extends State<RegisterPageEmail> {
       inputHintText: 'Nhập địa chỉ email',
       keyboardType: TextInputType.emailAddress,
       errorText: _errorText,
+      isLoading: _isLoading,
+      continueText: 'Tiếp theo',
+      loadingText: 'Đang kiểm tra...',
       onInputChanged: _onEmailChanged,
       onContinuePressed: _onContinuePressed,
     );
