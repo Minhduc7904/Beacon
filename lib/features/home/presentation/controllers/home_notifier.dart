@@ -1,34 +1,226 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
+import 'dart:io';
+import 'dart:math' as math;
 
-import '../../../../core/messages/app_message_notifier.dart';
-import '../../domain/usecase/upload_post_media_usecase.dart';
+import 'package:camera/camera.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image/image.dart' as img;
+
 import 'home_state.dart';
 
 class HomeNotifier extends StateNotifier<HomeState> {
-  final UploadPostMediaUseCase _uploadPostMediaUseCase;
-  final AppMessageNotifier _messageNotifier;
+  static const Duration _cameraInitTimeout = Duration(seconds: 10);
 
-  HomeNotifier(this._uploadPostMediaUseCase, this._messageNotifier)
-    : super(const HomeInitial());
+  CameraController? _cameraController;
+  bool _isInitializingCamera = false;
 
-  Future<void> uploadPostMedia({required String filePath}) async {
-    state = const HomeUploading();
+  HomeNotifier() : super(const HomeState.initial());
 
-    final result = await _uploadPostMediaUseCase(
-      UploadPostMediaParams(filePath: filePath),
+  CameraController? get cameraController => _cameraController;
+
+  Future<void> initializeCamera() async {
+    if (!mounted) {
+      return;
+    }
+
+    if (_isInitializingCamera) {
+      return;
+    }
+
+    _isInitializingCamera = true;
+
+    state = state.copyWith(
+      isCameraInitializing: true,
+      clearCameraError: true,
     );
 
-    result.fold(
-      (failure) {
-        _messageNotifier.addError(failure.message);
-        state = HomeError(failure.message);
-      },
-      (media) {
-        _messageNotifier.addSuccess('Đăng ảnh thành công');
-        state = HomeUploadSuccess(media);
-      },
-    );
+    try {
+      final cameras = await availableCameras().timeout(_cameraInitTimeout);
+      if (cameras.isEmpty) {
+        throw CameraException('NO_CAMERA', 'Thiết bị không có camera');
+      }
+
+      final selectedCamera = cameras.firstWhere(
+        (camera) => camera.lensDirection == CameraLensDirection.back,
+        orElse: () => cameras.first,
+      );
+
+      final controller = CameraController(
+        selectedCamera,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
+
+      await controller.initialize().timeout(_cameraInitTimeout);
+      await _cameraController?.dispose();
+
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+
+      _cameraController = controller;
+      state = state.copyWith(
+        isCameraInitializing: false,
+        clearCameraError: true,
+      );
+    } on TimeoutException {
+      if (!mounted) {
+        return;
+      }
+
+      _cameraController = null;
+      state = state.copyWith(
+        isCameraInitializing: false,
+        cameraError: 'Mở camera quá lâu. Vui lòng thử lại.',
+      );
+    } on CameraException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      _cameraController = null;
+      final code = error.code;
+      final message = switch (code) {
+        'CameraAccessDenied' || 'CameraAccessDeniedWithoutPrompt' =>
+          'Bạn chưa cấp quyền camera.',
+        'CameraAccessRestricted' => 'Camera bị hạn chế trên thiết bị này.',
+        'AudioAccessDenied' || 'AudioAccessDeniedWithoutPrompt' =>
+          'Không có quyền microphone.',
+        _ => 'Không thể khởi tạo camera. Vui lòng thử lại.',
+      };
+
+      state = state.copyWith(isCameraInitializing: false, cameraError: message);
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      _cameraController = null;
+      state = state.copyWith(
+        isCameraInitializing: false,
+        cameraError: 'Không thể khởi tạo camera. Vui lòng thử lại.',
+      );
+    } finally {
+      _isInitializingCamera = false;
+    }
   }
 
-  void reset() => state = const HomeInitial();
+  Future<void> onLifecycleChanged(AppLifecycleState appState) async {
+    final controller = _cameraController;
+    if (controller == null || !controller.value.isInitialized) {
+      return;
+    }
+
+    if (appState == AppLifecycleState.inactive ||
+        appState == AppLifecycleState.paused ||
+        appState == AppLifecycleState.detached) {
+      await controller.dispose();
+      _cameraController = null;
+      return;
+    }
+
+    if (appState == AppLifecycleState.resumed && !state.hasCapturedImage) {
+      if (!_isInitializingCamera) {
+        await initializeCamera();
+      }
+    }
+  }
+
+  Future<void> capturePhoto({
+    Duration minimumPublishDelay = Duration.zero,
+  }) async {
+    final controller = _cameraController;
+    if (state.isCapturing ||
+        state.isCameraInitializing ||
+        controller == null ||
+        !controller.value.isInitialized) {
+      return;
+    }
+
+    state = state.copyWith(isCapturing: true, clearCameraError: true);
+    final startedAt = DateTime.now();
+
+    try {
+      final imageFile = await controller.takePicture();
+      final croppedPath = await _cropSquareImage(imageFile.path);
+
+      final elapsed = DateTime.now().difference(startedAt);
+      final remainingDelay = minimumPublishDelay - elapsed;
+      if (remainingDelay > Duration.zero) {
+        await Future<void>.delayed(remainingDelay);
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      state = state.copyWith(
+        isCapturing: false,
+        capturedImagePath: croppedPath,
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      state = state.copyWith(
+        isCapturing: false,
+        cameraError: 'Chụp ảnh thất bại. Vui lòng thử lại.',
+      );
+    }
+  }
+
+  void clearCapturedImage() {
+    if (!state.hasCapturedImage) {
+      return;
+    }
+
+    state = state.copyWith(
+      clearCapturedImagePath: true,
+    );
+
+    if (_cameraController == null || !_cameraController!.value.isInitialized) {
+      initializeCamera();
+    }
+  }
+
+  void disposeCamera() {
+    _cameraController?.dispose();
+    _cameraController = null;
+  }
+
+  void reset() => state = const HomeState.initial();
+
+  Future<String> _cropSquareImage(String sourcePath) async {
+    final bytes = await File(sourcePath).readAsBytes();
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) {
+      return sourcePath;
+    }
+
+    final squareSize = math.min(decoded.width, decoded.height);
+    final offsetX = (decoded.width - squareSize) ~/ 2;
+    final offsetY = (decoded.height - squareSize) ~/ 2;
+
+    final squareImage = img.copyCrop(
+      decoded,
+      x: offsetX,
+      y: offsetY,
+      width: squareSize,
+      height: squareSize,
+    );
+
+    final lastDot = sourcePath.lastIndexOf('.');
+    final pathPrefix = lastDot == -1 ? sourcePath : sourcePath.substring(0, lastDot);
+    final croppedPath = '${pathPrefix}_square.jpg';
+
+    await File(croppedPath).writeAsBytes(
+      img.encodeJpg(squareImage, quality: 92),
+      flush: true,
+    );
+
+    return croppedPath;
+  }
 }

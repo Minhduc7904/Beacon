@@ -31,4 +31,15 @@ class AuthErrorCodeMapper {
         return null;
     }
   }
+
+  static String? mapMeCode(String code) {
+    switch (code) {
+      case 'UNAUTHORIZED':
+        return 'Phiên đăng nhập đã hết hạn';
+      case 'USER_NOT_FOUND':
+        return 'Không tìm thấy người dùng';
+      default:
+        return null;
+    }
+  }
 }

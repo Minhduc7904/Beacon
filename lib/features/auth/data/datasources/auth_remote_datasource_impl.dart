@@ -6,6 +6,7 @@ import '../../../../core/network/dio_client.dart';
 import '../mappers/auth_error_code_mapper.dart';
 import '../models/auth_response_model.dart';
 import '../models/tokens_model.dart';
+import '../models/user_profile_model.dart';
 import 'auth_remote_datasource.dart';
 
 class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
@@ -152,5 +153,26 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     );
 
     return result.data!;
+  }
+
+  @override
+  Future<UserProfileModel> getMe() async {
+    try {
+      final response = await _dioClient.get(ApiEndpoints.me);
+
+      final result = ApiHandler.handle<UserProfileModel>(
+        response,
+        fromJsonT: (json) =>
+            UserProfileModel.fromJson(json as Map<String, dynamic>),
+        codeMessageMapper: AuthErrorCodeMapper.mapMeCode,
+      );
+
+      return result.data!;
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: AuthErrorCodeMapper.mapMeCode,
+      );
+    }
   }
 }

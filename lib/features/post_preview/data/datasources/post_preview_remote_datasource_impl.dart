@@ -3,14 +3,14 @@ import 'package:dio/dio.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_handler.dart';
 import '../../../../core/network/dio_client.dart';
-import '../mappers/home_error_code_mapper.dart';
+import '../mappers/post_preview_error_code_mapper.dart';
 import '../models/media_upload_result_model.dart';
-import 'home_remote_datasource.dart';
+import 'post_preview_remote_datasource.dart';
 
-class HomeRemoteDatasourceImpl implements HomeRemoteDatasource {
+class PostPreviewRemoteDatasourceImpl implements PostPreviewRemoteDatasource {
   final DioClient _dioClient;
 
-  HomeRemoteDatasourceImpl(this._dioClient);
+  PostPreviewRemoteDatasourceImpl(this._dioClient);
 
   @override
   Future<MediaUploadResultModel> uploadPostMedia({
@@ -35,14 +35,14 @@ class HomeRemoteDatasourceImpl implements HomeRemoteDatasource {
         response,
         fromJsonT: (json) =>
             MediaUploadResultModel.fromJson(json as Map<String, dynamic>),
-        codeMessageMapper: HomeErrorCodeMapper.mapUploadCode,
+        codeMessageMapper: PostPreviewErrorCodeMapper.mapUploadCode,
       );
 
       return result.data!;
     } on DioException catch (e) {
       ApiHandler.rethrowDioException(
         e,
-        codeMessageMapper: HomeErrorCodeMapper.mapUploadCode,
+        codeMessageMapper: PostPreviewErrorCodeMapper.mapUploadCode,
       );
     }
   }

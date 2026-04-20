@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../entities/auth_result.dart';
+import '../entities/user_profile.dart';
 
 abstract class AuthRepository {
   Future<Either<Failure, bool>> checkEmailAvailable({required String email});
@@ -22,4 +23,6 @@ abstract class AuthRepository {
   });
 
   Future<Either<Failure, String>> logout();
+
+  Future<Either<Failure, UserProfile>> getMe();
 }

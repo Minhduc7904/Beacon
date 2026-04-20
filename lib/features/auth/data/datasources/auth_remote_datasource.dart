@@ -1,5 +1,6 @@
 import '../models/auth_response_model.dart';
 import '../models/tokens_model.dart';
+import '../models/user_profile_model.dart';
 
 abstract class AuthRemoteDatasource {
   /// Kiểm tra email còn khả dụng để đăng ký.
@@ -30,4 +31,7 @@ abstract class AuthRemoteDatasource {
 
   /// Làm mới accessToken từ refreshToken.
   Future<TokensModel> refreshToken({required String refreshToken});
+
+  /// Lấy profile người dùng hiện tại từ access token.
+  Future<UserProfileModel> getMe();
 }
