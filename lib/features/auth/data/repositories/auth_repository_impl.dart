@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/auth_result.dart';
+import '../../domain/entities/user_profile.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_local_datasource.dart';
 import '../datasources/auth_remote_datasource.dart';
@@ -18,6 +19,42 @@ class AuthRepositoryImpl implements AuthRepository {
   }) : _remoteDatasource = remoteDatasource,
        _localDatasource = localDatasource,
        _networkInfo = networkInfo;
+
+  @override
+  Future<Either<Failure, bool>> checkEmailAvailable({
+    required String email,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      final isAvailable = await _remoteDatasource.checkEmailAvailable(
+        email: email,
+      );
+      return Right(isAvailable);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> checkPhoneAvailable({
+    required String phoneNumber,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      final isAvailable = await _remoteDatasource.checkPhoneAvailable(
+        phoneNumber: phoneNumber,
+      );
+      return Right(isAvailable);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
 
   @override
   Future<Either<Failure, AuthResult>> login({
@@ -50,10 +87,13 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, AuthResult>> register({
+    required String email,
+    required String confirmPassword,
+    required String familyName,
+    required String givenName,
     required String username,
     required String password,
-    required String fullName,
-    required String? phoneNumber,
+    required String phoneNumber,
   }) async {
     if (!await _networkInfo.isConnected) {
       return const Left(NetworkFailure());
@@ -61,9 +101,12 @@ class AuthRepositoryImpl implements AuthRepository {
 
     try {
       final authResponse = await _remoteDatasource.register(
+        email: email,
+        confirmPassword: confirmPassword,
+        familyName: familyName,
+        givenName: givenName,
         username: username,
         password: password,
-        fullName: fullName,
         phoneNumber: phoneNumber,
       );
 
@@ -100,6 +143,20 @@ class AuthRepositoryImpl implements AuthRepository {
 
       await _localDatasource.clearTokens();
       return const Right('Đăng xuất thành công');
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserProfile>> getMe() async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      final profile = await _remoteDatasource.getMe();
+      return Right(profile);
     } on Exception catch (e) {
       return Left(e.toFailure());
     }

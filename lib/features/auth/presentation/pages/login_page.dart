@@ -47,7 +47,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     final authState = ref.watch(authNotifierProvider);
     final isLoading = authState is AuthLoading;
-    final onPrimaryColor = Theme.of(context).colorScheme.onPrimary;
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.primary,

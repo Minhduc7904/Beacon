@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/config/app_routes.dart';
 import '../../../../core/constants/app_images.dart';
 import '../../../../core/providers/providers.dart';
+import '../../../../core/widgets/layout/screen_layout.dart';
 import '../controllers/onboarding_state.dart';
 import '../widgets/onboarding_action_section.dart';
 import '../widgets/onboarding_content_section.dart';
@@ -98,78 +99,80 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
     return Scaffold(
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 60, 24, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Center(
-                        child: Image(
-                          image: AssetImage(AppImages.logoText),
-                          width: 120,
+        child: AppScreenLayout(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 60),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Center(
+                          child: Image(
+                            image: AssetImage(AppImages.logoText),
+                            width: 120,
+                          ),
                         ),
-                      ),
 
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                      SizedBox(
-                        height:
-                            MediaQuery.of(context).size.height *
-                            0.4, // Chiếm 45% chiều cao màn hình
-                        child: PageView.builder(
-                          controller: _pageController,
-                          itemCount: _slides.length,
-                          onPageChanged: (index) {
-                            setState(() {
-                              _currentIndex = index;
-                            });
-                          },
-                          itemBuilder: (context, index) {
-                            return OnboardingSlideContent(
-                              imagePath: _slides[index].imagePath,
-                            );
-                          },
+                        SizedBox(
+                          height:
+                              MediaQuery.of(context).size.height *
+                              0.4, // Chiếm 45% chiều cao màn hình
+                          child: PageView.builder(
+                            controller: _pageController,
+                            itemCount: _slides.length,
+                            onPageChanged: (index) {
+                              setState(() {
+                                _currentIndex = index;
+                              });
+                            },
+                            itemBuilder: (context, index) {
+                              return OnboardingSlideContent(
+                                imagePath: _slides[index].imagePath,
+                              );
+                            },
+                          ),
                         ),
-                      ),
 
-                      const SizedBox(height: 12),
-                      OnboardingProgressIndicator(
-                        currentIndex: _currentIndex,
-                        total: _slides.length,
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      Padding(
-                        padding: const EdgeInsets.only(top: 28),
-                        child: Column(
-                          children: [
-                            OnboardingContentSection(
-                              title: _slides[_currentIndex].title,
-                              description: _slides[_currentIndex].description,
-                            ),
-                            const SizedBox(height: 32),
-                            OnboardingActionSection(
-                              isLoading: isLoading,
-                              primaryLabel: 'Đăng nhập',
-                              secondaryLabel: 'Đăng kí',
-                              onPrimaryPressed: _onLoginPressed,
-                              onSecondaryPressed: _onRegisterPressed,
-                            ),
-                          ],
+                        const SizedBox(height: 12),
+                        OnboardingProgressIndicator(
+                          currentIndex: _currentIndex,
+                          total: _slides.length,
                         ),
-                      ),
-                    ],
+
+                        const SizedBox(height: 24),
+
+                        Padding(
+                          padding: const EdgeInsets.only(top: 28),
+                          child: Column(
+                            children: [
+                              OnboardingContentSection(
+                                title: _slides[_currentIndex].title,
+                                description: _slides[_currentIndex].description,
+                              ),
+                              const SizedBox(height: 32),
+                              OnboardingActionSection(
+                                isLoading: isLoading,
+                                primaryLabel: 'Đăng nhập',
+                                secondaryLabel: 'Đăng kí',
+                                onPrimaryPressed: _onLoginPressed,
+                                onSecondaryPressed: _onRegisterPressed,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );

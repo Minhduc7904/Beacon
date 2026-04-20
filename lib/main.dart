@@ -42,10 +42,16 @@ class MyApp extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme(),
       themeMode: themeMode,
       builder: (context, child) {
+        final appChild = child ?? const SizedBox.shrink();
+
+        if (!AppEnv.isDev) {
+          return appChild;
+        }
+
         return Stack(
           children: [
-            GlobalMessageOverlay(child: child!),
-            if (AppEnv.isDev) const DevSettingsBubble(),
+            GlobalMessageOverlay(child: appChild),
+            const DevSettingsBubble(),
           ],
         );
       },

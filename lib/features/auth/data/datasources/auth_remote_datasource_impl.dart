@@ -1,8 +1,12 @@
+import 'package:dio/dio.dart';
+
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_handler.dart';
 import '../../../../core/network/dio_client.dart';
+import '../mappers/auth_error_code_mapper.dart';
 import '../models/auth_response_model.dart';
 import '../models/tokens_model.dart';
+import '../models/user_profile_model.dart';
 import 'auth_remote_datasource.dart';
 
 class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
@@ -11,37 +15,109 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
   AuthRemoteDatasourceImpl(this._dioClient);
 
   @override
+  Future<bool> checkPhoneAvailable({required String phoneNumber}) async {
+    try {
+      final response = await _dioClient.get(
+        ApiEndpoints.checkPhone,
+        queryParameters: {'phoneNumber': phoneNumber},
+      );
+
+      final result = ApiHandler.handle<bool>(
+        response,
+        fromJsonT: (json) {
+          if (json is! Map<String, dynamic>) {
+            throw const FormatException('Invalid check-phone data format');
+          }
+
+          return json['available'] == true;
+        },
+        codeMessageMapper: AuthErrorCodeMapper.mapCheckPhoneCode,
+      );
+
+      return result.data ?? false;
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: AuthErrorCodeMapper.mapCheckPhoneCode,
+      );
+    }
+  }
+
+  @override
+  Future<bool> checkEmailAvailable({required String email}) async {
+    try {
+      final response = await _dioClient.get(
+        ApiEndpoints.checkEmail,
+        queryParameters: {'email': email},
+      );
+
+      final result = ApiHandler.handle<bool>(
+        response,
+        fromJsonT: (json) {
+          if (json is! Map<String, dynamic>) {
+            throw const FormatException('Invalid check-email data format');
+          }
+
+          return json['available'] == true;
+        },
+        codeMessageMapper: AuthErrorCodeMapper.mapCheckEmailCode,
+      );
+
+      return result.data ?? false;
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: AuthErrorCodeMapper.mapCheckEmailCode,
+      );
+    }
+  }
+
+  @override
   Future<AuthResponseModel> login({
     required String username,
     required String password,
   }) async {
-    final response = await _dioClient.post(
-      ApiEndpoints.login,
-      data: {'username': username, 'password': password},
-    );
+    try {
+      final response = await _dioClient.post(
+        ApiEndpoints.login,
+        data: {'username': username, 'password': password},
+      );
 
-    final result = ApiHandler.handle<AuthResponseModel>(
-      response,
-      fromJsonT: (json) =>
-          AuthResponseModel.fromJson(json as Map<String, dynamic>),
-    );
+      final result = ApiHandler.handle<AuthResponseModel>(
+        response,
+        fromJsonT: (json) =>
+            AuthResponseModel.fromJson(json as Map<String, dynamic>),
+        codeMessageMapper: AuthErrorCodeMapper.mapLoginCode,
+      );
 
-    return result.data!;
+      return result.data!;
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: AuthErrorCodeMapper.mapLoginCode,
+      );
+    }
   }
 
   @override
   Future<AuthResponseModel> register({
+    required String email,
+    required String confirmPassword,
+    required String familyName,
+    required String givenName,
     required String username,
     required String password,
-    required String fullName,
-    required String? phoneNumber,
+    required String phoneNumber,
   }) async {
     final response = await _dioClient.post(
       ApiEndpoints.register,
       data: {
+        'email': email,
         'username': username,
         'password': password,
-        'fullName': fullName,
+        'confirmPassword': confirmPassword,
+        'familyName': familyName,
+        'givenName': givenName,
         'phoneNumber': phoneNumber,
       },
     );
@@ -77,5 +153,26 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     );
 
     return result.data!;
+  }
+
+  @override
+  Future<UserProfileModel> getMe() async {
+    try {
+      final response = await _dioClient.get(ApiEndpoints.me);
+
+      final result = ApiHandler.handle<UserProfileModel>(
+        response,
+        fromJsonT: (json) =>
+            UserProfileModel.fromJson(json as Map<String, dynamic>),
+        codeMessageMapper: AuthErrorCodeMapper.mapMeCode,
+      );
+
+      return result.data!;
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: AuthErrorCodeMapper.mapMeCode,
+      );
+    }
   }
 }

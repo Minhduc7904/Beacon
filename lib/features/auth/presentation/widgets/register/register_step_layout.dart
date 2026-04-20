@@ -33,6 +33,7 @@ class RegisterStepLayout extends StatelessWidget {
     this.errorText,
     this.continueText = 'Tiếp theo',
     this.isLoading = false,
+    this.loadingText,
     this.enabled = true,
     this.instructionText,
     this.showAgreement = true,
@@ -57,6 +58,7 @@ class RegisterStepLayout extends StatelessWidget {
   final String? errorText;
   final String continueText;
   final bool isLoading;
+  final String? loadingText;
   final bool enabled;
   final String? instructionText;
   final bool showAgreement;
