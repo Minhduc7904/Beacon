@@ -3,15 +3,15 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/media_upload_result.dart';
-import '../../domain/repositories/home_repository.dart';
-import '../datasources/home_remote_datasource.dart';
+import '../../domain/repositories/post_preview_repository.dart';
+import '../datasources/post_preview_remote_datasource.dart';
 
-class HomeRepositoryImpl implements HomeRepository {
-  final HomeRemoteDatasource _remoteDatasource;
+class PostPreviewRepositoryImpl implements PostPreviewRepository {
+  final PostPreviewRemoteDatasource _remoteDatasource;
   final NetworkInfo _networkInfo;
 
-  HomeRepositoryImpl({
-    required HomeRemoteDatasource remoteDatasource,
+  PostPreviewRepositoryImpl({
+    required PostPreviewRemoteDatasource remoteDatasource,
     required NetworkInfo networkInfo,
   }) : _remoteDatasource = remoteDatasource,
        _networkInfo = networkInfo;

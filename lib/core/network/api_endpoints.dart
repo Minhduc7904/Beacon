@@ -14,6 +14,7 @@ class ApiEndpoints {
   static const String register = '/auth/register';
   static const String logout = '/auth/logout';
   static const String refreshToken = '/auth/refresh-token';
+  static const String me = '/auth/me';
 
   // Health
   static const String health = '/health';

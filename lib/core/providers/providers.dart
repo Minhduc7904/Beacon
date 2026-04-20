@@ -13,13 +13,11 @@ import '../../features/auth/domain/usecase/logout_usecase.dart';
 import '../../features/auth/domain/usecase/register_usecase.dart';
 import '../../features/auth/domain/usecase/check_email_availability_usecase.dart';
 import '../../features/auth/domain/usecase/check_phone_availability_usecase.dart';
+import '../../features/auth/domain/usecase/get_me_usecase.dart';
+import '../../features/auth/domain/entities/user_profile.dart';
 import '../../features/auth/presentation/controllers/auth_notifier.dart';
 import '../../features/auth/presentation/controllers/auth_state.dart';
-import '../../features/home/data/datasources/home_remote_datasource.dart';
-import '../../features/home/data/datasources/home_remote_datasource_impl.dart';
-import '../../features/home/data/repositories/home_repository_impl.dart';
-import '../../features/home/domain/repositories/home_repository.dart';
-import '../../features/home/domain/usecase/upload_post_media_usecase.dart';
+import '../../features/auth/presentation/controllers/me_profile_notifier.dart';
 import '../../features/home/presentation/controllers/home_notifier.dart';
 import '../../features/home/presentation/controllers/home_state.dart';
 import '../../features/onboarding/data/datasources/onboarding_local_datasource.dart';
@@ -30,6 +28,13 @@ import '../../features/onboarding/domain/usecase/complete_onboarding_usecase.dar
 import '../../features/onboarding/domain/usecase/should_show_onboarding_usecase.dart';
 import '../../features/onboarding/presentation/controllers/onboarding_notifier.dart';
 import '../../features/onboarding/presentation/controllers/onboarding_state.dart';
+import '../../features/post_preview/data/datasources/post_preview_remote_datasource.dart';
+import '../../features/post_preview/data/datasources/post_preview_remote_datasource_impl.dart';
+import '../../features/post_preview/data/repositories/post_preview_repository_impl.dart';
+import '../../features/post_preview/domain/repositories/post_preview_repository.dart';
+import '../../features/post_preview/domain/usecase/upload_post_media_usecase.dart';
+import '../../features/post_preview/presentation/controllers/post_preview_notifier.dart';
+import '../../features/post_preview/presentation/controllers/post_preview_state.dart';
 import '../messages/app_message.dart';
 import '../messages/app_message_notifier.dart';
 import '../network/dio_client.dart';
@@ -85,9 +90,10 @@ final authRemoteDatasourceProvider = Provider<AuthRemoteDatasource>((ref) {
   return AuthRemoteDatasourceImpl(ref.watch(dioClientProvider));
 });
 
-final homeRemoteDatasourceProvider = Provider<HomeRemoteDatasource>((ref) {
-  return HomeRemoteDatasourceImpl(ref.watch(dioClientProvider));
-});
+final postPreviewRemoteDatasourceProvider =
+    Provider<PostPreviewRemoteDatasource>((ref) {
+      return PostPreviewRemoteDatasourceImpl(ref.watch(dioClientProvider));
+    });
 
 // ─── Onboarding Datasource ───────────────────────────────────────────────────
 
@@ -107,9 +113,9 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   );
 });
 
-final homeRepositoryProvider = Provider<HomeRepository>((ref) {
-  return HomeRepositoryImpl(
-    remoteDatasource: ref.watch(homeRemoteDatasourceProvider),
+final postPreviewRepositoryProvider = Provider<PostPreviewRepository>((ref) {
+  return PostPreviewRepositoryImpl(
+    remoteDatasource: ref.watch(postPreviewRemoteDatasourceProvider),
     networkInfo: ref.watch(networkInfoProvider),
   );
 });
@@ -155,6 +161,10 @@ final checkPhoneAvailabilityUseCaseProvider =
       return CheckPhoneAvailabilityUseCase(ref.watch(authRepositoryProvider));
     });
 
+final getMeUseCaseProvider = Provider<GetMeUseCase>((ref) {
+  return GetMeUseCase(ref.watch(authRepositoryProvider));
+});
+
 final shouldShowOnboardingUseCaseProvider =
     Provider<ShouldShowOnboardingUseCase>((ref) {
       return ShouldShowOnboardingUseCase(
@@ -168,9 +178,15 @@ final completeOnboardingUseCaseProvider = Provider<CompleteOnboardingUseCase>((
   return CompleteOnboardingUseCase(ref.watch(onboardingRepositoryProvider));
 });
 
-final uploadPostMediaUseCaseProvider = Provider<UploadPostMediaUseCase>((ref) {
-  return UploadPostMediaUseCase(ref.watch(homeRepositoryProvider));
-});
+final meProfileProvider =
+    StateNotifierProvider<MeProfileNotifier, AsyncValue<UserProfile?>>((ref) {
+      return MeProfileNotifier(ref.watch(getMeUseCaseProvider));
+    });
+
+final postPreviewUploadPostMediaUseCaseProvider =
+    Provider<UploadPostMediaUseCase>((ref) {
+      return UploadPostMediaUseCase(ref.watch(postPreviewRepositoryProvider));
+    });
 
 // ─── Auth Controller ──────────────────────────────────────────────────────────
 
@@ -179,8 +195,10 @@ final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
 ) {
   return AuthNotifier(
     ref.watch(loginUseCaseProvider),
+    ref.watch(getMeUseCaseProvider),
     ref.watch(registerUseCaseProvider),
     ref.watch(logoutUseCaseProvider),
+    ref.watch(meProfileProvider.notifier),
     ref.watch(appMessageProvider.notifier),
   );
 });
@@ -196,8 +214,15 @@ final onboardingNotifierProvider =
 final homeNotifierProvider = StateNotifierProvider<HomeNotifier, HomeState>((
   ref,
 ) {
-  return HomeNotifier(
-    ref.watch(uploadPostMediaUseCaseProvider),
-    ref.watch(appMessageProvider.notifier),
-  );
+  return HomeNotifier();
 });
+
+final postPreviewNotifierProvider =
+    StateNotifierProvider.autoDispose<PostPreviewNotifier, PostPreviewState>((
+      ref,
+    ) {
+      return PostPreviewNotifier(
+        ref.watch(postPreviewUploadPostMediaUseCaseProvider),
+        ref.watch(appMessageProvider.notifier),
+      );
+    });

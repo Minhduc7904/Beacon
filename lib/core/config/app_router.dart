@@ -10,6 +10,7 @@ import '../../features/auth/presentation/pages/register/register_page_password.d
 import '../../features/auth/presentation/pages/register/register_page_username.dart';
 import '../../features/home/presentation/pages/home.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
+import '../../features/post_preview/presentation/pages/post_preview_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 import '../../features/widgets/presentation/page/shared_widgets_page.dart';
 import '../observers/app_route_stack_observer.dart';
@@ -30,6 +31,32 @@ CustomTransitionPage<void> _buildSlidePage(GoRouterState state, Widget child) {
       ).chain(CurveTween(curve: Curves.easeOutCubic));
 
       return SlideTransition(position: animation.drive(tween), child: child);
+    },
+  );
+}
+
+CustomTransitionPage<void> _buildCenterScalePage(
+  GoRouterState state,
+  Widget child,
+) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final scale = Tween<double>(begin: 0.9, end: 1.0).chain(
+        CurveTween(curve: Curves.easeOutCubic),
+      );
+      final fade = Tween<double>(begin: 0.0, end: 1.0).chain(
+        CurveTween(curve: Curves.easeOut),
+      );
+
+      return FadeTransition(
+        opacity: animation.drive(fade),
+        child: ScaleTransition(
+          scale: animation.drive(scale),
+          child: child,
+        ),
+      );
     },
   );
 }
@@ -124,6 +151,21 @@ final appRouter = GoRouter(
       path: AppRoutes.home,
       name: AppRoutes.homeName,
       builder: (context, state) => const AuthGuard(child: HomePage()),
+    ),
+    GoRoute(
+      path: AppRoutes.postPreview,
+      name: AppRoutes.postPreviewName,
+      pageBuilder: (context, state) {
+        final filePath = state.extra;
+        if (filePath is! String || filePath.trim().isEmpty) {
+          return _buildSlidePage(state, const NotFoundPage());
+        }
+
+        return _buildCenterScalePage(
+          state,
+          AuthGuard(child: PostPreviewPage(filePath: filePath)),
+        );
+      },
     ),
     GoRoute(
       path: AppRoutes.logout,

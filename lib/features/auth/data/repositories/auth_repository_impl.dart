@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/auth_result.dart';
+import '../../domain/entities/user_profile.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_local_datasource.dart';
 import '../datasources/auth_remote_datasource.dart';
@@ -142,6 +143,20 @@ class AuthRepositoryImpl implements AuthRepository {
 
       await _localDatasource.clearTokens();
       return const Right('Đăng xuất thành công');
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserProfile>> getMe() async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      final profile = await _remoteDatasource.getMe();
+      return Right(profile);
     } on Exception catch (e) {
       return Left(e.toFailure());
     }

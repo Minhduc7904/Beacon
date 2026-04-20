@@ -1,25 +1,42 @@
-import '../../domain/entities/media_upload_result.dart';
+class HomeState {
+  final bool isCameraInitializing;
+  final bool isCapturing;
+  final String? cameraError;
+  final String? capturedImagePath;
 
-sealed class HomeState {
-  const HomeState();
-}
+  const HomeState({
+    required this.isCameraInitializing,
+    required this.isCapturing,
+    required this.cameraError,
+    required this.capturedImagePath,
+  });
 
-class HomeInitial extends HomeState {
-  const HomeInitial();
-}
+  const HomeState.initial()
+    : isCameraInitializing = true,
+      isCapturing = false,
+      cameraError = null,
+      capturedImagePath = null;
 
-class HomeUploading extends HomeState {
-  const HomeUploading();
-}
+  bool get hasCapturedImage =>
+      capturedImagePath != null && capturedImagePath!.isNotEmpty;
 
-class HomeUploadSuccess extends HomeState {
-  final MediaUploadResult media;
+  bool get showBusy => isCapturing;
 
-  const HomeUploadSuccess(this.media);
-}
-
-class HomeError extends HomeState {
-  final String message;
-
-  const HomeError(this.message);
+  HomeState copyWith({
+    bool? isCameraInitializing,
+    bool? isCapturing,
+    String? cameraError,
+    bool clearCameraError = false,
+    String? capturedImagePath,
+    bool clearCapturedImagePath = false,
+  }) {
+    return HomeState(
+      isCameraInitializing: isCameraInitializing ?? this.isCameraInitializing,
+      isCapturing: isCapturing ?? this.isCapturing,
+      cameraError: clearCameraError ? null : (cameraError ?? this.cameraError),
+      capturedImagePath: clearCapturedImagePath
+          ? null
+          : (capturedImagePath ?? this.capturedImagePath),
+    );
+  }
 }

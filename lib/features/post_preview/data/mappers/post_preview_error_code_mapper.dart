@@ -1,5 +1,5 @@
-class HomeErrorCodeMapper {
-  HomeErrorCodeMapper._();
+class PostPreviewErrorCodeMapper {
+  PostPreviewErrorCodeMapper._();
 
   static String? mapUploadCode(String code) {
     switch (code) {

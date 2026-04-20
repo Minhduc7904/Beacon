@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 
 import '../../../../core/errors/failures.dart';
 import '../entities/media_upload_result.dart';
-import '../repositories/home_repository.dart';
+import '../repositories/post_preview_repository.dart';
 
 class UploadPostMediaParams {
   final String filePath;
@@ -11,7 +11,7 @@ class UploadPostMediaParams {
 }
 
 class UploadPostMediaUseCase {
-  final HomeRepository _repository;
+  final PostPreviewRepository _repository;
 
   UploadPostMediaUseCase(this._repository);
 
