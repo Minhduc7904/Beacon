@@ -26,6 +26,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     this._messageNotifier,
   ) : super(const AuthInitial());
 
+  static const String _registerUsernameExistsMessage =
+      'Tên đăng nhập đã được sử dụng';
+
+  bool _isRegisterUsernameConflictMessage(String message) {
+    final normalized = message.trim().toLowerCase();
+    return normalized == _registerUsernameExistsMessage.toLowerCase() ||
+        normalized == 'username is already taken.';
+  }
+
   Future<void> login({
     required String username,
     required String password,
@@ -72,12 +81,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
               givenName: profile.givenName,
             );
 
-            final displayName = profile.fullName.isNotEmpty
-                ? profile.fullName
-                : authResult.user.fullName;
+            final apiSuccessMessage = authResult.message.trim();
+            final successMessage = apiSuccessMessage.isNotEmpty
+                ? apiSuccessMessage
+                : 'Đăng nhập thành công';
 
-            _messageNotifier.addSuccess('Chào mừng $displayName!');
-            state = AuthSuccess(user);
+            _messageNotifier.addSuccess(successMessage);
+            state = AuthSuccess(user, successMessage: successMessage);
           },
         );
       },
@@ -113,12 +123,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
           state = AuthValidationError(failure.message);
         } else {
           _messageNotifier.addError(failure.message);
+          if (_isRegisterUsernameConflictMessage(failure.message)) {
+            state = AuthValidationError(
+              failure.message,
+              usernameError: failure.message,
+            );
+            return;
+          }
+
           state = AuthError(failure.message);
         }
       },
       (authResult) {
-        _messageNotifier.addSuccess('Đăng ký thành công!');
-        state = AuthSuccess(authResult.user);
+        final apiSuccessMessage = authResult.message.trim();
+        final successMessage = apiSuccessMessage.isNotEmpty
+            ? apiSuccessMessage
+            : 'Đăng ký thành công!';
+        _messageNotifier.addSuccess(successMessage);
+        state = AuthSuccess(authResult.user, successMessage: successMessage);
       },
     );
   }

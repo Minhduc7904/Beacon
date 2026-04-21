@@ -90,7 +90,12 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
         codeMessageMapper: AuthErrorCodeMapper.mapLoginCode,
       );
 
-      return result.data!;
+      final data = result.data!;
+      return AuthResponseModel(
+        message: result.message,
+        tokens: data.tokens,
+        user: data.user,
+      );
     } on DioException catch (e) {
       ApiHandler.rethrowDioException(
         e,
@@ -109,26 +114,39 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     required String password,
     required String phoneNumber,
   }) async {
-    final response = await _dioClient.post(
-      ApiEndpoints.register,
-      data: {
-        'email': email,
-        'username': username,
-        'password': password,
-        'confirmPassword': confirmPassword,
-        'familyName': familyName,
-        'givenName': givenName,
-        'phoneNumber': phoneNumber,
-      },
-    );
+    try {
+      final response = await _dioClient.post(
+        ApiEndpoints.register,
+        data: {
+          'email': email,
+          'username': username,
+          'password': password,
+          'confirmPassword': confirmPassword,
+          'familyName': familyName,
+          'givenName': givenName,
+          'phoneNumber': phoneNumber,
+        },
+      );
 
-    final result = ApiHandler.handle<AuthResponseModel>(
-      response,
-      fromJsonT: (json) =>
-          AuthResponseModel.fromJson(json as Map<String, dynamic>),
-    );
+      final result = ApiHandler.handle<AuthResponseModel>(
+        response,
+        fromJsonT: (json) =>
+            AuthResponseModel.fromJson(json as Map<String, dynamic>),
+        codeMessageMapper: AuthErrorCodeMapper.mapRegisterCode,
+      );
 
-    return result.data!;
+      final data = result.data!;
+      return AuthResponseModel(
+        message: result.message,
+        tokens: data.tokens,
+        user: data.user,
+      );
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: AuthErrorCodeMapper.mapRegisterCode,
+      );
+    }
   }
 
   @override
@@ -172,6 +190,75 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       ApiHandler.rethrowDioException(
         e,
         codeMessageMapper: AuthErrorCodeMapper.mapMeCode,
+      );
+    }
+  }
+
+  @override
+  Future<UserProfileModel> updateMe({
+    String? familyName,
+    String? givenName,
+    String? email,
+    String? phoneNumber,
+  }) async {
+    try {
+      final payload = <String, dynamic>{
+        'familyName': familyName,
+        'givenName': givenName,
+        'email': email,
+        'phoneNumber': phoneNumber,
+      }..removeWhere((_, value) => value == null);
+
+      final response = await _dioClient.patch(
+        ApiEndpoints.userMe,
+        data: payload,
+      );
+
+      final result = ApiHandler.handle<UserProfileModel>(
+        response,
+        fromJsonT: (json) =>
+            UserProfileModel.fromJson(json as Map<String, dynamic>),
+        codeMessageMapper: AuthErrorCodeMapper.mapUpdateMeCode,
+      );
+
+      return result.data!;
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: AuthErrorCodeMapper.mapUpdateMeCode,
+      );
+    }
+  }
+
+  @override
+  Future<UserProfileModel> updateMyAvatar({required String filePath}) async {
+    try {
+      final fileName = filePath.split(RegExp(r'[\\/]')).last;
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          filePath,
+          filename: fileName.isEmpty ? 'avatar.jpg' : fileName,
+        ),
+      });
+
+      final response = await _dioClient.put(
+        ApiEndpoints.userMeAvatar,
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      final result = ApiHandler.handle<UserProfileModel>(
+        response,
+        fromJsonT: (json) =>
+            UserProfileModel.fromJson(json as Map<String, dynamic>),
+        codeMessageMapper: AuthErrorCodeMapper.mapUpdateAvatarCode,
+      );
+
+      return result.data!;
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: AuthErrorCodeMapper.mapUpdateAvatarCode,
       );
     }
   }

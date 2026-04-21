@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../entities/auth_result.dart';
 import '../repositories/auth_repository.dart';
+import '../../../../core/constants/validation_messages.dart';
 
 class LoginValidationFailure extends ValidationFailure {
   final String? usernameError;
@@ -45,17 +46,17 @@ class LoginUseCase {
   LoginValidationFailure? _validate(LoginParams params) {
     if (params.username.trim().isEmpty) {
       return const LoginValidationFailure(
-        usernameError: 'Tên đăng nhập không được để trống',
+        usernameError: ErrorMessages.usernameRequired,
       );
     }
     if (params.password.isEmpty) {
       return const LoginValidationFailure(
-        passwordError: 'Mật khẩu không được để trống',
+        passwordError: ErrorMessages.passwordRequired,
       );
     }
-    if (params.password.length < 6) {
+    if (params.password.length < 8) {
       return const LoginValidationFailure(
-        passwordError: 'Mật khẩu phải có ít nhất 6 ký tự',
+        passwordError: ErrorMessages.passwordTooShort,
       );
     }
     return null;

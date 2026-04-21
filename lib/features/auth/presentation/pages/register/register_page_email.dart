@@ -60,14 +60,8 @@ class _RegisterPageEmailState extends ConsumerState<RegisterPageEmail> {
           _isLoading = false;
         });
       },
-      (isAvailable) {
-        if (!isAvailable) {
-          setState(() {
-            _errorText = 'Email đã được sử dụng';
-            _isLoading = false;
-          });
-          return;
-        }
+      (normalizedEmail) {
+        final draft = RegisterDraftData(email: normalizedEmail);
 
         setState(() {
           _isLoading = false;
@@ -76,7 +70,7 @@ class _RegisterPageEmailState extends ConsumerState<RegisterPageEmail> {
         FocusScope.of(context).unfocus();
         context.pushNamed(
           AppRoutes.registerPhoneNumberName,
-          extra: RegisterDraftData(email: email),
+          extra: draft,
         );
       },
     );

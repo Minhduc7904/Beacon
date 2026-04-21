@@ -14,7 +14,9 @@ class AuthLoading extends AuthState {
 
 class AuthSuccess extends AuthState {
   final User user;
-  const AuthSuccess(this.user);
+  final String successMessage;
+
+  const AuthSuccess(this.user, {this.successMessage = ''});
 }
 
 class AuthError extends AuthState {

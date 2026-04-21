@@ -75,6 +75,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await _localDatasource.saveRefreshToken(authResponse.tokens.refreshToken);
 
       final result = AuthResult(
+        message: authResponse.message,
         tokens: authResponse.tokens,
         user: authResponse.user,
       );
@@ -114,6 +115,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await _localDatasource.saveRefreshToken(authResponse.tokens.refreshToken);
 
       final result = AuthResult(
+        message: authResponse.message,
         tokens: authResponse.tokens,
         user: authResponse.user,
       );
@@ -156,6 +158,48 @@ class AuthRepositoryImpl implements AuthRepository {
 
     try {
       final profile = await _remoteDatasource.getMe();
+      return Right(profile);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserProfile>> updateMe({
+    String? familyName,
+    String? givenName,
+    String? email,
+    String? phoneNumber,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      final profile = await _remoteDatasource.updateMe(
+        familyName: familyName,
+        givenName: givenName,
+        email: email,
+        phoneNumber: phoneNumber,
+      );
+      return Right(profile);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserProfile>> updateMyAvatar({
+    required String filePath,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      final profile = await _remoteDatasource.updateMyAvatar(
+        filePath: filePath,
+      );
       return Right(profile);
     } on Exception catch (e) {
       return Left(e.toFailure());

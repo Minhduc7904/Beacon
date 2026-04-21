@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/auth/domain/entities/user_profile.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/logout_page.dart';
+import '../../features/auth/presentation/pages/profile/edit_profile_page.dart';
+import '../../features/auth/presentation/pages/profile/profile_page.dart';
 import '../../features/auth/presentation/pages/register/register_draft_data.dart';
 import '../../features/auth/presentation/pages/register/register_page_email.dart';
 import '../../features/auth/presentation/pages/register/register_page_name.dart';
@@ -20,9 +23,25 @@ import 'app_routes.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
+String _resolvePageName(GoRouterState state) {
+  final routeName = state.name?.trim();
+  if (routeName != null && routeName.isNotEmpty) {
+    return routeName;
+  }
+
+  final path = state.uri.path.trim();
+  if (path.isNotEmpty) {
+    return path;
+  }
+
+  return state.uri.toString();
+}
+
 CustomTransitionPage<void> _buildSlidePage(GoRouterState state, Widget child) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
+    name: _resolvePageName(state),
+    arguments: state.extra,
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       final tween = Tween<Offset>(
@@ -41,21 +60,22 @@ CustomTransitionPage<void> _buildCenterScalePage(
 ) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
+    name: _resolvePageName(state),
+    arguments: state.extra,
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      final scale = Tween<double>(begin: 0.9, end: 1.0).chain(
-        CurveTween(curve: Curves.easeOutCubic),
-      );
-      final fade = Tween<double>(begin: 0.0, end: 1.0).chain(
-        CurveTween(curve: Curves.easeOut),
-      );
+      final scale = Tween<double>(
+        begin: 0.9,
+        end: 1.0,
+      ).chain(CurveTween(curve: Curves.easeOutCubic));
+      final fade = Tween<double>(
+        begin: 0.0,
+        end: 1.0,
+      ).chain(CurveTween(curve: Curves.easeOut));
 
       return FadeTransition(
         opacity: animation.drive(fade),
-        child: ScaleTransition(
-          scale: animation.drive(scale),
-          child: child,
-        ),
+        child: ScaleTransition(scale: animation.drive(scale), child: child),
       );
     },
   );
@@ -81,8 +101,30 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.login,
       name: AppRoutes.loginName,
-      pageBuilder: (context, state) =>
-          _buildSlidePage(state, const LoginPage()),
+      pageBuilder: (context, state) {
+        LoginAutoFillData? autoFillData;
+        final extra = state.extra;
+        if (extra is Map<String, dynamic>) {
+          final username = extra['username'];
+          final password = extra['password'];
+          final autoSubmit = extra['autoSubmit'];
+
+          if (username is String &&
+              password is String &&
+              username.trim().isNotEmpty) {
+            autoFillData = LoginAutoFillData(
+              username: username,
+              password: password,
+              autoSubmit: autoSubmit == true,
+            );
+          }
+        }
+
+        return _buildSlidePage(
+          state,
+          LoginPage(autoFillData: autoFillData),
+        );
+      },
     ),
     GoRoute(
       path: AppRoutes.register,
@@ -150,14 +192,57 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.home,
       name: AppRoutes.homeName,
-      builder: (context, state) => const AuthGuard(child: HomePage()),
+      builder: (context, state) {
+        var autoCaptureOnOpen = false;
+        final extra = state.extra;
+
+        if (extra is Map<String, dynamic>) {
+          autoCaptureOnOpen = extra['autoCaptureOnOpen'] == true;
+        }
+
+        return AuthGuard(
+          child: HomePage(autoCaptureOnOpen: autoCaptureOnOpen),
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.profile,
+      name: AppRoutes.profileName,
+      pageBuilder: (context, state) =>
+          _buildSlidePage(state, const AuthGuard(child: ProfilePage())),
+    ),
+    GoRoute(
+      path: AppRoutes.editProfile,
+      name: AppRoutes.editProfileName,
+      pageBuilder: (context, state) {
+        final profile = state.extra;
+        if (profile is! UserProfile) {
+          return _buildSlidePage(state, const NotFoundPage());
+        }
+
+        return _buildSlidePage(
+          state,
+          AuthGuard(child: EditProfilePage(profile: profile)),
+        );
+      },
     ),
     GoRoute(
       path: AppRoutes.postPreview,
       name: AppRoutes.postPreviewName,
       pageBuilder: (context, state) {
-        final filePath = state.extra;
-        if (filePath is! String || filePath.trim().isEmpty) {
+        String? filePath;
+
+        final extra = state.extra;
+        if (extra is String) {
+          filePath = extra;
+        } else if (extra is Map<String, dynamic>) {
+          final path = extra['filePath'];
+          if (path is String) {
+            filePath = path;
+          }
+        }
+
+        if (filePath == null || filePath.trim().isEmpty) {
           return _buildSlidePage(state, const NotFoundPage());
         }
 

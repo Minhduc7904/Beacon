@@ -34,4 +34,15 @@ abstract class AuthRemoteDatasource {
 
   /// Lấy profile người dùng hiện tại từ access token.
   Future<UserProfileModel> getMe();
+
+  /// Cập nhật thông tin profile người dùng hiện tại.
+  Future<UserProfileModel> updateMe({
+    String? familyName,
+    String? givenName,
+    String? email,
+    String? phoneNumber,
+  });
+
+  /// Cập nhật avatar người dùng bằng file ảnh.
+  Future<UserProfileModel> updateMyAvatar({required String filePath});
 }

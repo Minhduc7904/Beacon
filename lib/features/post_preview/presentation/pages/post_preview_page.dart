@@ -10,7 +10,10 @@ import '../widgets/post_preview_send_button.dart';
 import '../widgets/post_preview_status_message.dart';
 
 class PostPreviewPage extends ConsumerWidget {
-  const PostPreviewPage({super.key, required this.filePath});
+  const PostPreviewPage({
+    super.key,
+    required this.filePath,
+  });
 
   final String filePath;
 
@@ -31,19 +34,19 @@ class PostPreviewPage extends ConsumerWidget {
                 const Spacer(),
                 const PostPreviewImageBox(),
                 const SizedBox(height: 24),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: SizedBox(
                     width: double.infinity,
                     height: 80,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        Positioned(
+                        const Positioned(
                           left: 0,
                           child: PostPreviewCloseButton(),
                         ),
-                        PostPreviewSendButton(),
+                        const PostPreviewSendButton(),
                       ],
                     ),
                   ),

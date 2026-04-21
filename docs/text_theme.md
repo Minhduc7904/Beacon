@@ -77,7 +77,7 @@ height = lineHeightPx / fontSize
 
 ```dart
 Text(
-  'Dashboard',
+  'Home',
   style: Theme.of(context).textTheme.title1,
 )
 ```

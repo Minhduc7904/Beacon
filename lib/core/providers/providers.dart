@@ -14,10 +14,14 @@ import '../../features/auth/domain/usecase/register_usecase.dart';
 import '../../features/auth/domain/usecase/check_email_availability_usecase.dart';
 import '../../features/auth/domain/usecase/check_phone_availability_usecase.dart';
 import '../../features/auth/domain/usecase/get_me_usecase.dart';
+import '../../features/auth/domain/usecase/update_me_usecase.dart';
+import '../../features/auth/domain/usecase/update_my_avatar_usecase.dart';
 import '../../features/auth/domain/entities/user_profile.dart';
 import '../../features/auth/presentation/controllers/auth_notifier.dart';
 import '../../features/auth/presentation/controllers/auth_state.dart';
 import '../../features/auth/presentation/controllers/me_profile_notifier.dart';
+import '../../features/auth/presentation/controllers/profile_notifier.dart';
+import '../../features/auth/presentation/controllers/profile_state.dart';
 import '../../features/home/presentation/controllers/home_notifier.dart';
 import '../../features/home/presentation/controllers/home_state.dart';
 import '../../features/onboarding/data/datasources/onboarding_local_datasource.dart';
@@ -165,6 +169,14 @@ final getMeUseCaseProvider = Provider<GetMeUseCase>((ref) {
   return GetMeUseCase(ref.watch(authRepositoryProvider));
 });
 
+final updateMeUseCaseProvider = Provider<UpdateMeUseCase>((ref) {
+  return UpdateMeUseCase(ref.watch(authRepositoryProvider));
+});
+
+final updateMyAvatarUseCaseProvider = Provider<UpdateMyAvatarUseCase>((ref) {
+  return UpdateMyAvatarUseCase(ref.watch(authRepositoryProvider));
+});
+
 final shouldShowOnboardingUseCaseProvider =
     Provider<ShouldShowOnboardingUseCase>((ref) {
       return ShouldShowOnboardingUseCase(
@@ -181,6 +193,17 @@ final completeOnboardingUseCaseProvider = Provider<CompleteOnboardingUseCase>((
 final meProfileProvider =
     StateNotifierProvider<MeProfileNotifier, AsyncValue<UserProfile?>>((ref) {
       return MeProfileNotifier(ref.watch(getMeUseCaseProvider));
+    });
+
+final profileNotifierProvider =
+    StateNotifierProvider.autoDispose<ProfileNotifier, ProfileState>((ref) {
+      return ProfileNotifier(
+        ref.watch(getMeUseCaseProvider),
+        ref.watch(updateMeUseCaseProvider),
+        ref.watch(updateMyAvatarUseCaseProvider),
+        ref.watch(meProfileProvider.notifier),
+        ref.watch(appMessageProvider.notifier),
+      );
     });
 
 final postPreviewUploadPostMediaUseCaseProvider =

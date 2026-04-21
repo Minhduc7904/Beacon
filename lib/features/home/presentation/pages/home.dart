@@ -4,12 +4,18 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/app_routes.dart';
 import '../../../../core/providers/providers.dart';
+import '../../../../core/widgets/image/user_avatar.dart';
 import '../../../../core/widgets/layout/screen_layout.dart';
 import '../widgets/home_action_button.dart';
 import '../widgets/home_camera_box.dart';
 
 class HomePage extends ConsumerStatefulWidget {
-  const HomePage({super.key});
+  const HomePage({
+    super.key,
+    this.autoCaptureOnOpen = false,
+  });
+
+  final bool autoCaptureOnOpen;
 
   @override
   ConsumerState<HomePage> createState() => _HomePageState();
@@ -17,6 +23,8 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage>
     with WidgetsBindingObserver {
+  bool _didAutoCapture = false;
+
   @override
   void initState() {
     super.initState();
@@ -25,6 +33,12 @@ class _HomePageState extends ConsumerState<HomePage>
       if (!mounted) {
         return;
       }
+
+      final profile = ref.read(meProfileProvider).valueOrNull;
+      if (profile == null) {
+        ref.read(meProfileProvider.notifier).fetchProfile();
+      }
+
       ref.read(homeNotifierProvider.notifier).initializeCamera();
     });
   }
@@ -43,6 +57,8 @@ class _HomePageState extends ConsumerState<HomePage>
 
   @override
   Widget build(BuildContext context) {
+    final profile = ref.watch(meProfileProvider).valueOrNull;
+
     ref.listen(homeNotifierProvider, (previous, next) {
       final previousPath = previous?.capturedImagePath;
       final nextPath = next.capturedImagePath;
@@ -56,17 +72,64 @@ class _HomePageState extends ConsumerState<HomePage>
           return;
         }
 
-        await context.pushNamed(AppRoutes.postPreviewName, extra: nextPath);
+        await context.pushNamed(
+          AppRoutes.postPreviewName,
+          extra: <String, dynamic>{
+            'filePath': nextPath,
+          },
+        );
         if (!mounted) {
           return;
         }
 
         ref.read(homeNotifierProvider.notifier).clearCapturedImage();
       });
+
+      if (!widget.autoCaptureOnOpen || _didAutoCapture) {
+        return;
+      }
+
+      final controller = ref.read(homeNotifierProvider.notifier).cameraController;
+      final canAutoCapture =
+          controller != null &&
+          controller.value.isInitialized &&
+          !next.isCameraInitializing &&
+          !next.isCapturing &&
+          !next.hasCapturedImage;
+
+      if (!canAutoCapture) {
+        return;
+      }
+
+      _didAutoCapture = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+
+        ref.read(homeNotifierProvider.notifier).capturePhoto(
+              minimumPublishDelay: const Duration(milliseconds: 300),
+            );
+      });
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Home')),
+      appBar: AppBar(
+        title: const Text('Home'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: () => context.pushNamed(AppRoutes.profileName),
+              child: UserAvatar(
+                avatarUrl: profile?.avatarUrl,
+                givenName: profile?.givenName,
+                size: 34,
+              ),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: AppScreenLayout(
           padding: const EdgeInsets.symmetric(vertical: 20),

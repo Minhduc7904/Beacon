@@ -1,10 +1,16 @@
+import '../../../../core/constants/api_error_codes.dart';
+import '../../../../core/constants/validation_messages.dart';
+
 class AuthErrorCodeMapper {
   AuthErrorCodeMapper._();
 
+  static const String registerUsernameExistsMessage =
+      ErrorMessages.registerUsernameExists;
+
   static String? mapCheckPhoneCode(String code) {
     switch (code) {
-      case 'VALIDATION_ERROR':
-        return 'Số điện thoại để trống hoặc sai định dạng';
+      case ApiErrorCodes.validationError:
+        return ErrorMessages.checkPhoneValidationError;
       default:
         return null;
     }
@@ -12,8 +18,8 @@ class AuthErrorCodeMapper {
 
   static String? mapCheckEmailCode(String code) {
     switch (code) {
-      case 'VALIDATION_ERROR':
-        return 'Email để trống hoặc sai định dạng';
+      case ApiErrorCodes.validationError:
+        return ErrorMessages.checkEmailValidationError;
       default:
         return null;
     }
@@ -21,23 +27,66 @@ class AuthErrorCodeMapper {
 
   static String? mapLoginCode(String code) {
     switch (code) {
-      case 'VALIDATION_ERROR':
-        return 'Username hoặc password để trống hoặc vượt quá độ dài cho phép';
-      case 'INVALID_CREDENTIALS':
-        return 'Tên đăng nhập hoặc tài khoản không đúng';
-      case 'ACCOUNT_INACTIVE':
-        return 'Tài khoản đã bị vô hiệu hóa';
+      case ApiErrorCodes.validationError:
+        return ErrorMessages.loginValidationError;
+      case ApiErrorCodes.invalidCredentials:
+        return ErrorMessages.loginInvalidCredentials;
+      case ApiErrorCodes.accountInactive:
+        return ErrorMessages.accountInactive;
       default:
         return null;
     }
   }
 
+  static String mapRegisterCode(String code) {
+    switch (code) {
+      case ApiErrorCodes.validationError:
+        return ErrorMessages.registerValidationError;
+      case ApiErrorCodes.usernameAlreadyExists:
+        return registerUsernameExistsMessage;
+      case ApiErrorCodes.emailAlreadyExists:
+        return ErrorMessages.registerEmailExists;
+      case ApiErrorCodes.phoneAlreadyExists:
+        return ErrorMessages.registerPhoneExists;
+      default:
+        return ErrorMessages.registerFailedFallback;
+    }
+  }
+
   static String? mapMeCode(String code) {
     switch (code) {
-      case 'UNAUTHORIZED':
-        return 'Phiên đăng nhập đã hết hạn';
-      case 'USER_NOT_FOUND':
-        return 'Không tìm thấy người dùng';
+      case ApiErrorCodes.unauthorized:
+        return ErrorMessages.unauthorized;
+      case ApiErrorCodes.userNotFound:
+        return ErrorMessages.userNotFound;
+      default:
+        return null;
+    }
+  }
+
+  static String? mapUpdateMeCode(String code) {
+    switch (code) {
+      case ApiErrorCodes.validationError:
+        return ErrorMessages.updateMeValidationError;
+      case ApiErrorCodes.userNotFound:
+        return ErrorMessages.userNotFound;
+      case ApiErrorCodes.emailAlreadyInUse:
+        return ErrorMessages.updateMeEmailAlreadyInUse;
+      case ApiErrorCodes.phoneAlreadyInUse:
+        return ErrorMessages.updateMePhoneAlreadyInUse;
+      default:
+        return null;
+    }
+  }
+
+  static String? mapUpdateAvatarCode(String code) {
+    switch (code) {
+      case ApiErrorCodes.validationError:
+        return ErrorMessages.updateAvatarValidationError;
+      case ApiErrorCodes.userNotFound:
+        return ErrorMessages.userNotFound;
+      case ApiErrorCodes.uploadFailed:
+        return ErrorMessages.updateAvatarUploadFailed;
       default:
         return null;
     }
