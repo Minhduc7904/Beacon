@@ -11,7 +11,8 @@ import '../../features/auth/presentation/pages/register/register_page_name.dart'
 import '../../features/auth/presentation/pages/register/register_page_phone_number.dart';
 import '../../features/auth/presentation/pages/register/register_page_password.dart';
 import '../../features/auth/presentation/pages/register/register_page_username.dart';
-import '../../features/home/presentation/pages/home.dart';
+import '../../features/home/presentation/pages/camera_screen.dart';
+import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/post_preview/presentation/pages/post_preview_page.dart';
 import '../../features/safety/presentation/pages/safety_settings_page.dart';
@@ -121,10 +122,7 @@ final appRouter = GoRouter(
           }
         }
 
-        return _buildSlidePage(
-          state,
-          LoginPage(autoFillData: autoFillData),
-        );
+        return _buildSlidePage(state, LoginPage(autoFillData: autoFillData));
       },
     ),
     GoRoute(
@@ -201,8 +199,22 @@ final appRouter = GoRouter(
           autoCaptureOnOpen = extra['autoCaptureOnOpen'] == true;
         }
 
+        return AuthGuard(child: HomePage(autoCaptureOnOpen: autoCaptureOnOpen));
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.cameraScreen,
+      name: AppRoutes.cameraScreenName,
+      builder: (context, state) {
+        var autoCaptureOnOpen = false;
+        final extra = state.extra;
+
+        if (extra is Map<String, dynamic>) {
+          autoCaptureOnOpen = extra['autoCaptureOnOpen'] == true;
+        }
+
         return AuthGuard(
-          child: HomePage(autoCaptureOnOpen: autoCaptureOnOpen),
+          child: CameraScreen(autoCaptureOnOpen: autoCaptureOnOpen),
         );
       },
     ),

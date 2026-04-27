@@ -24,4 +24,8 @@ class ApiErrorCodes {
   static const String invalidFileType = 'INVALID_FILE_TYPE';
   static const String fileTooLarge = 'FILE_TOO_LARGE';
   static const String uploadFailed = 'UPLOAD_FAILED';
+
+  // Check-in
+  static const String mediaNotFound = 'MEDIA_NOT_FOUND';
+  static const String alreadyCheckedIn = 'ALREADY_CHECKED_IN';
 }

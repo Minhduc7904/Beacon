@@ -58,6 +58,10 @@ class ErrorMessages {
   static const String postMediaUploadFailed =
       'Upload thất bại. Vui lòng thử lại';
 
+  static const String checkinValidationError = 'Dữ liệu check-in không hợp lệ';
+  static const String checkinMediaNotFound = 'Không tìm thấy ảnh đính kèm';
+  static const String checkinAlreadyCheckedIn = 'Bạn đã check-in hôm nay rồi';
+
   static const String safetySettingsValidationError =
       'Dữ liệu cài đặt an toàn không hợp lệ';
   static const String safetyDeadlineInvalidFormat =

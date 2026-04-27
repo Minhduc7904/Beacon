@@ -23,6 +23,14 @@ import '../../features/auth/presentation/controllers/auth_state.dart';
 import '../../features/auth/presentation/controllers/me_profile_notifier.dart';
 import '../../features/auth/presentation/controllers/profile_notifier.dart';
 import '../../features/auth/presentation/controllers/profile_state.dart';
+import '../../features/home/data/datasources/checkin_remote_datasource.dart';
+import '../../features/home/data/datasources/checkin_remote_datasource_impl.dart';
+import '../../features/home/data/repositories/checkin_repository_impl.dart';
+import '../../features/home/domain/repositories/checkin_repository.dart';
+import '../../features/home/domain/usecase/checkin_usecase.dart';
+import '../../features/home/domain/usecase/get_today_status_usecase.dart';
+import '../../features/home/presentation/controllers/home_checkin_notifier.dart';
+import '../../features/home/presentation/controllers/home_checkin_state.dart';
 import '../../features/home/presentation/controllers/home_notifier.dart';
 import '../../features/home/presentation/controllers/home_state.dart';
 import '../../features/onboarding/data/datasources/onboarding_local_datasource.dart';
@@ -118,6 +126,12 @@ final authRemoteDatasourceProvider = Provider<AuthRemoteDatasource>((ref) {
   return AuthRemoteDatasourceImpl(ref.watch(dioClientProvider));
 });
 
+final checkinRemoteDatasourceProvider = Provider<CheckinRemoteDatasource>((
+  ref,
+) {
+  return CheckinRemoteDatasourceImpl(ref.watch(dioClientProvider));
+});
+
 final postPreviewRemoteDatasourceProvider =
     Provider<PostPreviewRemoteDatasource>((ref) {
       return PostPreviewRemoteDatasourceImpl(ref.watch(dioClientProvider));
@@ -148,6 +162,13 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 final postPreviewRepositoryProvider = Provider<PostPreviewRepository>((ref) {
   return PostPreviewRepositoryImpl(
     remoteDatasource: ref.watch(postPreviewRemoteDatasourceProvider),
+    networkInfo: ref.watch(networkInfoProvider),
+  );
+});
+
+final checkinRepositoryProvider = Provider<CheckinRepository>((ref) {
+  return CheckinRepositoryImpl(
+    remoteDatasource: ref.watch(checkinRemoteDatasourceProvider),
     networkInfo: ref.watch(networkInfoProvider),
   );
 });
@@ -246,6 +267,14 @@ final postPreviewUploadPostMediaUseCaseProvider =
       return UploadPostMediaUseCase(ref.watch(postPreviewRepositoryProvider));
     });
 
+final checkinUseCaseProvider = Provider<CheckinUseCase>((ref) {
+  return CheckinUseCase(ref.watch(checkinRepositoryProvider));
+});
+
+final getTodayStatusUseCaseProvider = Provider<GetTodayStatusUseCase>((ref) {
+  return GetTodayStatusUseCase(ref.watch(checkinRepositoryProvider));
+});
+
 final getSafetySettingsUseCaseProvider = Provider<GetSafetySettingsUseCase>((
   ref,
 ) {
@@ -285,6 +314,18 @@ final homeNotifierProvider = StateNotifierProvider<HomeNotifier, HomeState>((
 ) {
   return HomeNotifier();
 });
+
+final homeCheckinNotifierProvider =
+    StateNotifierProvider.autoDispose<HomeCheckinNotifier, HomeCheckinState>((
+      ref,
+    ) {
+      return HomeCheckinNotifier(
+        ref.watch(getTodayStatusUseCaseProvider),
+        ref.watch(checkinUseCaseProvider),
+        ref.watch(getSafetySettingsUseCaseProvider),
+        ref.watch(appMessageProvider.notifier),
+      );
+    });
 
 final postPreviewNotifierProvider =
     StateNotifierProvider.autoDispose<PostPreviewNotifier, PostPreviewState>((

@@ -19,6 +19,10 @@ class ApiEndpoints {
   static const String userMeAvatar = '/users/me/avatar';
   static const String safetySettings = '/safety/settings';
 
+  // Check-in
+  static const String checkins = '/checkins';
+  static const String todayStatus = '/checkins/today-status';
+
   // Health
   static const String health = '/health';
   static const String healthLive = '/health/live';

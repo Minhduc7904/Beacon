@@ -9,19 +9,16 @@ import '../../../../core/widgets/layout/screen_layout.dart';
 import '../widgets/home_action_button.dart';
 import '../widgets/home_camera_box.dart';
 
-class HomePage extends ConsumerStatefulWidget {
-  const HomePage({
-    super.key,
-    this.autoCaptureOnOpen = false,
-  });
+class CameraScreen extends ConsumerStatefulWidget {
+  const CameraScreen({super.key, this.autoCaptureOnOpen = false});
 
   final bool autoCaptureOnOpen;
 
   @override
-  ConsumerState<HomePage> createState() => _HomePageState();
+  ConsumerState<CameraScreen> createState() => _CameraScreenState();
 }
 
-class _HomePageState extends ConsumerState<HomePage>
+class _CameraScreenState extends ConsumerState<CameraScreen>
     with WidgetsBindingObserver {
   bool _didAutoCapture = false;
 
@@ -74,9 +71,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
         await context.pushNamed(
           AppRoutes.postPreviewName,
-          extra: <String, dynamic>{
-            'filePath': nextPath,
-          },
+          extra: <String, dynamic>{'filePath': nextPath},
         );
         if (!mounted) {
           return;
@@ -89,7 +84,9 @@ class _HomePageState extends ConsumerState<HomePage>
         return;
       }
 
-      final controller = ref.read(homeNotifierProvider.notifier).cameraController;
+      final controller = ref
+          .read(homeNotifierProvider.notifier)
+          .cameraController;
       final canAutoCapture =
           controller != null &&
           controller.value.isInitialized &&
@@ -107,7 +104,9 @@ class _HomePageState extends ConsumerState<HomePage>
           return;
         }
 
-        ref.read(homeNotifierProvider.notifier).capturePhoto(
+        ref
+            .read(homeNotifierProvider.notifier)
+            .capturePhoto(
               minimumPublishDelay: const Duration(milliseconds: 300),
             );
       });
