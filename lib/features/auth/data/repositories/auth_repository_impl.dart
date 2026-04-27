@@ -73,6 +73,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
       await _localDatasource.saveAccessToken(authResponse.tokens.accessToken);
       await _localDatasource.saveRefreshToken(authResponse.tokens.refreshToken);
+      await _localDatasource.saveAccessTokenExpiresAt(
+        authResponse.tokens.accessTokenExpiresAt,
+      );
 
       final result = AuthResult(
         message: authResponse.message,
@@ -113,6 +116,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
       await _localDatasource.saveAccessToken(authResponse.tokens.accessToken);
       await _localDatasource.saveRefreshToken(authResponse.tokens.refreshToken);
+      await _localDatasource.saveAccessTokenExpiresAt(
+        authResponse.tokens.accessTokenExpiresAt,
+      );
 
       final result = AuthResult(
         message: authResponse.message,

@@ -57,4 +57,15 @@ class ErrorMessages {
       'File vượt quá dung lượng cho phép';
   static const String postMediaUploadFailed =
       'Upload thất bại. Vui lòng thử lại';
+
+  static const String safetySettingsValidationError =
+      'Dữ liệu cài đặt an toàn không hợp lệ';
+  static const String safetyDeadlineInvalidFormat =
+      'Giờ giới hạn phải đúng định dạng HH:mm';
+  static const String safetyGracePeriodOutOfRange =
+      'Thời gian gia hạn phải từ 0 đến 1440 phút';
+  static const String safetyReminderBeforeOutOfRange =
+      'Thời gian nhắc trước phải từ 0 đến 1440 phút';
+  static const String safetyAutoAlertDelayOutOfRange =
+      'Thời gian trì hoãn cảnh báo phải từ 0 đến 1440 phút';
 }

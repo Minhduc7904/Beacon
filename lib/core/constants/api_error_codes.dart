@@ -8,6 +8,7 @@ class ApiErrorCodes {
   static const String invalidCredentials = 'INVALID_CREDENTIALS';
   static const String accountInactive = 'ACCOUNT_INACTIVE';
   static const String unauthorized = 'UNAUTHORIZED';
+  static const String tokenInvalid = 'TOKEN_INVALID';
   static const String userNotFound = 'USER_NOT_FOUND';
 
   // Auth register conflicts

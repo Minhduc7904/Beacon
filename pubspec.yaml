@@ -41,6 +41,7 @@ dependencies:
 
   # Storage
   shared_preferences: ^2.3.4
+  flutter_secure_storage: ^9.2.2
 
   # Functional programming
   dartz: ^0.10.1

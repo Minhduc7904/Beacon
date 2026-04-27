@@ -12,6 +12,7 @@ class AppRoutes {
   static const String homeName = 'home';
   static const String profileName = 'profile';
   static const String editProfileName = 'edit-profile';
+  static const String safetySettingsName = 'safety-settings';
   static const String postPreviewName = 'post-preview';
   static const String logoutName = 'logout';
   static const String widgetsName = 'widgets';
@@ -27,6 +28,7 @@ class AppRoutes {
   static const String home = '/home';
   static const String profile = '/profile';
   static const String editProfile = '/profile/edit';
+  static const String safetySettings = '/profile/safety-settings';
   static const String postPreview = '/post-preview';
   static const String logout = '/logout';
   static const String widgets = '/widgets';
@@ -43,6 +45,7 @@ class AppRoutes {
     AppRouteItem(title: 'Home', path: home),
     AppRouteItem(title: 'Profile', path: profile),
     AppRouteItem(title: 'Edit Profile', path: editProfile),
+    AppRouteItem(title: 'Safety Settings', path: safetySettings),
     AppRouteItem(title: 'Post Preview', path: postPreview),
     AppRouteItem(title: 'Logout', path: logout),
     AppRouteItem(title: 'Widgets', path: widgets),
