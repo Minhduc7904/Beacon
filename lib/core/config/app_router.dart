@@ -14,6 +14,7 @@ import '../../features/auth/presentation/pages/register/register_page_username.d
 import '../../features/home/presentation/pages/home.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/post_preview/presentation/pages/post_preview_page.dart';
+import '../../features/safety/presentation/pages/safety_settings_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 import '../../features/widgets/presentation/page/shared_widgets_page.dart';
 import '../observers/app_route_stack_observer.dart';
@@ -225,6 +226,12 @@ final appRouter = GoRouter(
           AuthGuard(child: EditProfilePage(profile: profile)),
         );
       },
+    ),
+    GoRoute(
+      path: AppRoutes.safetySettings,
+      name: AppRoutes.safetySettingsName,
+      pageBuilder: (context, state) =>
+          _buildSlidePage(state, const AuthGuard(child: SafetySettingsPage())),
     ),
     GoRoute(
       path: AppRoutes.postPreview,

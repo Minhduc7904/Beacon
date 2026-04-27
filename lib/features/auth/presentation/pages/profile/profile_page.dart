@@ -67,7 +67,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: const Text('Hồ sơ'),
         leading: IconButton(
           onPressed: () => context.pop(),
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -104,41 +104,48 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         children: [
                           _ProfileMenuItem(
                             icon: Icons.person_outline_rounded,
-                            title: 'Edit Profile',
+                            title: 'Chỉnh sửa hồ sơ',
                             onTap: () => context.pushNamed(
                               AppRoutes.editProfileName,
                               extra: profile,
                             ),
                           ),
                           const SizedBox(height: 10),
+                          _ProfileMenuItem(
+                            icon: Icons.security_rounded,
+                            title: 'Cài đặt an toàn',
+                            onTap: () =>
+                                context.pushNamed(AppRoutes.safetySettingsName),
+                          ),
+                          const SizedBox(height: 10),
                           const _ProfileMenuItem(
                             icon: Icons.credit_card_rounded,
-                            title: 'Payment Method',
+                            title: 'Phương thức thanh toán',
                           ),
                           const SizedBox(height: 10),
                           const _ProfileMenuItem(
                             icon: Icons.language_rounded,
-                            title: 'Language',
+                            title: 'Ngôn ngữ',
                           ),
                           const SizedBox(height: 10),
                           const _ProfileMenuItem(
                             icon: Icons.history_rounded,
-                            title: 'Order History',
+                            title: 'Lịch sử đơn hàng',
                           ),
                           const SizedBox(height: 10),
                           const _ProfileMenuItem(
                             icon: Icons.group_add_rounded,
-                            title: 'Invite Friends',
+                            title: 'Mời bạn bè',
                           ),
                           const SizedBox(height: 10),
                           const _ProfileMenuItem(
                             icon: Icons.help_outline_rounded,
-                            title: 'Help Center',
+                            title: 'Trung tâm trợ giúp',
                           ),
                           const SizedBox(height: 10),
                           _ProfileMenuItem(
                             icon: Icons.logout_rounded,
-                            title: 'Logout',
+                            title: 'Đăng xuất',
                             isDestructive: true,
                             onTap: () => context.goNamed(AppRoutes.logoutName),
                           ),
@@ -307,7 +314,7 @@ class _ProfileErrorState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const AppText('Không thể tải thông tin profile'),
+          const AppText('Không thể tải thông tin hồ sơ'),
           const SizedBox(height: 12),
           FilledButton(onPressed: onRetry, child: const Text('Thử lại')),
         ],
