@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/validation_messages.dart';
 import '../../../../core/providers/providers.dart';
+import '../../../../core/utils/time_utils.dart';
 import '../../../../core/widgets/button/button.dart';
 import '../../../../core/widgets/input/input.dart';
 import '../../../../core/widgets/layout/screen_layout.dart';
@@ -87,7 +88,11 @@ class _SafetySettingsPageState extends ConsumerState<SafetySettingsPage> {
 
   void _hydrateFromSettings(SafetySettings settings) {
     setState(() {
-      _dailyDeadlineLocalTime = settings.dailyDeadlineLocalTime;
+      // 🔥 Convert UTC time from backend to Vietnam time for display
+      final vietnamDeadlineTime = TimeUtils.timeStringToVietnam(settings.dailyDeadlineLocalTime) ??
+          settings.dailyDeadlineLocalTime;
+      
+      _dailyDeadlineLocalTime = vietnamDeadlineTime;
       _isMonitoringEnabled = settings.isMonitoringEnabled;
       _isAutoAlertEnabled = settings.isAutoAlertEnabled;
       _gracePeriodController.text = settings.gracePeriodMinutes.toString();
@@ -159,11 +164,15 @@ class _SafetySettingsPageState extends ConsumerState<SafetySettingsPage> {
   }
 
   bool _hasChanges(SafetySettings settings) {
+    // 🔥 Convert backend UTC time to Vietnam time for comparison
+    final vietnamSettingsDeadline = TimeUtils.timeStringToVietnam(settings.dailyDeadlineLocalTime) ??
+        settings.dailyDeadlineLocalTime;
+    
     final grace = int.tryParse(_gracePeriodController.text.trim());
     final reminder = int.tryParse(_reminderBeforeController.text.trim());
     final autoAlert = int.tryParse(_autoAlertDelayController.text.trim());
 
-    return _dailyDeadlineLocalTime != settings.dailyDeadlineLocalTime ||
+    return _dailyDeadlineLocalTime != vietnamSettingsDeadline ||
         grace != settings.gracePeriodMinutes ||
         reminder != settings.reminderBeforeMinutes ||
         autoAlert != settings.autoAlertDelayMinutes ||
@@ -231,12 +240,16 @@ class _SafetySettingsPageState extends ConsumerState<SafetySettingsPage> {
       }
     }
 
+    // 🔥 Convert Vietnam time to UTC for backend
+    final vietnamSettingsDeadline = TimeUtils.timeStringToVietnam(currentSettings.dailyDeadlineLocalTime) ??
+        currentSettings.dailyDeadlineLocalTime;
+    final utcDeadlineTime = (_dailyDeadlineLocalTime != vietnamSettingsDeadline)
+        ? TimeUtils.timeStringToUtc(_dailyDeadlineLocalTime) ?? _dailyDeadlineLocalTime
+        : null;
+
     // Partial Update: Chỉ gửi những field có sự thay đổi (Truyền null cho field không đổi)
     final params = UpdateSafetySettingsParams(
-      dailyDeadlineLocalTime:
-          _dailyDeadlineLocalTime != currentSettings.dailyDeadlineLocalTime
-          ? _dailyDeadlineLocalTime
-          : null,
+      dailyDeadlineLocalTime: utcDeadlineTime,
 
       gracePeriodMinutes:
           (_isMonitoringEnabled &&
@@ -276,6 +289,9 @@ class _SafetySettingsPageState extends ConsumerState<SafetySettingsPage> {
           .read(safetySettingsNotifierProvider)
           .errorMessage;
       _applyValidationError(errorMessage);
+    } else if (mounted) {
+      // 🔥 Reload today status từ home notifier để cập nhật deadline mới
+      ref.read(homeCheckinNotifierProvider.notifier).load(forceRefresh: true);
     }
   }
 

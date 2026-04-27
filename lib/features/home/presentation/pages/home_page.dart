@@ -9,6 +9,9 @@ import '../../../../core/widgets/image/user_avatar.dart';
 import '../../../../core/widgets/layout/screen_layout.dart';
 import '../../../../core/widgets/text/text.dart';
 import '../../../../core/theme/text/app_text_theme.dart';
+import '../../../feed/presentation/controllers/feed_state.dart';
+import '../../../feed/presentation/pages/feed_page.dart';
+import '../../../feed/presentation/widgets/feed_post_card.dart';
 import '../controllers/home_checkin_state.dart';
 import '../widgets/home_countdown_bubble.dart';
 
@@ -21,12 +24,21 @@ class HomePage extends ConsumerStatefulWidget {
   ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends ConsumerState<HomePage> {
+class _HomePageState extends ConsumerState<HomePage>
+    with WidgetsBindingObserver {
   static const int _streakDays = 7;
+
+  /// 🔥 Track lifecycle to refresh when returning to this page
+  AppLifecycleState? _lastLifecycleState;
+
+  late final PageController _pageController;
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController();
+    WidgetsBinding.instance.addObserver(this);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -38,7 +50,34 @@ class _HomePageState extends ConsumerState<HomePage> {
       }
 
       ref.read(homeCheckinNotifierProvider.notifier).load();
+      ref.read(feedProvider.notifier).load();
     });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 🔥 Refresh data when app returns to resumed state (e.g., returning from another page)
+    if (_lastLifecycleState == AppLifecycleState.paused &&
+        state == AppLifecycleState.resumed &&
+        mounted) {
+      ref.read(homeCheckinNotifierProvider.notifier).load(forceRefresh: true);
+    }
+    _lastLifecycleState = state;
+  }
+
+  void _scrollToFeed() {
+    _pageController.animateToPage(
+      1,
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   @override
@@ -77,46 +116,159 @@ class _HomePageState extends ConsumerState<HomePage> {
               borderColor: colorScheme.outline,
               iconColor: colorScheme.onSurface,
               onPressed: () {
-                ref
-                    .read(appMessageProvider.notifier)
-                    .addInfo('Chat sẽ sớm ra mắt');
+                context.pushNamed(AppRoutes.messageListName);
               },
             ),
           ),
         ],
       ),
       body: SafeArea(
-        child: AppScreenLayout(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          child: Column(
-            children: [
-              Expanded(
-                child: Center(child: HomeCountdownBubble(state: state)),
-              ),
-              const SizedBox(height: 20),
-              _ActionRow(
-                isCheckingIn: state.isCheckingIn,
-                canCheckin: canCheckin,
-                onCheckin: canCheckin
-                    ? () => ref
-                          .read(homeCheckinNotifierProvider.notifier)
-                          .checkin()
-                    : null,
-                onMoodPressed: () {
-                  ref
-                      .read(appMessageProvider.notifier)
-                      .addInfo('Mood check-in sẽ sớm có');
-                },
-                onCameraPressed: () =>
-                    context.pushNamed(AppRoutes.cameraScreenName),
-              ),
-            ],
+        child: _buildBody(context, state, canCheckin, colorScheme),
+      ),
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    HomeCheckinState state,
+    bool canCheckin,
+    ColorScheme colorScheme,
+  ) {
+    final feedState = ref.watch(feedProvider);
+
+    // Home content (always page 0)
+    final homeContent = AppScreenLayout(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      child: Column(
+        children: [
+          Expanded(
+            child: Center(child: HomeCountdownBubble(state: state)),
           ),
+          const SizedBox(height: 20),
+          _ActionRow(
+            isCheckingIn: state.isCheckingIn,
+            canCheckin: canCheckin,
+            onCheckin: canCheckin
+                ? () => ref
+                      .read(homeCheckinNotifierProvider.notifier)
+                      .checkin()
+                : null,
+            onMoodPressed: () {
+              ref
+                  .read(appMessageProvider.notifier)
+                  .addInfo('Mood check-in sẽ sớm có');
+            },
+            onCameraPressed: () =>
+                context.pushNamed(AppRoutes.cameraScreenName),
+          ),
+          const SizedBox(height: 20),
+          _FeedIndicator(onTap: _scrollToFeed),
+        ],
+      ),
+    );
+
+    // Build the flat list: [home, post0, post1, ...]
+    final feedPosts = feedState.status == FeedStatus.loaded
+        ? feedState.posts
+        : <dynamic>[];
+    final pageCount = 1 + feedPosts.length;
+
+    return PageView.builder(
+      controller: _pageController,
+      scrollDirection: Axis.vertical,
+      itemCount: pageCount,
+      itemBuilder: (context, index) {
+        if (index == 0) return homeContent;
+
+        final post = feedPosts[index - 1];
+        return FeedPostCard(
+          post: post,
+          onReact: (postId, type) {
+            ref.read(feedProvider.notifier).toggleReaction(postId, type);
+          },
+        );
+      },
+    );
+  }
+}
+
+// ─── "Bảng tin" + chevron down ─────────────────────────────────────────────────
+
+class _FeedIndicator extends StatefulWidget {
+  const _FeedIndicator({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  State<_FeedIndicator> createState() => _FeedIndicatorState();
+}
+
+class _FeedIndicatorState extends State<_FeedIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _bounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+
+    _bounce = Tween<double>(begin: 0, end: 6).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppText(
+              'Bảng tin',
+              size: AppTextSize.small,
+              spacing: AppTextSpacing.tight,
+              weight: AppTextWeight.medium,
+              color: colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
+            const SizedBox(height: 2),
+            AnimatedBuilder(
+              animation: _bounce,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, _bounce.value),
+                  child: child,
+                );
+              },
+              child: Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 24,
+                color: colorScheme.onSurface.withValues(alpha: 0.45),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
+
+// ─── Existing private widgets ──────────────────────────────────────────────────
 
 class _StreakChip extends StatelessWidget {
   const _StreakChip({required this.days});
@@ -126,7 +278,6 @@ class _StreakChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final transparentSurface = colorScheme.surface.withValues(alpha: 0);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),

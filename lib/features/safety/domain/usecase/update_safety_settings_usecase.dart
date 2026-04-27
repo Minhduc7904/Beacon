@@ -7,6 +7,10 @@ import '../entities/safety_settings.dart';
 import '../repositories/safety_repository.dart';
 
 class UpdateSafetySettingsParams {
+  /// 🔥 Time in UTC format (HH:MM) - will be sent to backend as-is
+  /// 
+  /// UI converts Vietnam time → UTC time before creating this param
+  /// Example: "15:00" UTC (which displays as "22:00" Vietnam time)
   final String? dailyDeadlineLocalTime;
   final int? gracePeriodMinutes;
   final int? reminderBeforeMinutes;

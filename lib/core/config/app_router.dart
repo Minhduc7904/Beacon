@@ -13,6 +13,9 @@ import '../../features/auth/presentation/pages/register/register_page_password.d
 import '../../features/auth/presentation/pages/register/register_page_username.dart';
 import '../../features/home/presentation/pages/camera_screen.dart';
 import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/message/presentation/pages/message_list_page.dart';
+import '../../features/message/presentation/pages/chat_detail_page.dart';
+import '../../features/message/domain/entities/conversation.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/post_preview/presentation/pages/post_preview_page.dart';
 import '../../features/safety/presentation/pages/safety_settings_page.dart';
@@ -280,6 +283,27 @@ final appRouter = GoRouter(
       path: AppRoutes.widgets,
       name: AppRoutes.widgetsName,
       builder: (context, state) => const SharedWidgetsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.messageList,
+      name: AppRoutes.messageListName,
+      pageBuilder: (context, state) =>
+          _buildSlidePage(state, const AuthGuard(child: MessageListPage())),
+    ),
+    GoRoute(
+      path: AppRoutes.chatDetail,
+      name: AppRoutes.chatDetailName,
+      pageBuilder: (context, state) {
+        final conversation = state.extra;
+        if (conversation is! Conversation) {
+          return _buildSlidePage(state, const NotFoundPage());
+        }
+
+        return _buildSlidePage(
+          state,
+          AuthGuard(child: ChatDetailPage(conversation: conversation)),
+        );
+      },
     ),
   ],
 );

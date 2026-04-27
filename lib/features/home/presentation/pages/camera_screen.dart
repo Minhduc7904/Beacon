@@ -6,6 +6,7 @@ import '../../../../core/config/app_routes.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../core/widgets/image/user_avatar.dart';
 import '../../../../core/widgets/layout/screen_layout.dart';
+import '../controllers/home_notifier.dart';
 import '../widgets/home_action_button.dart';
 import '../widgets/home_camera_box.dart';
 
@@ -21,6 +22,9 @@ class CameraScreen extends ConsumerStatefulWidget {
 class _CameraScreenState extends ConsumerState<CameraScreen>
     with WidgetsBindingObserver {
   bool _didAutoCapture = false;
+  
+  /// 🔥 Store notifier reference to avoid using ref in dispose()
+  HomeNotifier? _homeNotifier;
 
   @override
   void initState() {
@@ -31,19 +35,23 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
         return;
       }
 
+      // 🔥 Capture notifier reference here (before dispose can happen)
+      _homeNotifier = ref.read(homeNotifierProvider.notifier);
+
       final profile = ref.read(meProfileProvider).valueOrNull;
       if (profile == null) {
         ref.read(meProfileProvider.notifier).fetchProfile();
       }
 
-      ref.read(homeNotifierProvider.notifier).initializeCamera();
+      _homeNotifier!.initializeCamera();
     });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    ref.read(homeNotifierProvider.notifier).disposeCamera();
+    // 🔥 Use stored notifier reference instead of ref.read()
+    _homeNotifier?.disposeCamera();
     super.dispose();
   }
 
