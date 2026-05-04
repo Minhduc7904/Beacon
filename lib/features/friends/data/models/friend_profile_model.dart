@@ -7,6 +7,7 @@ class FriendProfileModel extends FriendProfile {
     required super.username,
     required super.avatarUrl,
     required super.type,
+    super.friendshipStatus,
     required super.createdAtUtc,
     required super.messageGroupId,
   });
@@ -17,6 +18,7 @@ class FriendProfileModel extends FriendProfile {
       username: json['username']?.toString() ?? '',
       avatarUrl: json['avatarUrl']?.toString(),
       type: FriendTypeValue.fromValue(_toInt(json['type'])),
+      friendshipStatus: _toFriendshipStatus(json['friendshipStatus']),
       createdAtUtc: _toDate(json['createdAtUtc']),
       messageGroupId: json['messageGroupId']?.toString() ?? '',
     );
@@ -38,5 +40,15 @@ class FriendProfileModel extends FriendProfile {
       return value.toInt();
     }
     return int.tryParse(value?.toString() ?? '') ?? 2;
+  }
+
+  static int _toFriendshipStatus(dynamic value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 }

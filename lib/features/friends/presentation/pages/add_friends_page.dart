@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/providers.dart';
 import '../../../../core/widgets/input/input.dart';
+import '../../../friend_requests/presentation/widgets/received_friend_requests_section.dart';
 import '../../../friend_requests/presentation/widgets/send_friend_request_button.dart';
+import '../../../friend_requests/presentation/widgets/sent_friend_requests_section.dart';
 import '../../domain/entities/friend_profile.dart';
 
 class AddFriendsPage extends ConsumerStatefulWidget {
@@ -90,7 +92,7 @@ class _AddFriendsPageState extends ConsumerState<AddFriendsPage> {
       appBar: AppBar(title: const Text('Thêm bạn bè')),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
+        child: ListView(
           children: [
             Input(
               controller: _searchController,
@@ -111,6 +113,10 @@ class _AddFriendsPageState extends ConsumerState<AddFriendsPage> {
                 ),
               ),
             ],
+            const SizedBox(height: 12),
+            const ReceivedFriendRequestsSection(),
+            const SizedBox(height: 10),
+            const SentFriendRequestsSection(),
           ],
         ),
       ),
@@ -143,12 +149,51 @@ class _AddFriendsPageState extends ConsumerState<AddFriendsPage> {
         return ListTile(
           title: Text(friend.username),
           subtitle: Text(friend.userId),
-          trailing: SendFriendRequestButton(
-            key: ValueKey<String>(friend.userId),
-            receiverId: friend.userId,
-          ),
+          trailing: _buildTrailingAction(friend),
         );
       },
+    );
+  }
+
+  Widget _buildTrailingAction(FriendProfile friend) {
+    switch (friend.friendshipStatus) {
+      case 0:
+        return SendFriendRequestButton(
+          key: ValueKey<String>('add-${friend.userId}'),
+          receiverId: friend.userId,
+        );
+      case 1:
+        return const _FriendStatusBadge(label: 'Bạn bè');
+      case 2:
+        return const _FriendStatusBadge(label: 'Đã gửi lời mời');
+      case 3:
+        return const _FriendStatusBadge(label: 'Đã nhận lời mời');
+      default:
+        return const _FriendStatusBadge(label: 'Không khả dụng');
+    }
+  }
+}
+
+class _FriendStatusBadge extends StatelessWidget {
+  const _FriendStatusBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+      ),
     );
   }
 }

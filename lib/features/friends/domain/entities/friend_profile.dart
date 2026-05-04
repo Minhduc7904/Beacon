@@ -5,6 +5,7 @@ class FriendProfile {
   final String username;
   final String? avatarUrl;
   final FriendType type;
+  final int friendshipStatus;
   final DateTime? createdAtUtc;
   final String messageGroupId;
 
@@ -13,6 +14,7 @@ class FriendProfile {
     required this.username,
     required this.avatarUrl,
     required this.type,
+    this.friendshipStatus = 1,
     required this.createdAtUtc,
     required this.messageGroupId,
   });
