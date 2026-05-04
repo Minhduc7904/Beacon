@@ -66,29 +66,34 @@ class _CountdownBubbleState extends State<CountdownBubble>
 
     return TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(begin: minScale, end: maxScale)
-            .chain(CurveTween(curve: Curves.easeOutCubic)),
+        tween: Tween(
+          begin: minScale,
+          end: maxScale,
+        ).chain(CurveTween(curve: Curves.easeOutCubic)),
         weight: 14,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: maxScale, end: minScale)
-            .chain(CurveTween(curve: Curves.easeInCubic)),
+        tween: Tween(
+          begin: maxScale,
+          end: minScale,
+        ).chain(CurveTween(curve: Curves.easeInCubic)),
         weight: 10,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: minScale, end: secondPeak)
-            .chain(CurveTween(curve: Curves.easeOutCubic)),
+        tween: Tween(
+          begin: minScale,
+          end: secondPeak,
+        ).chain(CurveTween(curve: Curves.easeOutCubic)),
         weight: 8,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: secondPeak, end: minScale)
-            .chain(CurveTween(curve: Curves.easeInCubic)),
+        tween: Tween(
+          begin: secondPeak,
+          end: minScale,
+        ).chain(CurveTween(curve: Curves.easeInCubic)),
         weight: 12,
       ),
-      TweenSequenceItem(
-        tween: ConstantTween<double>(minScale),
-        weight: 56,
-      ),
+      TweenSequenceItem(tween: ConstantTween<double>(minScale), weight: 56),
     ]).animate(_controller);
   }
 
