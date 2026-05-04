@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/text/app_text_theme.dart';
-import '../../../../core/widgets/text/text.dart';
+import '../../../../../core/theme/text/app_text_theme.dart';
+import '../../../../../core/widgets/text/text.dart';
 
 /// Empty state illustration for the conversation list.
 class ConversationEmptyState extends StatelessWidget {

@@ -8,8 +8,8 @@ import '../../../../core/widgets/text/text.dart';
 import '../../domain/entities/conversation.dart';
 import '../controllers/chat_detail_notifier.dart';
 import '../controllers/chat_detail_state.dart';
-import '../widgets/chat_message_list.dart';
-import '../widgets/message_input_bar.dart';
+import '../widgets/detail/chat_message_list.dart';
+import '../widgets/detail/message_input_bar.dart';
 
 /// Family provider — one notifier per conversation ID.
 final chatDetailProvider = StateNotifierProvider.autoDispose

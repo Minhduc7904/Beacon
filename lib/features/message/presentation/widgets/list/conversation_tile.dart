@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/text/app_text_theme.dart';
-import '../../../../core/widgets/image/user_avatar.dart';
-import '../../../../core/widgets/text/text.dart';
-import '../../domain/entities/conversation.dart';
+import '../../../../../core/theme/text/app_text_theme.dart';
+import '../../../../../core/widgets/image/user_avatar.dart';
+import '../../../../../core/widgets/text/text.dart';
+import '../../../domain/entities/conversation.dart';
 
 /// A single conversation row in the conversation list.
 class ConversationTile extends StatelessWidget {

@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/providers/providers.dart';
-import '../../../../core/theme/color/app_colors.dart';
+import '../../../../../core/providers/providers.dart';
+import '../../../../../core/theme/color/app_colors.dart';
 
-class HomeActionButton extends ConsumerStatefulWidget {
-  const HomeActionButton({super.key});
+class ActionButton extends ConsumerStatefulWidget {
+  const ActionButton({super.key});
 
   @override
-  ConsumerState<HomeActionButton> createState() =>
-      _HomeActionButtonState();
+  ConsumerState<ActionButton> createState() =>
+      _ActionButtonState();
 }
 
-class _HomeActionButtonState extends ConsumerState<HomeActionButton>
+class _ActionButtonState extends ConsumerState<ActionButton>
     with SingleTickerProviderStateMixin {
   static const Duration _minimumLoadingDuration =
       Duration(milliseconds: 1000);

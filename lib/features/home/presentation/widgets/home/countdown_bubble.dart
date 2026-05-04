@@ -2,23 +2,23 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/color/app_colors.dart';
-import '../../../../core/theme/text/app_text_theme.dart';
-import '../../../../core/widgets/text/text.dart';
-import '../../domain/entities/checkin_record.dart';
-import '../controllers/home_checkin_state.dart';
+import '../../../../../core/theme/color/app_colors.dart';
+import '../../../../../core/theme/text/app_text_theme.dart';
+import '../../../../../core/widgets/text/text.dart';
+import '../../../domain/entities/checkin_record.dart';
+import '../../controllers/home_checkin_state.dart';
 
-class HomeCountdownBubble extends StatefulWidget {
-  const HomeCountdownBubble({super.key, required this.state, this.size});
+class CountdownBubble extends StatefulWidget {
+  const CountdownBubble({super.key, required this.state, this.size});
 
   final HomeCheckinState state;
   final double? size;
 
   @override
-  State<HomeCountdownBubble> createState() => _HomeCountdownBubbleState();
+  State<CountdownBubble> createState() => _CountdownBubbleState();
 }
 
-class _HomeCountdownBubbleState extends State<HomeCountdownBubble>
+class _CountdownBubbleState extends State<CountdownBubble>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _pulse;
@@ -32,7 +32,7 @@ class _HomeCountdownBubbleState extends State<HomeCountdownBubble>
   }
 
   @override
-  void didUpdateWidget(HomeCountdownBubble oldWidget) {
+  void didUpdateWidget(CountdownBubble oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.state.phase != widget.state.phase) {
       _configurePulse(widget.state.phase);

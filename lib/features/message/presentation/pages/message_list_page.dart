@@ -7,8 +7,8 @@ import '../../../../core/theme/text/app_text_theme.dart';
 import '../../../../core/widgets/text/text.dart';
 import '../controllers/conversation_list_notifier.dart';
 import '../controllers/conversation_list_state.dart';
-import '../widgets/conversation_empty_state.dart';
-import '../widgets/conversation_tile.dart';
+import '../widgets/list/conversation_empty_state.dart';
+import '../widgets/list/conversation_tile.dart';
 
 /// Provider for the conversation list notifier.
 final conversationListProvider = StateNotifierProvider.autoDispose<

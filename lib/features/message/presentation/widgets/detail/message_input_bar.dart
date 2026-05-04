@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/widgets/input/input.dart';
+import '../../../../../core/widgets/input/input.dart';
 
 /// The message composer bar at the bottom of the chat screen.
 class MessageInputBar extends StatefulWidget {

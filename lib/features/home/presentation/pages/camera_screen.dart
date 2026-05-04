@@ -7,8 +7,8 @@ import '../../../../core/providers/providers.dart';
 import '../../../../core/widgets/image/user_avatar.dart';
 import '../../../../core/widgets/layout/screen_layout.dart';
 import '../controllers/home_notifier.dart';
-import '../widgets/home_action_button.dart';
-import '../widgets/home_camera_box.dart';
+import '../widgets/camera/action_button.dart';
+import '../widgets/camera/camera_box.dart';
 
 class CameraScreen extends ConsumerStatefulWidget {
   const CameraScreen({super.key, this.autoCaptureOnOpen = false});
@@ -143,9 +143,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
           child: Column(
             children: [
               const Spacer(),
-              const HomeCameraBox(),
+              const CameraBox(),
               const SizedBox(height: 24),
-              const HomeActionButton(),
+              const ActionButton(),
               const Spacer(flex: 2),
             ],
           ),

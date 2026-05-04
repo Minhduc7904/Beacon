@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/domain/entities/user_profile.dart';
-import '../../features/auth/presentation/pages/login_page.dart';
-import '../../features/auth/presentation/pages/logout_page.dart';
+import '../../features/auth/presentation/pages/login/login_page.dart';
+import '../../features/auth/presentation/pages/logout/logout_page.dart';
 import '../../features/auth/presentation/pages/profile/edit_profile_page.dart';
 import '../../features/auth/presentation/pages/profile/profile_page.dart';
 import '../../features/auth/presentation/pages/register/register_draft_data.dart';

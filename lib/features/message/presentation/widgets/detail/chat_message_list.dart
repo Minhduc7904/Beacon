@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/text/app_text_theme.dart';
-import '../../../../core/widgets/text/text.dart';
-import '../../domain/entities/chat_message.dart';
+import '../../../../../core/theme/text/app_text_theme.dart';
+import '../../../../../core/widgets/text/text.dart';
+import '../../../domain/entities/chat_message.dart';
 import 'chat_bubble.dart';
 
 /// Builds a grouped, scrollable list of chat messages with date separators.

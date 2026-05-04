@@ -2,10 +2,10 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/providers/providers.dart';
+import '../../../../../core/providers/providers.dart';
 
-class HomeCameraBox extends ConsumerWidget {
-  const HomeCameraBox({super.key});
+class CameraBox extends ConsumerWidget {
+  const CameraBox({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
