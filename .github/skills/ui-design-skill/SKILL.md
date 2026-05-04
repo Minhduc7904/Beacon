@@ -49,6 +49,7 @@ description: "Use when: creating or updating Flutter UI while enforcing Beacon t
 
 - Giữ logic nghiệp vụ ở notifier/usecase; page/widget chỉ render state.
 - Side effects thông báo người dùng thông qua `appMessageProvider`.
+- Bọc nội dung page bằng `AppScreenLayout` để bám layout guide (trừ khi page được yêu cầu full-bleed hoặc demo như shared_widgets).
 
 ### 4) Tự review visual và consistency
 
@@ -68,6 +69,7 @@ description: "Use when: creating or updating Flutter UI while enforcing Beacon t
 8. Kiểm tra light/dark mode nếu có ảnh hưởng đến contrast.
 9. Không hardcode route/endpoint/storage key trong UI.
 10. Chạy `flutter analyze` và verify tay flow liên quan.
+11. Page body được bọc bởi `AppScreenLayout` (trừ khi được chỉ định ngoại lệ).
 
 ## Done khi
 

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/config/app_routes.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../core/widgets/image/logo_image.dart';
+import '../../../../core/widgets/layout/screen_layout.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
@@ -70,12 +71,18 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     return Scaffold(
       backgroundColor: colors.primary,
       body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const AppLogoImage(width: 359, height: 380, fit: BoxFit.contain),
-            ],
+        child: AppScreenLayout(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AppLogoImage(
+                  width: 359,
+                  height: 380,
+                  fit: BoxFit.contain,
+                ),
+              ],
+            ),
           ),
         ),
       ),

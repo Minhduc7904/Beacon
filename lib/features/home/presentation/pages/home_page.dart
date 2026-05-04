@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/providers.dart';
-import '../../../../core/widgets/button/icon_circle_button.dart';
-import '../../../../core/widgets/image/user_avatar.dart';
 import '../../../auth/presentation/pages/profile/profile_page.dart';
 import '../../../feed/presentation/pages/feed_page.dart';
 import '../../../message_groups/presentation/pages/message_group_list_page.dart';
-import '../widgets/home/home_body.dart';
-import '../widgets/home/home_streak_chip.dart';
+import '../widgets/home/home_center_scaffold.dart';
+import '../widgets/home/home_keep_alive_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key, this.autoCaptureOnOpen = false});
@@ -21,10 +19,10 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage>
     with WidgetsBindingObserver {
-  static const int _streakDays = 7;
+  static const int _streakDays = 36;
+  static const int _unreadMessageCount = 2;
   static const int _profilePageIndex = 0;
   static const int _homePageIndex = 1;
-  static const int _messagePageIndex = 2;
 
   late final PageController _horizontalController;
   AppLifecycleState? _lastLifecycleState;
@@ -80,96 +78,29 @@ class _HomePageState extends ConsumerState<HomePage>
     return PageView(
       controller: _horizontalController,
       children: [
-        _KeepAlivePage(
+        HomeKeepAlivePage(
           child: ProfilePage(
             onBackToHome: () => _animateToPage(_homePageIndex),
           ),
         ),
-        _KeepAlivePage(
-          child: _HomeCenterScaffold(
+        HomeKeepAlivePage(
+          child: HomeCenterScaffold(
             onOpenProfile: () => _animateToPage(_profilePageIndex),
-            onOpenMessages: () => _animateToPage(_messagePageIndex),
+            onOpenMessages: () {
+              ref
+                  .read(appMessageProvider.notifier)
+                  .addInfo('Chat sẽ sớm ra mắt');
+            },
             streakDays: _streakDays,
+            unreadMessages: _unreadMessageCount,
           ),
         ),
-        _KeepAlivePage(
+        HomeKeepAlivePage(
           child: MessageGroupListPage(
             onBackToHome: () => _animateToPage(_homePageIndex),
           ),
         ),
       ],
-    );
-  }
-}
-
-class _KeepAlivePage extends StatefulWidget {
-  const _KeepAlivePage({required this.child});
-
-  final Widget child;
-
-  @override
-  State<_KeepAlivePage> createState() => _KeepAlivePageState();
-}
-
-class _KeepAlivePageState extends State<_KeepAlivePage>
-    with AutomaticKeepAliveClientMixin<_KeepAlivePage> {
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return widget.child;
-  }
-}
-
-class _HomeCenterScaffold extends ConsumerWidget {
-  const _HomeCenterScaffold({
-    required this.onOpenProfile,
-    required this.onOpenMessages,
-    required this.streakDays,
-  });
-
-  final VoidCallback onOpenProfile;
-  final VoidCallback onOpenMessages;
-  final int streakDays;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final profile = ref.watch(meProfileProvider).valueOrNull;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Scaffold(
-      appBar: AppBar(
-        leadingWidth: 64,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: GestureDetector(
-            onTap: onOpenProfile,
-            child: UserAvatar(
-              avatarUrl: profile?.avatarUrl,
-              givenName: profile?.givenName,
-              size: 38,
-            ),
-          ),
-        ),
-        title: HomeStreakChip(days: streakDays),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: IconCircleButton(
-              icon: Icons.chat_bubble_outline_rounded,
-              size: 40,
-              iconSize: 18,
-              backgroundColor: colorScheme.surface,
-              borderColor: colorScheme.outline,
-              iconColor: colorScheme.onSurface,
-              onPressed: onOpenMessages,
-            ),
-          ),
-        ],
-      ),
-      body: const SafeArea(child: HomeBody()),
     );
   }
 }

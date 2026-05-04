@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../core/theme/text/app_text_theme.dart';
 import '../../../../core/widgets/image/user_avatar.dart';
+import '../../../../core/widgets/layout/screen_layout.dart';
 import '../../../../core/widgets/text/text.dart';
 import '../../domain/entities/message_group.dart';
 import '../controllers/group_chat_detail_notifier.dart';
@@ -14,17 +15,19 @@ import '../widgets/detail/group_message_list.dart';
 
 final groupChatDetailProvider = StateNotifierProvider.autoDispose
     .family<GroupChatDetailNotifier, GroupChatDetailState, String>((
-  ref,
-  groupId,
-) {
-  return GroupChatDetailNotifier(
-    groupId: groupId,
-    getGroupMessagesUseCase: ref.watch(getGroupMessagesUseCaseProvider),
-    getMessageGroupDetailUseCase: ref.watch(getMessageGroupDetailUseCaseProvider),
-    sendGroupMessageUseCase: ref.watch(sendGroupMessageUseCaseProvider),
-    messageNotifier: ref.watch(appMessageProvider.notifier),
-  );
-});
+      ref,
+      groupId,
+    ) {
+      return GroupChatDetailNotifier(
+        groupId: groupId,
+        getGroupMessagesUseCase: ref.watch(getGroupMessagesUseCaseProvider),
+        getMessageGroupDetailUseCase: ref.watch(
+          getMessageGroupDetailUseCaseProvider,
+        ),
+        sendGroupMessageUseCase: ref.watch(sendGroupMessageUseCaseProvider),
+        messageNotifier: ref.watch(appMessageProvider.notifier),
+      );
+    });
 
 class GroupChatDetailPage extends ConsumerStatefulWidget {
   const GroupChatDetailPage({super.key, required this.group});
@@ -32,7 +35,8 @@ class GroupChatDetailPage extends ConsumerStatefulWidget {
   final MessageGroup group;
 
   @override
-  ConsumerState<GroupChatDetailPage> createState() => _GroupChatDetailPageState();
+  ConsumerState<GroupChatDetailPage> createState() =>
+      _GroupChatDetailPageState();
 }
 
 class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
@@ -78,8 +82,8 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
           (m) => m.userId != meId,
           orElse: () => members.first,
         );
-        final fullName =
-            '${peer.familyName ?? ''} ${peer.givenName ?? ''}'.trim();
+        final fullName = '${peer.familyName ?? ''} ${peer.givenName ?? ''}'
+            .trim();
         if (fullName.isNotEmpty) {
           return fullName;
         }
@@ -122,11 +126,7 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            UserAvatar(
-              avatarUrl: null,
-              givenName: _title(state),
-              size: 34,
-            ),
+            UserAvatar(avatarUrl: null, givenName: _title(state), size: 34),
             const SizedBox(width: 10),
             Flexible(
               child: Column(
@@ -154,20 +154,26 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
           ],
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _buildMessages(state, colorScheme, currentUserId),
+      body: SafeArea(
+        child: AppScreenLayout(
+          child: Column(
+            children: [
+              Expanded(
+                child: _buildMessages(state, colorScheme, currentUserId),
+              ),
+              GroupMessageInputBar(
+                isSending: state.isSending,
+                onSend: (text) {
+                  ref
+                      .read(
+                        groupChatDetailProvider(widget.group.groupId).notifier,
+                      )
+                      .sendMessage(text);
+                },
+              ),
+            ],
           ),
-          GroupMessageInputBar(
-            isSending: state.isSending,
-            onSend: (text) {
-              ref
-                  .read(groupChatDetailProvider(widget.group.groupId).notifier)
-                  .sendMessage(text);
-            },
-          ),
-        ],
+        ),
       ),
     );
   }

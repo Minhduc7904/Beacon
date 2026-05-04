@@ -46,20 +46,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _applyAutoFillIfNeeded();
 
     /// 🔥 listen đúng lifecycle + tránh trigger lại nhiều lần
-    _subscription = ref.listenManual<AuthState>(
-      authNotifierProvider,
-      (previous, state) {
-        if (state is AuthSuccess && previous is! AuthSuccess) {
-          if (!mounted) return;
+    _subscription = ref.listenManual<AuthState>(authNotifierProvider, (
+      previous,
+      state,
+    ) {
+      if (state is AuthSuccess && previous is! AuthSuccess) {
+        if (!mounted) return;
 
-          /// tránh navigate trong cùng frame
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            context.go(AppRoutes.home);
-          });
-        }
-      },
-    );
+        /// tránh navigate trong cùng frame
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          context.go(AppRoutes.home);
+        });
+      }
+    });
   }
 
   void _applyAutoFillIfNeeded() {
@@ -90,7 +90,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void _onSubmit() {
     if (!_formKey.currentState!.validate()) return;
 
-    ref.read(authNotifierProvider.notifier).login(
+    ref
+        .read(authNotifierProvider.notifier)
+        .login(
           username: _usernameController.text.trim(),
           password: _passwordController.text,
         );

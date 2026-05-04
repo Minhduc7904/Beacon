@@ -29,9 +29,9 @@ class HomeActionRow extends StatelessWidget {
           icon: Icons.emoji_emotions_rounded,
           size: 52,
           iconSize: 22,
-          backgroundColor: colorScheme.surface,
-          borderColor: colorScheme.outline,
-          iconColor: colorScheme.onSurface,
+          backgroundColor: colorScheme.primary.withValues(alpha: 0.08),
+          borderColor: colorScheme.primary.withValues(alpha: 0.35),
+          iconColor: colorScheme.primary,
           onPressed: onMoodPressed,
         ),
         _HomeCheckinActionButton(
@@ -43,9 +43,9 @@ class HomeActionRow extends StatelessWidget {
           icon: Icons.camera_alt_rounded,
           size: 52,
           iconSize: 22,
-          backgroundColor: colorScheme.surface,
-          borderColor: colorScheme.outline,
-          iconColor: colorScheme.onSurface,
+          backgroundColor: colorScheme.primary.withValues(alpha: 0.08),
+          borderColor: colorScheme.primary.withValues(alpha: 0.35),
+          iconColor: colorScheme.primary,
           onPressed: onCameraPressed,
         ),
       ],
@@ -70,10 +70,10 @@ class _HomeCheckinActionButton extends StatelessWidget {
     final transparentSurface = colorScheme.surface.withValues(alpha: 0);
     final outerColor = isEnabled
         ? colorScheme.primary
-        : colorScheme.outline.withValues(alpha: 0.6);
+        : colorScheme.outline.withValues(alpha: 0.5);
     final innerRing = isEnabled
-        ? colorScheme.primary.withValues(alpha: 0.2)
-        : colorScheme.outline.withValues(alpha: 0.2);
+        ? colorScheme.primary.withValues(alpha: 0.18)
+        : colorScheme.outline.withValues(alpha: 0.18);
     final centerColor = isEnabled ? colorScheme.primary : colorScheme.outline;
     final iconColor = isEnabled ? colorScheme.onPrimary : colorScheme.onSurface;
 
@@ -126,10 +126,16 @@ class _HomeCheckinActionButton extends StatelessWidget {
                             valueColor: AlwaysStoppedAnimation(iconColor),
                           ),
                         )
-                      : Icon(
-                          Icons.shield_rounded,
-                          size: 24,
-                          color: iconColor,
+                      : Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Icon(
+                              Icons.shield_rounded,
+                              size: 26,
+                              color: iconColor,
+                            ),
+                            Icon(Icons.add_rounded, size: 14, color: iconColor),
+                          ],
                         ),
                 ),
               ),
