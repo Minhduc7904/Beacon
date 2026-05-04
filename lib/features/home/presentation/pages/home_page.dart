@@ -21,10 +21,10 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage>
     with WidgetsBindingObserver {
-  static const int _streakDays = 7;
+  static const int _streakDays = 36;
+  static const int _unreadMessageCount = 2;
   static const int _profilePageIndex = 0;
   static const int _homePageIndex = 1;
-  static const int _messagePageIndex = 2;
 
   late final PageController _horizontalController;
   AppLifecycleState? _lastLifecycleState;
@@ -88,8 +88,13 @@ class _HomePageState extends ConsumerState<HomePage>
         _KeepAlivePage(
           child: _HomeCenterScaffold(
             onOpenProfile: () => _animateToPage(_profilePageIndex),
-            onOpenMessages: () => _animateToPage(_messagePageIndex),
+            onOpenMessages: () {
+              ref
+                  .read(appMessageProvider.notifier)
+                  .addInfo('Chat sẽ sớm ra mắt');
+            },
             streakDays: _streakDays,
+            unreadMessages: _unreadMessageCount,
           ),
         ),
         _KeepAlivePage(
@@ -128,11 +133,13 @@ class _HomeCenterScaffold extends ConsumerWidget {
     required this.onOpenProfile,
     required this.onOpenMessages,
     required this.streakDays,
+    required this.unreadMessages,
   });
 
   final VoidCallback onOpenProfile;
   final VoidCallback onOpenMessages;
   final int streakDays;
+  final int unreadMessages;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -141,35 +148,166 @@ class _HomeCenterScaffold extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leadingWidth: 64,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: GestureDetector(
-            onTap: onOpenProfile,
-            child: UserAvatar(
-              avatarUrl: profile?.avatarUrl,
-              givenName: profile?.givenName,
-              size: 38,
-            ),
-          ),
+        automaticallyImplyLeading: false,
+        titleSpacing: 0,
+        title: _HomeAppBarContent(
+          avatarUrl: profile?.avatarUrl,
+          givenName: profile?.givenName,
+          streakDays: streakDays,
+          unreadMessages: unreadMessages,
+          onOpenProfile: onOpenProfile,
+          onOpenMessages: onOpenMessages,
         ),
-        title: HomeStreakChip(days: streakDays),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: IconCircleButton(
-              icon: Icons.chat_bubble_outline_rounded,
-              size: 40,
-              iconSize: 18,
-              backgroundColor: colorScheme.surface,
-              borderColor: colorScheme.outline,
-              iconColor: colorScheme.onSurface,
-              onPressed: onOpenMessages,
-            ),
-          ),
-        ],
       ),
       body: const SafeArea(child: HomeBody()),
+    );
+  }
+}
+
+class _HomeAppBarContent extends StatelessWidget {
+  const _HomeAppBarContent({
+    required this.avatarUrl,
+    required this.givenName,
+    required this.streakDays,
+    required this.unreadMessages,
+    required this.onOpenProfile,
+    required this.onOpenMessages,
+  });
+
+  final String? avatarUrl;
+  final String? givenName;
+  final int streakDays;
+  final int unreadMessages;
+  final VoidCallback onOpenProfile;
+  final VoidCallback onOpenMessages;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _HomeAvatarButton(
+              avatarUrl: avatarUrl,
+              givenName: givenName,
+              onPressed: onOpenProfile,
+            ),
+            HomeStreakChip(days: streakDays),
+            _HomeChatButton(
+              unreadCount: unreadMessages,
+              onPressed: onOpenMessages,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeAvatarButton extends StatelessWidget {
+  const _HomeAvatarButton({
+    required this.avatarUrl,
+    required this.givenName,
+    required this.onPressed,
+  });
+
+  final String? avatarUrl;
+  final String? givenName;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: colorScheme.outline.withValues(alpha: 0.6),
+            width: 1,
+          ),
+        ),
+        child: UserAvatar(
+          avatarUrl: avatarUrl,
+          givenName: givenName,
+          size: 34,
+          backgroundColor: colorScheme.surface,
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeChatButton extends StatelessWidget {
+  const _HomeChatButton({required this.unreadCount, required this.onPressed});
+
+  final int unreadCount;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SizedBox(
+      width: 44,
+      height: 44,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Align(
+            alignment: Alignment.center,
+            child: IconCircleButton(
+              icon: Icons.chat_bubble_outline_rounded,
+              size: 42,
+              iconSize: 19,
+              backgroundColor: colorScheme.surface,
+              borderColor: colorScheme.outline.withValues(alpha: 0.7),
+              iconColor: colorScheme.onSurface,
+              onPressed: onPressed,
+            ),
+          ),
+          if (unreadCount > 0)
+            Positioned(
+              top: -1,
+              right: -1,
+              child: _UnreadBadge(count: unreadCount),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UnreadBadge extends StatelessWidget {
+  const _UnreadBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final labelStyle = Theme.of(context).textTheme.labelSmall?.copyWith(
+      color: colorScheme.onSecondary,
+      fontWeight: FontWeight.w700,
+    );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: colorScheme.secondary,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: colorScheme.secondary.withValues(alpha: 0.6),
+          width: 1,
+        ),
+      ),
+      child: Text('$count', style: labelStyle),
     );
   }
 }

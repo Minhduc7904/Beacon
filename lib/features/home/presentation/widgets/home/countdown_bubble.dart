@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/color/app_colors.dart';
 import '../../../../../core/theme/text/app_text_theme.dart';
 import '../../../../../core/widgets/text/text.dart';
-import '../../../domain/entities/checkin_record.dart';
 import '../../controllers/home_checkin_state.dart';
 
 class CountdownBubble extends StatefulWidget {
@@ -89,8 +88,12 @@ class _CountdownBubbleState extends State<CountdownBubble>
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: palette.fill,
-              border: Border.all(color: palette.outline, width: 1.5),
+              gradient: RadialGradient(
+                center: Alignment.topLeft,
+                radius: 0.9,
+                colors: [palette.highlight, palette.base],
+              ),
+              border: Border.all(color: palette.outline, width: 1.2),
               boxShadow: [
                 BoxShadow(
                   color: palette.glow.withValues(alpha: 0.35),
@@ -105,6 +108,10 @@ class _CountdownBubbleState extends State<CountdownBubble>
       },
       child: _BubbleContent(state: widget.state, palette: palette),
     );
+  }
+
+  Color _mix(Color a, Color b, double t) {
+    return Color.lerp(a, b, t) ?? a;
   }
 
   _PulseConfig _resolvePulseConfig(HomeCheckinPhase phase) {
@@ -151,43 +158,55 @@ class _CountdownBubbleState extends State<CountdownBubble>
 
     switch (phase) {
       case HomeCheckinPhase.pending:
+        final base = colorScheme.primaryContainer;
         return _BubblePalette(
-          fill: colorScheme.primaryContainer,
+          base: base,
+          highlight: _mix(colorScheme.surface, base, 0.35),
           outline: colorScheme.primary.withValues(alpha: 0.4),
           glow: colorScheme.primary,
           text: colorScheme.onPrimaryContainer,
         );
       case HomeCheckinPhase.grace:
+        final base = colorScheme.secondaryContainer;
         return _BubblePalette(
-          fill: colorScheme.secondaryContainer,
+          base: base,
+          highlight: _mix(colorScheme.surface, base, 0.35),
           outline: colorScheme.secondary.withValues(alpha: 0.4),
           glow: colorScheme.secondary,
           text: colorScheme.onSecondaryContainer,
         );
       case HomeCheckinPhase.emergency:
+        final base = AppColors.red100;
         return _BubblePalette(
-          fill: AppColors.red100,
+          base: base,
+          highlight: _mix(colorScheme.surface, base, 0.35),
           outline: colorScheme.error.withValues(alpha: 0.45),
           glow: colorScheme.error,
           text: colorScheme.error,
         );
       case HomeCheckinPhase.checkedIn:
+        final base = AppColors.success.withValues(alpha: 0.18);
         return _BubblePalette(
-          fill: AppColors.success.withValues(alpha: 0.16),
+          base: base,
+          highlight: _mix(colorScheme.surface, base, 0.5),
           outline: AppColors.success.withValues(alpha: 0.5),
           glow: AppColors.success,
           text: AppColors.success,
         );
       case HomeCheckinPhase.monitoringOff:
+        final base = colorScheme.surface;
         return _BubblePalette(
-          fill: colorScheme.surface,
+          base: base,
+          highlight: _mix(colorScheme.surface, base, 0.2),
           outline: colorScheme.outline.withValues(alpha: 0.6),
           glow: colorScheme.outline,
           text: colorScheme.onSurface,
         );
       case HomeCheckinPhase.unknown:
+        final base = colorScheme.surface;
         return _BubblePalette(
-          fill: colorScheme.surface,
+          base: base,
+          highlight: _mix(colorScheme.surface, base, 0.2),
           outline: colorScheme.outline.withValues(alpha: 0.4),
           glow: colorScheme.outline,
           text: colorScheme.onSurface,
@@ -214,10 +233,10 @@ class _BubbleContent extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             AppText(
-              content.title,
-              size: AppTextSize.small,
-              spacing: AppTextSpacing.normal,
-              weight: AppTextWeight.medium,
+              content.title.toUpperCase(),
+              size: AppTextSize.tiny,
+              spacing: AppTextSpacing.tight,
+              weight: AppTextWeight.bold,
               color: palette.text.withValues(alpha: 0.8),
               textAlign: TextAlign.center,
             ),
@@ -228,17 +247,6 @@ class _BubbleContent extends StatelessWidget {
               color: palette.text,
               textAlign: TextAlign.center,
             ),
-            if (content.subtitle != null) ...[
-              const SizedBox(height: 8),
-              AppText(
-                content.subtitle!,
-                size: AppTextSize.tiny,
-                spacing: AppTextSpacing.normal,
-                weight: AppTextWeight.regular,
-                color: palette.text.withValues(alpha: 0.8),
-                textAlign: TextAlign.center,
-              ),
-            ],
           ],
         ),
       ),
@@ -247,11 +255,7 @@ class _BubbleContent extends StatelessWidget {
 
   _BubbleTextContent _resolveContent() {
     if (state.isLoading && state.todayStatus == null) {
-      return const _BubbleTextContent(
-        title: 'Đang tải',
-        value: '--:--',
-        subtitle: 'Vui lòng đợi',
-      );
+      return const _BubbleTextContent(title: 'Đang tải', value: '--:--');
     }
 
     switch (state.phase) {
@@ -259,45 +263,26 @@ class _BubbleContent extends StatelessWidget {
         return _BubbleTextContent(
           title: 'Đếm ngược',
           value: _formatDuration(state.remainingSeconds),
-          subtitle: 'Đến hạn check-in hôm nay',
         );
       case HomeCheckinPhase.grace:
         return _BubbleTextContent(
-          title: 'Đã tới hạn',
+          title: 'Gia hạn',
           value: _formatDuration(_resolveGraceSeconds()),
-          subtitle: 'Còn trong thời gian gia hạn',
         );
       case HomeCheckinPhase.emergency:
         return _BubbleTextContent(
           title: 'Quá hạn',
           value: _formatDuration(state.remainingSeconds?.abs()),
-          subtitle: state.isAutoAlertEnabled
-              ? 'Cảnh báo đã được kích hoạt'
-              : 'Tự động cảnh báo đang tắt',
         );
       case HomeCheckinPhase.checkedIn:
-        final subtitle = switch (state.lastCheckinType) {
-          CheckinType.recovery => 'Bạn đã check-in trong thời gian gia hạn',
-          CheckinType.emergency => 'Bạn đã quá hạn check-in',
-          _ => 'Bạn đã check-in an toàn',
-        };
-        return _BubbleTextContent(
-          title: 'Đã check-in',
-          value: 'An toàn',
-          subtitle: subtitle,
-        );
+        return _BubbleTextContent(title: 'Đã check-in', value: 'An toàn');
       case HomeCheckinPhase.monitoringOff:
         return const _BubbleTextContent(
           title: 'Theo dõi tắt',
           value: 'Không đếm ngược',
-          subtitle: 'Bật lại trong cài đặt an toàn',
         );
       case HomeCheckinPhase.unknown:
-        return const _BubbleTextContent(
-          title: 'Đang tải',
-          value: '--:--',
-          subtitle: 'Vui lòng đợi',
-        );
+        return const _BubbleTextContent(title: 'Đang tải', value: '--:--');
     }
   }
 
@@ -337,23 +322,20 @@ class _BubbleContent extends StatelessWidget {
 class _BubbleTextContent {
   final String title;
   final String value;
-  final String? subtitle;
 
-  const _BubbleTextContent({
-    required this.title,
-    required this.value,
-    this.subtitle,
-  });
+  const _BubbleTextContent({required this.title, required this.value});
 }
 
 class _BubblePalette {
-  final Color fill;
+  final Color base;
+  final Color highlight;
   final Color outline;
   final Color glow;
   final Color text;
 
   const _BubblePalette({
-    required this.fill,
+    required this.base,
+    required this.highlight,
     required this.outline,
     required this.glow,
     required this.text,

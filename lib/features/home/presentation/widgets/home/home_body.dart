@@ -57,17 +57,16 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Column(
         children: [
+          const SizedBox(height: 8),
           Expanded(
             child: Center(child: CountdownBubble(state: state)),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           HomeActionRow(
             isCheckingIn: state.isCheckingIn,
             canCheckin: canCheckin,
             onCheckin: canCheckin
-                ? () => ref
-                      .read(homeCheckinNotifierProvider.notifier)
-                      .checkin()
+                ? () => ref.read(homeCheckinNotifierProvider.notifier).checkin()
                 : null,
             onMoodPressed: () {
               ref
@@ -77,7 +76,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
             onCameraPressed: () =>
                 context.pushNamed(AppRoutes.cameraScreenName),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           HomeFeedIndicator(onTap: _scrollToFeed),
         ],
       ),

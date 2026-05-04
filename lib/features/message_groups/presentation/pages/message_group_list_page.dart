@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/config/app_routes.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../core/theme/text/app_text_theme.dart';
+import '../../../../core/widgets/layout/screen_layout.dart';
 import '../../../../core/widgets/text/text.dart';
 import '../../domain/entities/message_group.dart';
 import '../controllers/message_group_list_notifier.dart';
@@ -62,7 +63,9 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
         ),
         centerTitle: true,
       ),
-      body: _buildBody(state, colorScheme),
+      body: SafeArea(
+        child: AppScreenLayout(child: _buildBody(state, colorScheme)),
+      ),
     );
   }
 
