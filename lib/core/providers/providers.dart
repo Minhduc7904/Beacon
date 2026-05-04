@@ -82,6 +82,7 @@ import '../../features/safety/domain/usecase/get_safety_settings_usecase.dart';
 import '../../features/safety/domain/usecase/update_safety_settings_usecase.dart';
 import '../../features/safety/presentation/controllers/safety_settings_notifier.dart';
 import '../../features/safety/presentation/controllers/safety_settings_state.dart';
+import '../observers/app_provider_observer.dart';
 import '../messages/app_message.dart';
 import '../messages/app_message_notifier.dart';
 import '../network/dio_client.dart';
@@ -172,7 +173,9 @@ final friendRequestRemoteDatasourceProvider =
       return FriendRequestRemoteDatasourceImpl(ref.watch(dioClientProvider));
     });
 
-final friendsRemoteDatasourceProvider = Provider<FriendsRemoteDatasource>((ref) {
+final friendsRemoteDatasourceProvider = Provider<FriendsRemoteDatasource>((
+  ref,
+) {
   return FriendsRemoteDatasourceImpl(ref.watch(dioClientProvider));
 });
 
@@ -220,7 +223,9 @@ final safetyRepositoryProvider = Provider<SafetyRepository>((ref) {
   );
 });
 
-final friendRequestRepositoryProvider = Provider<FriendRequestRepository>((ref) {
+final friendRequestRepositoryProvider = Provider<FriendRequestRepository>((
+  ref,
+) {
   return FriendRequestRepositoryImpl(
     remoteDatasource: ref.watch(friendRequestRemoteDatasourceProvider),
     networkInfo: ref.watch(networkInfoProvider),
@@ -234,7 +239,9 @@ final friendsRepositoryProvider = Provider<FriendsRepository>((ref) {
   );
 });
 
-final messageGroupsRepositoryProvider = Provider<MessageGroupsRepository>((ref) {
+final messageGroupsRepositoryProvider = Provider<MessageGroupsRepository>((
+  ref,
+) {
   return MessageGroupsRepositoryImpl(
     remoteDatasource: ref.watch(messageGroupsRemoteDatasourceProvider),
     networkInfo: ref.watch(networkInfoProvider),
@@ -394,7 +401,9 @@ final getFriendDetailUseCaseProvider = Provider<GetFriendDetailUseCase>((ref) {
   return GetFriendDetailUseCase(ref.watch(friendsRepositoryProvider));
 });
 
-final updateFriendTypeUseCaseProvider = Provider<UpdateFriendTypeUseCase>((ref) {
+final updateFriendTypeUseCaseProvider = Provider<UpdateFriendTypeUseCase>((
+  ref,
+) {
   return UpdateFriendTypeUseCase(ref.watch(friendsRepositoryProvider));
 });
 
@@ -402,15 +411,21 @@ final deleteFriendUseCaseProvider = Provider<DeleteFriendUseCase>((ref) {
   return DeleteFriendUseCase(ref.watch(friendsRepositoryProvider));
 });
 
-final getMessageGroupsUseCaseProvider = Provider<GetMessageGroupsUseCase>((ref) {
+final getMessageGroupsUseCaseProvider = Provider<GetMessageGroupsUseCase>((
+  ref,
+) {
   return GetMessageGroupsUseCase(ref.watch(messageGroupsRepositoryProvider));
 });
 
-final sendGroupMessageUseCaseProvider = Provider<SendGroupMessageUseCase>((ref) {
+final sendGroupMessageUseCaseProvider = Provider<SendGroupMessageUseCase>((
+  ref,
+) {
   return SendGroupMessageUseCase(ref.watch(messageGroupsRepositoryProvider));
 });
 
-final getGroupMessagesUseCaseProvider = Provider<GetGroupMessagesUseCase>((ref) {
+final getGroupMessagesUseCaseProvider = Provider<GetGroupMessagesUseCase>((
+  ref,
+) {
   return GetGroupMessagesUseCase(ref.watch(messageGroupsRepositoryProvider));
 });
 
@@ -460,7 +475,7 @@ final homeCheckinNotifierProvider =
         ref.watch(getSafetySettingsUseCaseProvider),
         ref.watch(appMessageProvider.notifier),
       );
-    });
+    }, name: 'homeCheckinNotifierProvider ${ProviderLogFlags.noLog}');
 
 final postPreviewNotifierProvider =
     StateNotifierProvider.autoDispose<PostPreviewNotifier, PostPreviewState>((

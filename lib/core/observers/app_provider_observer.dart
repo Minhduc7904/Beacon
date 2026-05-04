@@ -1,6 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+class ProviderLogFlags {
+  ProviderLogFlags._();
+
+  static const String noLog = '#no_log';
+}
+
 class AppProviderObserver extends ProviderObserver {
   const AppProviderObserver();
 
@@ -11,6 +17,7 @@ class AppProviderObserver extends ProviderObserver {
     ProviderContainer container,
   ) {
     if (!kDebugMode) return;
+    if (_shouldSkip(provider)) return;
     debugPrint(
       '[Riverpod] INIT  ${_name(provider)}\n'
       '          value: ${_format(value)}',
@@ -25,6 +32,7 @@ class AppProviderObserver extends ProviderObserver {
     ProviderContainer container,
   ) {
     if (!kDebugMode) return;
+    if (_shouldSkip(provider)) return;
     debugPrint(
       '[Riverpod] UPDATE ${_name(provider)}\n'
       '          prev : ${_format(previousValue)}\n'
@@ -38,6 +46,7 @@ class AppProviderObserver extends ProviderObserver {
     ProviderContainer container,
   ) {
     if (!kDebugMode) return;
+    if (_shouldSkip(provider)) return;
     debugPrint('[Riverpod] DISPOSE ${_name(provider)}');
   }
 
@@ -57,6 +66,14 @@ class AppProviderObserver extends ProviderObserver {
 
   String _name(ProviderBase<Object?> provider) =>
       provider.name ?? provider.runtimeType.toString();
+
+  bool _shouldSkip(ProviderBase<Object?> provider) {
+    final name = provider.name;
+    if (name == null || name.isEmpty) {
+      return false;
+    }
+    return name.contains(ProviderLogFlags.noLog);
+  }
 
   String _format(Object? value) {
     if (value == null) return 'null';

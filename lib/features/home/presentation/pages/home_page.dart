@@ -23,6 +23,7 @@ class _HomePageState extends ConsumerState<HomePage>
   static const int _unreadMessageCount = 2;
   static const int _profilePageIndex = 0;
   static const int _homePageIndex = 1;
+  static const int _messagePageIndex = 2;
 
   late final PageController _horizontalController;
   AppLifecycleState? _lastLifecycleState;
@@ -86,11 +87,7 @@ class _HomePageState extends ConsumerState<HomePage>
         HomeKeepAlivePage(
           child: HomeCenterScaffold(
             onOpenProfile: () => _animateToPage(_profilePageIndex),
-            onOpenMessages: () {
-              ref
-                  .read(appMessageProvider.notifier)
-                  .addInfo('Chat sẽ sớm ra mắt');
-            },
+            onOpenMessages: () => _animateToPage(_messagePageIndex),
             streakDays: _streakDays,
             unreadMessages: _unreadMessageCount,
           ),
