@@ -172,10 +172,13 @@ class HomeCheckinNotifier extends StateNotifier<HomeCheckinState> {
     final status = isEmergency
         ? TodayStatusType.overdue
         : TodayStatusType.checkedIn;
+    final previousStreak = previous?.streak ?? 0;
+    final nextStreak = isEmergency ? previousStreak : previousStreak + 1;
 
     return TodayStatus(
       hasCheckedIn: !isEmergency,
       status: status,
+      streak: nextStreak,
       deadlineAtUtc: previous?.deadlineAtUtc,
       remainingSeconds: isEmergency ? state.remainingSeconds : null,
       checkedInAtUtc: record.checkedInAtUtc,
