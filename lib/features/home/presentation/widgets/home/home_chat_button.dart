@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/theme/color/app_colors.dart';
 import '../../../../../core/widgets/button/icon_circle_button.dart';
 import 'unread_badge.dart';
 
@@ -8,18 +9,27 @@ class HomeChatButton extends StatelessWidget {
     super.key,
     required this.unreadCount,
     required this.onPressed,
+    this.size = 40,
+    this.iconSize = 24,
+    this.backgroundColor,
+    this.iconColor,
   });
 
   final int unreadCount;
   final VoidCallback onPressed;
+  final double size;
+  final double iconSize;
+  final Color? backgroundColor;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final effectiveBackground = backgroundColor ?? AppColors.sky400;
+    final effectiveIcon = iconColor ?? AppColors.ink400;
 
     return SizedBox(
-      width: 44,
-      height: 44,
+      width: size,
+      height: size,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -27,18 +37,19 @@ class HomeChatButton extends StatelessWidget {
             alignment: Alignment.center,
             child: IconCircleButton(
               icon: Icons.chat_bubble_outline_rounded,
-              size: 42,
-              iconSize: 19,
-              backgroundColor: colorScheme.surface,
-              borderColor: colorScheme.outline.withValues(alpha: 0.7),
-              iconColor: colorScheme.onSurface,
+              size: size,
+              iconSize: iconSize,
+              backgroundColor: effectiveBackground,
+              borderColor: effectiveBackground,
+              borderWidth: 0,
+              iconColor: effectiveIcon,
               onPressed: onPressed,
             ),
           ),
           if (unreadCount > 0)
             Positioned(
-              top: -1,
-              right: -1,
+              top: -2,
+              right: -4,
               child: UnreadBadge(count: unreadCount),
             ),
         ],

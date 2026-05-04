@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/theme/color/app_colors.dart';
 import '../../../../../core/widgets/button/icon_circle_button.dart';
 
 class HomeActionRow extends StatelessWidget {
@@ -20,18 +21,18 @@ class HomeActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         IconCircleButton(
           icon: Icons.emoji_emotions_rounded,
-          size: 52,
-          iconSize: 22,
-          backgroundColor: colorScheme.primary.withValues(alpha: 0.08),
-          borderColor: colorScheme.primary.withValues(alpha: 0.35),
-          iconColor: colorScheme.primary,
+          size: 60,
+          iconSize: 32,
+          backgroundColor: AppColors.sky100,
+          borderColor: AppColors.teal100,
+          iconColor: AppColors.teal400,
+          borderWidth: 4,
           onPressed: onMoodPressed,
         ),
         _HomeCheckinActionButton(
@@ -41,11 +42,12 @@ class HomeActionRow extends StatelessWidget {
         ),
         IconCircleButton(
           icon: Icons.camera_alt_rounded,
-          size: 52,
-          iconSize: 22,
-          backgroundColor: colorScheme.primary.withValues(alpha: 0.08),
-          borderColor: colorScheme.primary.withValues(alpha: 0.35),
-          iconColor: colorScheme.primary,
+          size: 60,
+          iconSize: 32,
+          backgroundColor: AppColors.sky100,
+          borderColor: AppColors.teal100,
+          iconColor: AppColors.teal400,
+          borderWidth: 4,
           onPressed: onCameraPressed,
         ),
       ],
@@ -66,20 +68,15 @@ class _HomeCheckinActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final transparentSurface = colorScheme.surface.withValues(alpha: 0);
-    final outerColor = isEnabled
-        ? colorScheme.primary
-        : colorScheme.outline.withValues(alpha: 0.5);
-    final innerRing = isEnabled
-        ? colorScheme.primary.withValues(alpha: 0.18)
-        : colorScheme.outline.withValues(alpha: 0.18);
-    final centerColor = isEnabled ? colorScheme.primary : colorScheme.outline;
-    final iconColor = isEnabled ? colorScheme.onPrimary : colorScheme.onSurface;
+    final transparentSurface = AppColors.sky100.withValues(alpha: 0);
+    final stateAlpha = isEnabled ? 1.0 : 0.45;
+    final outerColor = AppColors.teal200.withValues(alpha: stateAlpha);
+    final innerColor = AppColors.teal400.withValues(alpha: stateAlpha);
+    final iconColor = AppColors.sky100.withValues(alpha: stateAlpha);
 
     return SizedBox(
-      width: 92,
-      height: 92,
+      width: 128,
+      height: 128,
       child: Material(
         color: transparentSurface,
         shape: const CircleBorder(),
@@ -90,53 +87,31 @@ class _HomeCheckinActionButton extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               Container(
-                width: 92,
-                height: 92,
+                width: 128,
+                height: 128,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: outerColor, width: 2),
+                  border: Border.all(color: outerColor, width: 4),
                 ),
               ),
               Container(
-                width: 72,
-                height: 72,
+                width: 110,
+                height: 110,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: innerRing,
-                  border: Border.all(
-                    color: outerColor.withValues(alpha: 0.6),
-                    width: 1.5,
-                  ),
-                ),
-              ),
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: centerColor,
+                  color: innerColor,
                 ),
                 child: Center(
                   child: isLoading
                       ? SizedBox(
-                          width: 20,
-                          height: 20,
+                          width: 32,
+                          height: 32,
                           child: CircularProgressIndicator(
-                            strokeWidth: 2,
+                            strokeWidth: 3,
                             valueColor: AlwaysStoppedAnimation(iconColor),
                           ),
                         )
-                      : Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Icon(
-                              Icons.shield_rounded,
-                              size: 26,
-                              color: iconColor,
-                            ),
-                            Icon(Icons.add_rounded, size: 14, color: iconColor),
-                          ],
-                        ),
+                      : Icon(Icons.shield_rounded, size: 60, color: iconColor),
                 ),
               ),
             ],

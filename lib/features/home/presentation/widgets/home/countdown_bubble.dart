@@ -71,15 +71,14 @@ class _CountdownBubbleState extends State<CountdownBubble>
   @override
   Widget build(BuildContext context) {
     final palette = _resolvePalette(context, widget.state.phase);
-    final size =
-        widget.size ??
-        (MediaQuery.sizeOf(context).width - 48).clamp(220.0, 320.0);
+    final size = widget.size ?? 280.0;
 
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
         final glowBlur = _pulseConfig.glowBlur(_controller.value);
         final glowSpread = _pulseConfig.glowSpread(_controller.value);
+        final innerGlowBlur = (glowBlur * 0.6).clamp(12.0, 28.0).toDouble();
 
         return Transform.scale(
           scale: _pulse.value,
@@ -93,10 +92,15 @@ class _CountdownBubbleState extends State<CountdownBubble>
                 radius: 0.9,
                 colors: [palette.highlight, palette.base],
               ),
-              border: Border.all(color: palette.outline, width: 1.2),
               boxShadow: [
                 BoxShadow(
-                  color: palette.glow.withValues(alpha: 0.35),
+                  color: palette.innerGlow.withValues(alpha: 0.55),
+                  blurRadius: innerGlowBlur,
+                  spreadRadius: -4,
+                  blurStyle: ui.BlurStyle.inner,
+                ),
+                BoxShadow(
+                  color: palette.glow.withValues(alpha: 0.45),
                   blurRadius: glowBlur,
                   spreadRadius: glowSpread,
                 ),
@@ -118,33 +122,33 @@ class _CountdownBubbleState extends State<CountdownBubble>
     switch (phase) {
       case HomeCheckinPhase.pending:
         return const _PulseConfig(
-          duration: Duration(milliseconds: 2400),
-          minScale: 0.98,
-          maxScale: 1.02,
-          minGlow: 12,
-          maxGlow: 18,
-          minSpread: 0,
-          maxSpread: 6,
+          duration: Duration(milliseconds: 2600),
+          minScale: 0.985,
+          maxScale: 1.015,
+          minGlow: 20,
+          maxGlow: 30,
+          minSpread: 2,
+          maxSpread: 8,
         );
       case HomeCheckinPhase.grace:
         return const _PulseConfig(
-          duration: Duration(milliseconds: 1600),
-          minScale: 0.98,
-          maxScale: 1.04,
-          minGlow: 16,
-          maxGlow: 24,
-          minSpread: 2,
-          maxSpread: 8,
+          duration: Duration(milliseconds: 1700),
+          minScale: 0.975,
+          maxScale: 1.035,
+          minGlow: 26,
+          maxGlow: 38,
+          minSpread: 4,
+          maxSpread: 12,
         );
       case HomeCheckinPhase.emergency:
         return const _PulseConfig(
           duration: Duration(milliseconds: 900),
           minScale: 0.96,
           maxScale: 1.06,
-          minGlow: 22,
-          maxGlow: 32,
-          minSpread: 4,
-          maxSpread: 10,
+          minGlow: 32,
+          maxGlow: 48,
+          minSpread: 8,
+          maxSpread: 16,
         );
       case HomeCheckinPhase.checkedIn:
       case HomeCheckinPhase.monitoringOff:
@@ -162,54 +166,48 @@ class _CountdownBubbleState extends State<CountdownBubble>
         return _BubblePalette(
           base: base,
           highlight: _mix(colorScheme.surface, base, 0.35),
-          outline: colorScheme.primary.withValues(alpha: 0.4),
+          innerGlow: _mix(colorScheme.surface, base, 0.6),
           glow: colorScheme.primary,
-          text: colorScheme.onPrimaryContainer,
         );
       case HomeCheckinPhase.grace:
         final base = colorScheme.secondaryContainer;
         return _BubblePalette(
           base: base,
           highlight: _mix(colorScheme.surface, base, 0.35),
-          outline: colorScheme.secondary.withValues(alpha: 0.4),
+          innerGlow: _mix(colorScheme.surface, base, 0.6),
           glow: colorScheme.secondary,
-          text: colorScheme.onSecondaryContainer,
         );
       case HomeCheckinPhase.emergency:
         final base = AppColors.red100;
         return _BubblePalette(
           base: base,
           highlight: _mix(colorScheme.surface, base, 0.35),
-          outline: colorScheme.error.withValues(alpha: 0.45),
+          innerGlow: _mix(colorScheme.surface, base, 0.65),
           glow: colorScheme.error,
-          text: colorScheme.error,
         );
       case HomeCheckinPhase.checkedIn:
         final base = AppColors.success.withValues(alpha: 0.18);
         return _BubblePalette(
           base: base,
           highlight: _mix(colorScheme.surface, base, 0.5),
-          outline: AppColors.success.withValues(alpha: 0.5),
+          innerGlow: _mix(colorScheme.surface, base, 0.7),
           glow: AppColors.success,
-          text: AppColors.success,
         );
       case HomeCheckinPhase.monitoringOff:
         final base = colorScheme.surface;
         return _BubblePalette(
           base: base,
           highlight: _mix(colorScheme.surface, base, 0.2),
-          outline: colorScheme.outline.withValues(alpha: 0.6),
+          innerGlow: colorScheme.outline.withValues(alpha: 0.45),
           glow: colorScheme.outline,
-          text: colorScheme.onSurface,
         );
       case HomeCheckinPhase.unknown:
         final base = colorScheme.surface;
         return _BubblePalette(
           base: base,
           highlight: _mix(colorScheme.surface, base, 0.2),
-          outline: colorScheme.outline.withValues(alpha: 0.4),
+          innerGlow: colorScheme.outline.withValues(alpha: 0.35),
           glow: colorScheme.outline,
-          text: colorScheme.onSurface,
         );
     }
   }
@@ -234,17 +232,17 @@ class _BubbleContent extends StatelessWidget {
           children: [
             AppText(
               content.title.toUpperCase(),
-              size: AppTextSize.tiny,
-              spacing: AppTextSpacing.tight,
-              weight: AppTextWeight.bold,
-              color: palette.text.withValues(alpha: 0.8),
+              size: AppTextSize.large,
+              spacing: AppTextSpacing.none,
+              weight: AppTextWeight.medium,
+              color: AppColors.ink400,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             AppText(
               content.value,
-              preset: AppTextPreset.title2,
-              color: palette.text,
+              preset: AppTextPreset.title1,
+              color: AppColors.ink500,
               textAlign: TextAlign.center,
             ),
           ],
@@ -329,16 +327,14 @@ class _BubbleTextContent {
 class _BubblePalette {
   final Color base;
   final Color highlight;
-  final Color outline;
   final Color glow;
-  final Color text;
+  final Color innerGlow;
 
   const _BubblePalette({
     required this.base,
     required this.highlight,
-    required this.outline,
     required this.glow,
-    required this.text,
+    required this.innerGlow,
   });
 }
 

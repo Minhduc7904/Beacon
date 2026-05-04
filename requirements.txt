@@ -1,42 +1,7 @@
-Tôi có 2 API của backend về check-in và lấy today-status như trong backend.md
-Yêu cầu:
-- Đổi tên trang home.dart thành home_page.dart, cập nhật các route liên quan và viết lại từ đầu theo mô tả bên dưới
-- Bố cục của trang home_screen như sau:
-+ Phần header gồm: Icon profile dẫn đến trang profile_page, streaks chip có icon ngọn lửa và số ngày giữ streak (hiện chưa có api streak, hard tạm 1 số), icon chat dẫn đến chat_page (hiện chưa có chat_page, hãy log ra thông báo thay vì dẫn đến chat_page)
-+ Phần body gồm: Bộ đếm ngược thời gian đến deadline nằm trong 1 bong bóng hình tròn có hiệu ứng tỏa sáng nhẹ nhàng và hiệu ứng pulse đập nhẹ, màu sắc và độ dồn dập của hiệu ứng phụ thuộc vào trạng thái check-in. Nội dung bên trong bong bóng cũng thay đổi phụ thuộc theo trạng thái.
-VD:
-Chưa đến deadline: Chữ "Đếm ngược" + thời gian còn lại, màu sắc trung tính
-Đến deadline, đang trong thời gian cho phép delay, cảnh báo mạnh hơn
-Hết thời gian delay, người dùng bị cảnh báo mạnh nhất, đồng thời gửi thông báo cho emergency contact (tính năng gửi thông báo chưa làm)
-+ Phần bên dưới body gồm nhóm các nút: Nút bên trái có icon mặt cười (để làm tính năng check-in bằng mood sau này), ở giữa là nút check-in gồm 2 vòng tròn lồng nhau, bên trong có hình chiếc khiên, khi bấm vào sẽ check-in (không cần chụp ảnh), bên phải là nút chuyển sang camera_page, có icon camera ở giữa
-Hãy tạo 1 widget riêng cho loại button chỉ có icon, widget này có hình tròn, màu nền, màu viền, màu icon, size icon,... có thể tùy chỉnh linh hoạt
-
-Nghiệp vụ:
-- Mỗi ngày user phải check-in trong app, có thể chọn nhiều phương pháp check-in (hiện tại mới chỉ có thể check-in only và check-in bằng cách chụp ảnh)
-- Cấu trúc của settings
-    /// {
-    ///   "dailyDeadlineLocalTime": "HH:mm",
-    ///   "gracePeriodMinutes": 15,
-    ///   "reminderBeforeMinutes": 30,
-    ///   "autoAlertDelayMinutes": 15,
-    ///   "isMonitoringEnabled": true,
-    ///   "isAutoAlertEnabled": true,
-    ///   "isDefault": true|false
-    /// }
-
-    + dailyDeadlineLocalTime: deadline hằng ngày (tính theo múi giờ UTC+7)
-    + gracePeriodMinutes: bỏ qua trường này vì sau này tôi sẽ xóa
-    + reminderBeforeMinutes: số phút ứng dụng sẽ gửi thông báo nhắc nhở check-in trước khi deadline
-    + autoAlertDelayMinutes: số phút mà người dùng được cho phép delay check-in sau khi chậm deadline 
-    + isMonitoringEnabled: người dùng bật tắt chế độ check-in (dành cho user chỉ có nhu cầu sử dụng app như 1 mạng xã hội, không cần check-in)
-    + isAutoAlertEnabled: cho phép tự động gửi cảnh báo đến người thân khi hết thời gian cho phép delay (tạm thời chưa làm, hoặc chỉ đơn giản là log ra màn hình)
-- 2 loại type trả về trong /checkin và /today-status:
-    + /checkin: Manual - người dùng checkin đúng hạn, Recovery - người dùng checkin trong khoảng thời gian delay sau deadline, Emergency - người dùng bị gửi cảnh báo, sau khi đến ngưỡng emergency, người dùng phải đợi hôm sau mới được checkin tiếp
-    + /today-status: Pending - người dùng chưa checkin, chưa đến deadline, CheckedIn - người dùng đã checkin, Overdue - quá hạn
-- User phải check-in trước deadline được đặt. Các trường hợp có thể xảy ra:
-    + Người dùng chưa checkin, chưa đến deadline: Null, Pending
-    + Người dùng đã checkin đúng hạn: Manual, CheckedIn
-    + Người dùng đã checkin nhưng trong thời gian delay cho phép: Recovery, CheckedIn
-    + Người dùng quá hạn checkin: Emergency, Overdue
-
-Lưu ý: sử dụng skill cần thiết trong .github, tuân thủ clean architecture theo dự án
+Sửa lại giao diện 1 số thứ sau:
+- HomeActionRow:
+    + Button check-in bằng mood (icon mặt cười) và button mở trang camera đều có kích cỡ 60x60, nền màu sky100, viền màu teal100, icon size 32x32, màu teal400
+    + Button check-in ở giữa: là 2 vòng tròn lồng nhau, vòng tròn ngoài có kích cỡ 128x128, màu teal200, chỉ có viền không có nền, hình tròn bên trong kích cỡ 110x110, màu teal400, icon ở chính giữa bên trong vòng tròn nhỏ hình chiếc khiên, màu sky100, kích cỡ 60x60
+    + Button mood bên trái, button camera bên phải, button checkin ở giữa, tất cả căn giữa theo chiều dọc của button checkin
+- Feed indicator: để icon arrow down bên phải chữ Bảng tin, cách 4px, tất cả có màu ink400, chữ bảng tin typo là Large/Normal/Medium
+- Tất cả font, color sử dụng theo theme đã định nghĩa của hệ thống

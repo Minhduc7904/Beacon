@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/theme/color/app_colors.dart';
 import '../../../../../core/theme/text/app_text_theme.dart';
 import '../../../../../core/widgets/text/text.dart';
 
@@ -25,9 +26,10 @@ class _HomeFeedIndicatorState extends State<HomeFeedIndicator>
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
 
-    _bounce = Tween<double>(begin: 0, end: 6).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _bounce = Tween<double>(
+      begin: 0,
+      end: 6,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -38,24 +40,22 @@ class _HomeFeedIndicatorState extends State<HomeFeedIndicator>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return GestureDetector(
       onTap: widget.onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: Column(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             AppText(
               'Bảng tin',
-              size: AppTextSize.small,
-              spacing: AppTextSpacing.tight,
+              size: AppTextSize.large,
+              spacing: AppTextSpacing.normal,
               weight: AppTextWeight.medium,
-              color: colorScheme.onSurface.withValues(alpha: 0.6),
+              color: AppColors.ink400,
             ),
-            const SizedBox(height: 2),
+            const SizedBox(width: 4),
             AnimatedBuilder(
               animation: _bounce,
               builder: (context, child) {
@@ -64,10 +64,10 @@ class _HomeFeedIndicatorState extends State<HomeFeedIndicator>
                   child: child,
                 );
               },
-              child: Icon(
+              child: const Icon(
                 Icons.keyboard_arrow_down_rounded,
                 size: 24,
-                color: colorScheme.onSurface.withValues(alpha: 0.45),
+                color: AppColors.ink400,
               ),
             ),
           ],

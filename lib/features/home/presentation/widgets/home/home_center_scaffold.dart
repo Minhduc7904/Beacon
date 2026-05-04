@@ -22,10 +22,17 @@ class HomeCenterScaffold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(meProfileProvider).valueOrNull;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        backgroundColor: colorScheme.surface.withValues(alpha: 0),
+        surfaceTintColor: colorScheme.surface.withValues(alpha: 0),
+        shadowColor: colorScheme.surface.withValues(alpha: 0),
+        elevation: 0,
+        scrolledUnderElevation: 0,
         titleSpacing: 0,
         title: HomeAppBarContent(
           avatarUrl: profile?.avatarUrl,
