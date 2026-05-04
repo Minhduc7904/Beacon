@@ -15,19 +15,15 @@ class HomeStreakChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: colorScheme.primaryContainer,
+        color: colorScheme.secondary,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: colorScheme.primary.withValues(alpha: 0.35),
-          width: 1,
-        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             Icons.local_fire_department_rounded,
-            color: colorScheme.primary,
+            color: colorScheme.onSecondary,
             size: 18,
           ),
           const SizedBox(width: 6),
@@ -36,7 +32,7 @@ class HomeStreakChip extends StatelessWidget {
             size: AppTextSize.tiny,
             spacing: AppTextSpacing.tight,
             weight: AppTextWeight.bold,
-            color: colorScheme.onPrimaryContainer,
+            color: colorScheme.onSecondary,
           ),
         ],
       ),

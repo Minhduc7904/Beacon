@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../core/config/app_routes.dart';
 import '../../../../../core/providers/providers.dart';
+import '../../../../../core/widgets/layout/screen_layout.dart';
 import '../../controllers/auth_state.dart';
 
 class LogoutPage extends ConsumerStatefulWidget {
@@ -30,8 +31,10 @@ class _LogoutPageState extends ConsumerState<LogoutPage> {
     });
 
     return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
+      body: SafeArea(
+        child: AppScreenLayout(
+          child: Center(child: CircularProgressIndicator()),
+        ),
       ),
     );
   }

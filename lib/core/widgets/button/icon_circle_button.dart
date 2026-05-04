@@ -28,12 +28,13 @@ class IconCircleButton extends StatelessWidget {
     final effectiveBackground = backgroundColor ?? colorScheme.surface;
     final effectiveBorder = borderColor ?? colorScheme.outline;
     final effectiveIcon = iconColor ?? colorScheme.onSurface;
+    final transparentBackground = effectiveBackground.withValues(alpha: 0);
 
     return SizedBox(
       width: size,
       height: size,
       child: Material(
-        color: Colors.transparent,
+        color: transparentBackground,
         shape: const CircleBorder(),
         child: InkWell(
           onTap: onPressed,
