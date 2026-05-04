@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gal/gal.dart';
 
 import '../../../../core/providers/providers.dart';
+import '../../../../core/theme/color/app_colors.dart';
 import '../controllers/post_preview_image_path_provider.dart';
 
 class PostPreviewDownloadButton extends ConsumerStatefulWidget {
@@ -26,23 +27,36 @@ class _PostPreviewDownloadButtonState
       postPreviewNotifierProvider.select((value) => value.isUploading),
     );
 
-    return IconButton(
-      tooltip: 'Tải xuống',
-      onPressed: (isUploading || _isSaving) ? null : _onDownloadPressed,
-      icon: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 220),
-        transitionBuilder: (child, animation) {
-          return ScaleTransition(scale: animation, child: child);
-        },
-        child: _showSuccessIcon
-            ? const Icon(
-                Icons.check_circle_rounded,
-                key: ValueKey('download_success'),
-              )
-            : const Icon(
-                Icons.download_rounded,
-                key: ValueKey('download_default'),
-              ),
+    return SizedBox(
+      width: 36,
+      height: 36,
+      child: Material(
+        color: AppColors.sky100,
+        shape: const CircleBorder(),
+        child: IconButton(
+          padding: EdgeInsets.zero,
+          tooltip: 'Tải xuống',
+          onPressed: (isUploading || _isSaving) ? null : _onDownloadPressed,
+          icon: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            transitionBuilder: (child, animation) {
+              return ScaleTransition(scale: animation, child: child);
+            },
+            child: _showSuccessIcon
+                ? const Icon(
+                    Icons.check_rounded,
+                    key: ValueKey('download_success'),
+                    size: 24,
+                    color: AppColors.ink600,
+                  )
+                : const Icon(
+                    Icons.download_rounded,
+                    key: ValueKey('download_default'),
+                    size: 24,
+                    color: AppColors.ink600,
+                  ),
+          ),
+        ),
       ),
     );
   }
@@ -57,7 +71,6 @@ class _PostPreviewDownloadButtonState
     });
 
     final isSuccess = await _downloadImage();
-
     if (!mounted) {
       return;
     }
@@ -66,13 +79,10 @@ class _PostPreviewDownloadButtonState
       setState(() {
         _showSuccessIcon = true;
       });
-
       await Future<void>.delayed(const Duration(milliseconds: 1200));
-
       if (!mounted) {
         return;
       }
-
       setState(() {
         _showSuccessIcon = false;
       });
@@ -81,7 +91,6 @@ class _PostPreviewDownloadButtonState
     if (!mounted) {
       return;
     }
-
     setState(() {
       _isSaving = false;
     });

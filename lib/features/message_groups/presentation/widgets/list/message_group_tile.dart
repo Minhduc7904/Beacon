@@ -10,10 +10,16 @@ class MessageGroupTile extends StatelessWidget {
     super.key,
     required this.group,
     required this.onTap,
+    this.displayName,
+    this.avatarUrl,
+    this.avatarGivenName,
   });
 
   final MessageGroup group;
   final VoidCallback onTap;
+  final String? displayName;
+  final String? avatarUrl;
+  final String? avatarGivenName;
 
   String _formatTime(DateTime dateTime) {
     final now = DateTime.now();
@@ -26,20 +32,13 @@ class MessageGroupTile extends StatelessWidget {
     return '${dateTime.day}/${dateTime.month}';
   }
 
-  String _groupTitle() {
-    final hint = group.lastMessageSenderUsername?.trim();
-    if (hint != null && hint.isNotEmpty) {
-      return hint;
-    }
-    final gid = group.groupId;
-    final shortId = gid.length > 8 ? gid.substring(0, 8) : gid;
-    return 'Nhom $shortId';
-  }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final title = _groupTitle();
+    final title =
+        (displayName ?? group.lastMessageSenderFullName).trim().isEmpty
+        ? 'Nguoi dung'
+        : (displayName ?? group.lastMessageSenderFullName).trim();
     final updatedAt = group.lastMessageAtUtc ?? group.createdAtUtc;
     final subtitle = group.lastMessageContent?.trim();
 
@@ -53,8 +52,8 @@ class MessageGroupTile extends StatelessWidget {
           child: Row(
             children: [
               UserAvatar(
-                avatarUrl: null,
-                givenName: title,
+                avatarUrl: avatarUrl,
+                givenName: avatarGivenName ?? title,
                 size: 52,
               ),
               const SizedBox(width: 14),

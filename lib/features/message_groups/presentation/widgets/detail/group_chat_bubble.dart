@@ -41,7 +41,9 @@ class GroupChatBubble extends StatelessWidget {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isMe ? colorScheme.primary : colorScheme.surfaceContainerHighest,
+          color: isMe
+              ? colorScheme.primary
+              : colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(18),
             topRight: const Radius.circular(18),
@@ -50,12 +52,15 @@ class GroupChatBubble extends StatelessWidget {
           ),
         ),
         child: Column(
-          crossAxisAlignment:
-              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: isMe
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
           children: [
             if (!isMe) ...[
               AppText(
-                message.senderUsername,
+                message.senderFullName.isEmpty
+                    ? 'Người dùng'
+                    : message.senderFullName,
                 size: AppTextSize.veryTiny,
                 spacing: AppTextSpacing.tight,
                 weight: AppTextWeight.medium,

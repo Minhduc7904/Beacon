@@ -2,14 +2,10 @@ import '../../domain/entities/tokens.dart';
 
 class TokensModel extends Tokens {
   TokensModel({
-    required String accessToken,
-    required String refreshToken,
-    required DateTime? accessTokenExpiresAt,
-  }) : super(
-         accessToken: accessToken,
-         refreshToken: refreshToken,
-         accessTokenExpiresAt: accessTokenExpiresAt,
-       );
+    required super.accessToken,
+    required super.refreshToken,
+    required super.accessTokenExpiresAt,
+  });
 
   factory TokensModel.fromJson(Map<String, dynamic> json) {
     final expiresAtRaw = json['accessTokenExpiresAt'] as String?;

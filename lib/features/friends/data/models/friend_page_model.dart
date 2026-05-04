@@ -28,6 +28,18 @@ class FriendPageModel extends FriendPage {
     );
   }
 
+  factory FriendPageModel.fromSearchList(List<dynamic> rows) {
+    return FriendPageModel(
+      items: rows
+          .whereType<Map<String, dynamic>>()
+          .map(FriendProfileModel.fromJson)
+          .toList(),
+      nextCursor: null,
+      limit: rows.length,
+      hasMore: false,
+    );
+  }
+
   static int _toInt(dynamic value) {
     if (value is int) {
       return value;

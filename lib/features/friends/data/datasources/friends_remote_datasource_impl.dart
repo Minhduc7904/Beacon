@@ -14,10 +14,7 @@ class FriendsRemoteDatasourceImpl implements FriendsRemoteDatasource {
   FriendsRemoteDatasourceImpl(this._dioClient);
 
   @override
-  Future<FriendPageModel> getFriends({
-    String? cursor,
-    int? limit,
-  }) async {
+  Future<FriendPageModel> getFriends({String? cursor, int? limit}) async {
     try {
       final query = <String, dynamic>{};
       if (cursor != null && cursor.trim().isNotEmpty) {
@@ -34,7 +31,8 @@ class FriendsRemoteDatasourceImpl implements FriendsRemoteDatasource {
 
       final result = ApiHandler.handle<FriendPageModel>(
         response,
-        fromJsonT: (json) => FriendPageModel.fromJson(json as Map<String, dynamic>),
+        fromJsonT: (json) =>
+            FriendPageModel.fromJson(json as Map<String, dynamic>),
         codeMessageMapper: FriendsErrorCodeMapper.mapCode,
       );
 
@@ -44,7 +42,6 @@ class FriendsRemoteDatasourceImpl implements FriendsRemoteDatasource {
         e,
         codeMessageMapper: FriendsErrorCodeMapper.mapCode,
       );
-      rethrow;
     }
   }
 
@@ -70,7 +67,9 @@ class FriendsRemoteDatasourceImpl implements FriendsRemoteDatasource {
 
       final result = ApiHandler.handle<FriendPageModel>(
         response,
-        fromJsonT: (json) => FriendPageModel.fromJson(json as Map<String, dynamic>),
+        fromJsonT: (json) => FriendPageModel.fromSearchList(
+          json is List ? json : const <dynamic>[],
+        ),
         codeMessageMapper: FriendsErrorCodeMapper.mapCode,
       );
 
@@ -80,14 +79,15 @@ class FriendsRemoteDatasourceImpl implements FriendsRemoteDatasource {
         e,
         codeMessageMapper: FriendsErrorCodeMapper.mapCode,
       );
-      rethrow;
     }
   }
 
   @override
   Future<FriendProfileModel> getFriendDetail({required String userId}) async {
     try {
-      final response = await _dioClient.get(ApiEndpoints.friendByUserId(userId));
+      final response = await _dioClient.get(
+        ApiEndpoints.friendByUserId(userId),
+      );
 
       final result = ApiHandler.handle<FriendProfileModel>(
         response,
@@ -102,7 +102,6 @@ class FriendsRemoteDatasourceImpl implements FriendsRemoteDatasource {
         e,
         codeMessageMapper: FriendsErrorCodeMapper.mapCode,
       );
-      rethrow;
     }
   }
 
@@ -126,15 +125,15 @@ class FriendsRemoteDatasourceImpl implements FriendsRemoteDatasource {
         e,
         codeMessageMapper: FriendsErrorCodeMapper.mapCode,
       );
-      rethrow;
     }
   }
 
   @override
   Future<void> deleteFriend({required String userId}) async {
     try {
-      final response =
-          await _dioClient.delete(ApiEndpoints.friendDeleteByUserId(userId));
+      final response = await _dioClient.delete(
+        ApiEndpoints.friendDeleteByUserId(userId),
+      );
 
       ApiHandler.handle<dynamic>(
         response,
@@ -145,7 +144,6 @@ class FriendsRemoteDatasourceImpl implements FriendsRemoteDatasource {
         e,
         codeMessageMapper: FriendsErrorCodeMapper.mapCode,
       );
-      rethrow;
     }
   }
 }

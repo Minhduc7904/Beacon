@@ -3,18 +3,29 @@ import '../../domain/entities/friend_request.dart';
 class FriendRequestModel extends FriendRequest {
   const FriendRequestModel({
     required super.id,
-    required super.senderId,
-    required super.senderUsername,
-    required super.senderAvatarUrl,
+    required super.userId,
+    required super.familyName,
+    required super.givenName,
+    required super.avatarUrl,
     required super.createdAtUtc,
   });
 
   factory FriendRequestModel.fromJson(Map<String, dynamic> json) {
     return FriendRequestModel(
       id: json['id']?.toString() ?? '',
-      senderId: json['senderId']?.toString() ?? '',
-      senderUsername: json['senderUsername']?.toString() ?? '',
-      senderAvatarUrl: json['senderAvatarUrl']?.toString(),
+      userId:
+          json['receiverId']?.toString() ?? json['senderId']?.toString() ?? '',
+      familyName:
+          json['receiverFamilyName']?.toString() ??
+          json['senderFamilyName']?.toString() ??
+          '',
+      givenName:
+          json['receiverGivenName']?.toString() ??
+          json['senderGivenName']?.toString() ??
+          '',
+      avatarUrl:
+          json['receiverAvatarUrl']?.toString() ??
+          json['senderAvatarUrl']?.toString(),
       createdAtUtc: _toDate(json['createdAtUtc']),
     );
   }

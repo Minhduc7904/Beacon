@@ -7,7 +7,8 @@ class MessageGroupModel extends MessageGroup {
     required super.createdAtUtc,
     required super.lastMessageContent,
     required super.lastMessageAtUtc,
-    required super.lastMessageSenderUsername,
+    required super.lastMessageSenderFamilyName,
+    required super.lastMessageSenderGivenName,
   });
 
   factory MessageGroupModel.fromJson(Map<String, dynamic> json) {
@@ -17,7 +18,11 @@ class MessageGroupModel extends MessageGroup {
       createdAtUtc: _toDate(json['createdAtUtc']),
       lastMessageContent: json['lastMessageContent']?.toString(),
       lastMessageAtUtc: _toDate(json['lastMessageAtUtc']),
-      lastMessageSenderUsername: json['lastMessageSenderUsername']?.toString(),
+      lastMessageSenderFamilyName: json['lastMessageSenderFamilyName']
+          ?.toString(),
+      lastMessageSenderGivenName:
+          json['lastMessageSenderGivenName']?.toString() ??
+          json['lastMessageSenderUsername']?.toString(),
     );
   }
 
