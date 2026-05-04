@@ -90,7 +90,7 @@ class _HomePageState extends ConsumerState<HomePage>
           child: HomeCenterScaffold(
             onOpenProfile: () => _animateToPage(_profilePageIndex),
             onOpenMessages: () => _animateToPage(_messagePageIndex),
-            streakDays: _streakDays,
+            streakDays: streakDays,
             unreadMessages: _unreadMessageCount,
           ),
         ),
