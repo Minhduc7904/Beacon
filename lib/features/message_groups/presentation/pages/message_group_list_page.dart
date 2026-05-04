@@ -12,19 +12,25 @@ import '../controllers/message_group_list_state.dart';
 import '../widgets/list/message_group_empty_state.dart';
 import '../widgets/list/message_group_tile.dart';
 
-final messageGroupListProvider = StateNotifierProvider.autoDispose<
-    MessageGroupListNotifier, MessageGroupListState>((ref) {
-  return MessageGroupListNotifier(
-    ref.watch(getMessageGroupsUseCaseProvider),
-    ref.watch(appMessageProvider.notifier),
-  );
-});
+final messageGroupListProvider =
+    StateNotifierProvider.autoDispose<
+      MessageGroupListNotifier,
+      MessageGroupListState
+    >((ref) {
+      return MessageGroupListNotifier(
+        ref.watch(getMessageGroupsUseCaseProvider),
+        ref.watch(appMessageProvider.notifier),
+      );
+    });
 
 class MessageGroupListPage extends ConsumerStatefulWidget {
-  const MessageGroupListPage({super.key});
+  const MessageGroupListPage({super.key, this.onBackToHome});
+
+  final VoidCallback? onBackToHome;
 
   @override
-  ConsumerState<MessageGroupListPage> createState() => _MessageGroupListPageState();
+  ConsumerState<MessageGroupListPage> createState() =>
+      _MessageGroupListPageState();
 }
 
 class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
@@ -45,7 +51,7 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-          onPressed: () => context.pop(),
+          onPressed: widget.onBackToHome ?? () => context.pop(),
         ),
         title: AppText(
           'Tin nhan',
@@ -101,9 +107,6 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
   }
 
   void _openDetail(MessageGroup group) {
-    context.pushNamed(
-      AppRoutes.chatDetailName,
-      extra: group,
-    );
+    context.pushNamed(AppRoutes.chatDetailName, extra: group);
   }
 }

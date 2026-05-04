@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../../core/config/app_routes.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../core/widgets/button/icon_circle_button.dart';
 import '../../../../core/widgets/image/user_avatar.dart';
+import '../../../auth/presentation/pages/profile/profile_page.dart';
 import '../../../feed/presentation/pages/feed_page.dart';
+import '../../../message_groups/presentation/pages/message_group_list_page.dart';
 import '../widgets/home/home_body.dart';
 import '../widgets/home/home_streak_chip.dart';
 
@@ -22,13 +22,17 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage>
     with WidgetsBindingObserver {
   static const int _streakDays = 7;
+  static const int _profilePageIndex = 0;
+  static const int _homePageIndex = 1;
+  static const int _messagePageIndex = 2;
 
-  /// 🔥 Track lifecycle to refresh when returning to this page
+  late final PageController _horizontalController;
   AppLifecycleState? _lastLifecycleState;
 
   @override
   void initState() {
     super.initState();
+    _horizontalController = PageController(initialPage: _homePageIndex);
     WidgetsBinding.instance.addObserver(this);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -49,12 +53,12 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _horizontalController.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // 🔥 Refresh data when app returns to resumed state (e.g., returning from another page)
     if (_lastLifecycleState == AppLifecycleState.paused &&
         state == AppLifecycleState.resumed &&
         mounted) {
@@ -63,8 +67,75 @@ class _HomePageState extends ConsumerState<HomePage>
     _lastLifecycleState = state;
   }
 
+  Future<void> _animateToPage(int page) {
+    return _horizontalController.animateToPage(
+      page,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    return PageView(
+      controller: _horizontalController,
+      children: [
+        _KeepAlivePage(
+          child: ProfilePage(
+            onBackToHome: () => _animateToPage(_homePageIndex),
+          ),
+        ),
+        _KeepAlivePage(
+          child: _HomeCenterScaffold(
+            onOpenProfile: () => _animateToPage(_profilePageIndex),
+            onOpenMessages: () => _animateToPage(_messagePageIndex),
+            streakDays: _streakDays,
+          ),
+        ),
+        _KeepAlivePage(
+          child: MessageGroupListPage(
+            onBackToHome: () => _animateToPage(_homePageIndex),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _KeepAlivePage extends StatefulWidget {
+  const _KeepAlivePage({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_KeepAlivePage> createState() => _KeepAlivePageState();
+}
+
+class _KeepAlivePageState extends State<_KeepAlivePage>
+    with AutomaticKeepAliveClientMixin<_KeepAlivePage> {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
+  }
+}
+
+class _HomeCenterScaffold extends ConsumerWidget {
+  const _HomeCenterScaffold({
+    required this.onOpenProfile,
+    required this.onOpenMessages,
+    required this.streakDays,
+  });
+
+  final VoidCallback onOpenProfile;
+  final VoidCallback onOpenMessages;
+  final int streakDays;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(meProfileProvider).valueOrNull;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -74,7 +145,7 @@ class _HomePageState extends ConsumerState<HomePage>
         leading: Padding(
           padding: const EdgeInsets.only(left: 12),
           child: GestureDetector(
-            onTap: () => context.pushNamed(AppRoutes.profileName),
+            onTap: onOpenProfile,
             child: UserAvatar(
               avatarUrl: profile?.avatarUrl,
               givenName: profile?.givenName,
@@ -82,7 +153,7 @@ class _HomePageState extends ConsumerState<HomePage>
             ),
           ),
         ),
-        title: HomeStreakChip(days: _streakDays),
+        title: HomeStreakChip(days: streakDays),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
@@ -93,16 +164,12 @@ class _HomePageState extends ConsumerState<HomePage>
               backgroundColor: colorScheme.surface,
               borderColor: colorScheme.outline,
               iconColor: colorScheme.onSurface,
-              onPressed: () {
-                context.pushNamed(AppRoutes.messageListName);
-              },
+              onPressed: onOpenMessages,
             ),
           ),
         ],
       ),
-      body: SafeArea(
-        child: const HomeBody(),
-      ),
+      body: const SafeArea(child: HomeBody()),
     );
   }
 }

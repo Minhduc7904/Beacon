@@ -13,7 +13,9 @@ import '../../../../../core/widgets/text/text.dart';
 import '../../controllers/profile_state.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
-  const ProfilePage({super.key});
+  const ProfilePage({super.key, this.onBackToHome});
+
+  final VoidCallback? onBackToHome;
 
   @override
   ConsumerState<ProfilePage> createState() => _ProfilePageState();
@@ -71,7 +73,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
-            onPressed: () => context.pop(),
+            onPressed: widget.onBackToHome ?? () => context.pop(),
             icon: const Icon(Icons.arrow_forward_ios_rounded),
           ),
         ],
