@@ -4,6 +4,7 @@ class TodayStatusModel extends TodayStatus {
   const TodayStatusModel({
     required super.hasCheckedIn,
     required super.status,
+    required super.streak,
     required super.deadlineAtUtc,
     required super.remainingSeconds,
     required super.checkedInAtUtc,
@@ -15,6 +16,7 @@ class TodayStatusModel extends TodayStatus {
     return TodayStatusModel(
       hasCheckedIn: json['hasCheckedIn'] == true,
       status: _parseStatus(json['status']),
+      streak: _toInt(json['streak']) ?? 0,
       deadlineAtUtc: _toDate(json['deadlineAtUtc']),
       remainingSeconds: _toInt(json['remainingSeconds']),
       checkedInAtUtc: _toDate(json['checkedInAtUtc']),

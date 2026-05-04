@@ -3,6 +3,7 @@ enum TodayStatusType { pending, checkedIn, overdue, unknown }
 class TodayStatus {
   final bool hasCheckedIn;
   final TodayStatusType status;
+  final int streak;
   final DateTime? deadlineAtUtc;
   final int? remainingSeconds;
   final DateTime? checkedInAtUtc;
@@ -12,6 +13,7 @@ class TodayStatus {
   const TodayStatus({
     required this.hasCheckedIn,
     required this.status,
+    required this.streak,
     required this.deadlineAtUtc,
     required this.remainingSeconds,
     required this.checkedInAtUtc,
@@ -22,6 +24,7 @@ class TodayStatus {
   TodayStatus copyWith({
     bool? hasCheckedIn,
     TodayStatusType? status,
+    int? streak,
     DateTime? deadlineAtUtc,
     bool clearDeadlineAtUtc = false,
     int? remainingSeconds,
@@ -34,6 +37,7 @@ class TodayStatus {
     return TodayStatus(
       hasCheckedIn: hasCheckedIn ?? this.hasCheckedIn,
       status: status ?? this.status,
+      streak: streak ?? this.streak,
       deadlineAtUtc: clearDeadlineAtUtc
           ? null
           : (deadlineAtUtc ?? this.deadlineAtUtc),

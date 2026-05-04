@@ -47,19 +47,49 @@ class _CountdownBubbleState extends State<CountdownBubble>
         ..stop()
         ..duration = const Duration(milliseconds: 1)
         ..value = 0;
-      _pulse = const AlwaysStoppedAnimation(1);
+      _pulse = AlwaysStoppedAnimation(config.minScale);
       return;
     }
 
-    _controller.duration = config.duration;
-    _pulse = Tween<double>(
-      begin: config.minScale,
-      end: config.maxScale,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _controller
+      ..stop()
+      ..duration = config.duration
+      ..value = 0;
+    _pulse = _buildHeartbeatAnimation(config);
+    _controller.repeat();
+  }
 
-    if (!_controller.isAnimating) {
-      _controller.repeat(reverse: true);
-    }
+  Animation<double> _buildHeartbeatAnimation(_PulseConfig config) {
+    final minScale = config.minScale;
+    final maxScale = config.maxScale;
+    final secondPeak = minScale + (maxScale - minScale) * 0.7;
+
+    return TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: minScale, end: maxScale)
+            .chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 14,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: maxScale, end: minScale)
+            .chain(CurveTween(curve: Curves.easeInCubic)),
+        weight: 10,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: minScale, end: secondPeak)
+            .chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 8,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: secondPeak, end: minScale)
+            .chain(CurveTween(curve: Curves.easeInCubic)),
+        weight: 12,
+      ),
+      TweenSequenceItem(
+        tween: ConstantTween<double>(minScale),
+        weight: 56,
+      ),
+    ]).animate(_controller);
   }
 
   @override
@@ -76,12 +106,14 @@ class _CountdownBubbleState extends State<CountdownBubble>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        final glowBlur = _pulseConfig.glowBlur(_controller.value);
-        final glowSpread = _pulseConfig.glowSpread(_controller.value);
+        final scale = _pulse.value;
+        final pulseIntensity = _pulseConfig.intensityForScale(scale);
+        final glowBlur = _pulseConfig.glowBlur(pulseIntensity);
+        final glowSpread = _pulseConfig.glowSpread(pulseIntensity);
         final innerGlowBlur = (glowBlur * 0.6).clamp(12.0, 28.0).toDouble();
 
         return Transform.scale(
-          scale: _pulse.value,
+          scale: scale,
           child: Container(
             width: size,
             height: size,
@@ -151,9 +183,35 @@ class _CountdownBubbleState extends State<CountdownBubble>
           maxSpread: 16,
         );
       case HomeCheckinPhase.checkedIn:
+        return const _PulseConfig(
+          duration: Duration(milliseconds: 3200),
+          minScale: 0.992,
+          maxScale: 1.01,
+          minGlow: 14,
+          maxGlow: 22,
+          minSpread: 2,
+          maxSpread: 6,
+        );
       case HomeCheckinPhase.monitoringOff:
+        return const _PulseConfig(
+          duration: Duration(milliseconds: 3600),
+          minScale: 0.993,
+          maxScale: 1.008,
+          minGlow: 12,
+          maxGlow: 18,
+          minSpread: 1,
+          maxSpread: 5,
+        );
       case HomeCheckinPhase.unknown:
-        return const _PulseConfig.disabled();
+        return const _PulseConfig(
+          duration: Duration(milliseconds: 3400),
+          minScale: 0.994,
+          maxScale: 1.007,
+          minGlow: 12,
+          maxGlow: 16,
+          minSpread: 1,
+          maxSpread: 4,
+        );
     }
   }
 
@@ -372,4 +430,13 @@ class _PulseConfig {
 
   double glowSpread(double t) =>
       ui.lerpDouble(minSpread, maxSpread, t) ?? minSpread;
+
+  double intensityForScale(double scale) {
+    final range = (maxScale - minScale).abs();
+    if (range <= 0) {
+      return 0;
+    }
+
+    return ((scale - minScale) / range).clamp(0.0, 1.0);
+  }
 }

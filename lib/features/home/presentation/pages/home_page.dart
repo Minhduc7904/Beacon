@@ -19,7 +19,6 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage>
     with WidgetsBindingObserver {
-  static const int _streakDays = 36;
   static const int _unreadMessageCount = 2;
   static const int _profilePageIndex = 0;
   static const int _homePageIndex = 1;
@@ -75,6 +74,9 @@ class _HomePageState extends ConsumerState<HomePage>
 
   @override
   Widget build(BuildContext context) {
+    final checkinState = ref.watch(homeCheckinNotifierProvider);
+    final streakDays = checkinState.streakDays;
+
     return PageView(
       controller: _horizontalController,
       children: [
@@ -91,7 +93,7 @@ class _HomePageState extends ConsumerState<HomePage>
                   .read(appMessageProvider.notifier)
                   .addInfo('Chat sẽ sớm ra mắt');
             },
-            streakDays: _streakDays,
+            streakDays: streakDays,
             unreadMessages: _unreadMessageCount,
           ),
         ),

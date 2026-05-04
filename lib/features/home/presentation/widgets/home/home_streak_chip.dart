@@ -29,12 +29,42 @@ class HomeStreakChip extends StatelessWidget {
             size: 28,
           ),
           const SizedBox(width: 8),
-          AppText(
-            '$days ngày',
-            size: AppTextSize.regular,
-            spacing: AppTextSpacing.none,
-            weight: AppTextWeight.bold,
-            color: AppColors.sky100,
+          ClipRect(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 240),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) {
+                final isIncoming = child.key == ValueKey<int>(days);
+                final beginOffset = isIncoming
+                    ? const Offset(0, 0.6)
+                    : const Offset(0, -0.6);
+
+                return SlideTransition(
+                  position: animation.drive(
+                    Tween(begin: beginOffset, end: Offset.zero),
+                  ),
+                  child: FadeTransition(opacity: animation, child: child),
+                );
+              },
+              layoutBuilder: (currentChild, previousChildren) {
+                return Stack(
+                  alignment: Alignment.centerLeft,
+                  children: [
+                    ...previousChildren,
+                    if (currentChild != null) currentChild,
+                  ],
+                );
+              },
+              child: AppText(
+                '$days ngày',
+                key: ValueKey<int>(days),
+                size: AppTextSize.regular,
+                spacing: AppTextSpacing.none,
+                weight: AppTextWeight.bold,
+                color: AppColors.sky100,
+              ),
+            ),
           ),
         ],
       ),

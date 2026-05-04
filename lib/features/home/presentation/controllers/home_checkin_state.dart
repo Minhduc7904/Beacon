@@ -43,6 +43,8 @@ class HomeCheckinState {
 
   bool get isAutoAlertEnabled => todayStatus?.isAutoAlertEnabled ?? true;
 
+  int get streakDays => todayStatus?.streak ?? 0;
+
   TodayStatusType get status => todayStatus?.status ?? TodayStatusType.unknown;
 
   int get autoAlertDelayMinutes => safetySettings?.autoAlertDelayMinutes ?? 0;
