@@ -11,9 +11,14 @@ import '../../features/auth/presentation/pages/register/register_page_name.dart'
 import '../../features/auth/presentation/pages/register/register_page_phone_number.dart';
 import '../../features/auth/presentation/pages/register/register_page_password.dart';
 import '../../features/auth/presentation/pages/register/register_page_username.dart';
-import '../../features/home/presentation/pages/home.dart';
+import '../../features/home/presentation/pages/camera_screen.dart';
+import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/message/presentation/pages/message_list_page.dart';
+import '../../features/message/presentation/pages/chat_detail_page.dart';
+import '../../features/message/domain/entities/conversation.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/post_preview/presentation/pages/post_preview_page.dart';
+import '../../features/safety/presentation/pages/safety_settings_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 import '../../features/widgets/presentation/page/shared_widgets_page.dart';
 import '../observers/app_route_stack_observer.dart';
@@ -120,10 +125,7 @@ final appRouter = GoRouter(
           }
         }
 
-        return _buildSlidePage(
-          state,
-          LoginPage(autoFillData: autoFillData),
-        );
+        return _buildSlidePage(state, LoginPage(autoFillData: autoFillData));
       },
     ),
     GoRoute(
@@ -200,8 +202,22 @@ final appRouter = GoRouter(
           autoCaptureOnOpen = extra['autoCaptureOnOpen'] == true;
         }
 
+        return AuthGuard(child: HomePage(autoCaptureOnOpen: autoCaptureOnOpen));
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.cameraScreen,
+      name: AppRoutes.cameraScreenName,
+      builder: (context, state) {
+        var autoCaptureOnOpen = false;
+        final extra = state.extra;
+
+        if (extra is Map<String, dynamic>) {
+          autoCaptureOnOpen = extra['autoCaptureOnOpen'] == true;
+        }
+
         return AuthGuard(
-          child: HomePage(autoCaptureOnOpen: autoCaptureOnOpen),
+          child: CameraScreen(autoCaptureOnOpen: autoCaptureOnOpen),
         );
       },
     ),
@@ -225,6 +241,12 @@ final appRouter = GoRouter(
           AuthGuard(child: EditProfilePage(profile: profile)),
         );
       },
+    ),
+    GoRoute(
+      path: AppRoutes.safetySettings,
+      name: AppRoutes.safetySettingsName,
+      pageBuilder: (context, state) =>
+          _buildSlidePage(state, const AuthGuard(child: SafetySettingsPage())),
     ),
     GoRoute(
       path: AppRoutes.postPreview,
@@ -261,6 +283,27 @@ final appRouter = GoRouter(
       path: AppRoutes.widgets,
       name: AppRoutes.widgetsName,
       builder: (context, state) => const SharedWidgetsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.messageList,
+      name: AppRoutes.messageListName,
+      pageBuilder: (context, state) =>
+          _buildSlidePage(state, const AuthGuard(child: MessageListPage())),
+    ),
+    GoRoute(
+      path: AppRoutes.chatDetail,
+      name: AppRoutes.chatDetailName,
+      pageBuilder: (context, state) {
+        final conversation = state.extra;
+        if (conversation is! Conversation) {
+          return _buildSlidePage(state, const NotFoundPage());
+        }
+
+        return _buildSlidePage(
+          state,
+          AuthGuard(child: ChatDetailPage(conversation: conversation)),
+        );
+      },
     ),
   ],
 );

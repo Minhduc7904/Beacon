@@ -164,7 +164,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        title: const Text('Chỉnh sửa hồ sơ'),
         leading: IconButton(
           onPressed: () => context.pop(),
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -179,7 +179,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                 child: ListView(
                   children: [
                     Input(
-                      labelText: 'Username',
+                      labelText: 'Tên đăng nhập',
                       controller: _usernameController,
                       enabled: false,
                       state: InputState.disabled,
@@ -220,7 +220,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                     ),
                     const SizedBox(height: 14),
                     Input(
-                      labelText: 'Email',
+                      labelText: 'Địa chỉ email',
                       keyboardType: TextInputType.emailAddress,
                       controller: _emailController,
                       onChanged: (_) {
@@ -247,38 +247,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                       },
                       caption: _phoneError,
                       state: _resolveState(_phoneController.text, _phoneError),
-                    ),
-                    const SizedBox(height: 14),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.outline.withValues(alpha: 0.6),
-                        ),
-                        color: Theme.of(context).colorScheme.surface,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const AppText(
-                            'Múi giờ',
-                            preset: AppTextPreset.bodySmall,
-                          ),
-                          const SizedBox(height: 6),
-                          AppText(
-                            widget.profile.timeZone,
-                            preset: AppTextPreset.bodyMedium,
-                          ),
-                          const SizedBox(height: 4),
-                          const AppText(
-                            'Trường này chỉ đọc theo backend hiện tại.',
-                            preset: AppTextPreset.labelSmall,
-                          ),
-                        ],
-                      ),
                     ),
                   ],
                 ),

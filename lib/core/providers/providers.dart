@@ -1,5 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/auth/data/datasources/auth_local_datasource.dart';
@@ -22,6 +23,14 @@ import '../../features/auth/presentation/controllers/auth_state.dart';
 import '../../features/auth/presentation/controllers/me_profile_notifier.dart';
 import '../../features/auth/presentation/controllers/profile_notifier.dart';
 import '../../features/auth/presentation/controllers/profile_state.dart';
+import '../../features/home/data/datasources/checkin_remote_datasource.dart';
+import '../../features/home/data/datasources/checkin_remote_datasource_impl.dart';
+import '../../features/home/data/repositories/checkin_repository_impl.dart';
+import '../../features/home/domain/repositories/checkin_repository.dart';
+import '../../features/home/domain/usecase/checkin_usecase.dart';
+import '../../features/home/domain/usecase/get_today_status_usecase.dart';
+import '../../features/home/presentation/controllers/home_checkin_notifier.dart';
+import '../../features/home/presentation/controllers/home_checkin_state.dart';
 import '../../features/home/presentation/controllers/home_notifier.dart';
 import '../../features/home/presentation/controllers/home_state.dart';
 import '../../features/onboarding/data/datasources/onboarding_local_datasource.dart';
@@ -39,6 +48,14 @@ import '../../features/post_preview/domain/repositories/post_preview_repository.
 import '../../features/post_preview/domain/usecase/upload_post_media_usecase.dart';
 import '../../features/post_preview/presentation/controllers/post_preview_notifier.dart';
 import '../../features/post_preview/presentation/controllers/post_preview_state.dart';
+import '../../features/safety/data/datasources/safety_remote_datasource.dart';
+import '../../features/safety/data/datasources/safety_remote_datasource_impl.dart';
+import '../../features/safety/data/repositories/safety_repository_impl.dart';
+import '../../features/safety/domain/repositories/safety_repository.dart';
+import '../../features/safety/domain/usecase/get_safety_settings_usecase.dart';
+import '../../features/safety/domain/usecase/update_safety_settings_usecase.dart';
+import '../../features/safety/presentation/controllers/safety_settings_notifier.dart';
+import '../../features/safety/presentation/controllers/safety_settings_state.dart';
 import '../messages/app_message.dart';
 import '../messages/app_message_notifier.dart';
 import '../network/dio_client.dart';
@@ -46,6 +63,8 @@ import '../network/network_info.dart';
 import '../preferences/app_preferences.dart';
 import '../preferences/app_preferences_impl.dart';
 import '../storage/local_storage.dart';
+import '../storage/secure_storage.dart';
+import '../storage/flutter_secure_storage_impl.dart';
 import '../storage/shared_prefs_storage.dart';
 
 // ─── SharedPreferences ────────────────────────────────────────────────────────
@@ -62,6 +81,14 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
 final localStorageProvider = Provider<LocalStorage>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
   return SharedPrefsStorage(prefs);
+});
+
+final flutterSecureStorageProvider = Provider<FlutterSecureStorage>((ref) {
+  return const FlutterSecureStorage();
+});
+
+final secureStorageProvider = Provider<SecureStorage>((ref) {
+  return FlutterSecureStorageImpl(ref.watch(flutterSecureStorageProvider));
 });
 
 final appPreferencesProvider = Provider<AppPreferences>((ref) {
@@ -83,21 +110,36 @@ final networkInfoProvider = Provider<NetworkInfo>((ref) {
 // ─── Auth Datasources ─────────────────────────────────────────────────────────
 
 final authLocalDatasourceProvider = Provider<AuthLocalDatasource>((ref) {
-  return AuthLocalDatasourceImpl(ref.watch(localStorageProvider));
+  return AuthLocalDatasourceImpl(ref.watch(secureStorageProvider));
 });
 
 final dioClientProvider = Provider<DioClient>((ref) {
-  return DioClient(ref.watch(authLocalDatasourceProvider));
+  return DioClient(
+    ref.watch(authLocalDatasourceProvider),
+    onAuthFailure: (message) {
+      ref.read(appMessageProvider.notifier).addError(message);
+    },
+  );
 });
 
 final authRemoteDatasourceProvider = Provider<AuthRemoteDatasource>((ref) {
   return AuthRemoteDatasourceImpl(ref.watch(dioClientProvider));
 });
 
+final checkinRemoteDatasourceProvider = Provider<CheckinRemoteDatasource>((
+  ref,
+) {
+  return CheckinRemoteDatasourceImpl(ref.watch(dioClientProvider));
+});
+
 final postPreviewRemoteDatasourceProvider =
     Provider<PostPreviewRemoteDatasource>((ref) {
       return PostPreviewRemoteDatasourceImpl(ref.watch(dioClientProvider));
     });
+
+final safetyRemoteDatasourceProvider = Provider<SafetyRemoteDatasource>((ref) {
+  return SafetyRemoteDatasourceImpl(ref.watch(dioClientProvider));
+});
 
 // ─── Onboarding Datasource ───────────────────────────────────────────────────
 
@@ -120,6 +162,20 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 final postPreviewRepositoryProvider = Provider<PostPreviewRepository>((ref) {
   return PostPreviewRepositoryImpl(
     remoteDatasource: ref.watch(postPreviewRemoteDatasourceProvider),
+    networkInfo: ref.watch(networkInfoProvider),
+  );
+});
+
+final checkinRepositoryProvider = Provider<CheckinRepository>((ref) {
+  return CheckinRepositoryImpl(
+    remoteDatasource: ref.watch(checkinRemoteDatasourceProvider),
+    networkInfo: ref.watch(networkInfoProvider),
+  );
+});
+
+final safetyRepositoryProvider = Provider<SafetyRepository>((ref) {
+  return SafetyRepositoryImpl(
+    remoteDatasource: ref.watch(safetyRemoteDatasourceProvider),
     networkInfo: ref.watch(networkInfoProvider),
   );
 });
@@ -211,6 +267,25 @@ final postPreviewUploadPostMediaUseCaseProvider =
       return UploadPostMediaUseCase(ref.watch(postPreviewRepositoryProvider));
     });
 
+final checkinUseCaseProvider = Provider<CheckinUseCase>((ref) {
+  return CheckinUseCase(ref.watch(checkinRepositoryProvider));
+});
+
+final getTodayStatusUseCaseProvider = Provider<GetTodayStatusUseCase>((ref) {
+  return GetTodayStatusUseCase(ref.watch(checkinRepositoryProvider));
+});
+
+final getSafetySettingsUseCaseProvider = Provider<GetSafetySettingsUseCase>((
+  ref,
+) {
+  return GetSafetySettingsUseCase(ref.watch(safetyRepositoryProvider));
+});
+
+final updateSafetySettingsUseCaseProvider =
+    Provider<UpdateSafetySettingsUseCase>((ref) {
+      return UpdateSafetySettingsUseCase(ref.watch(safetyRepositoryProvider));
+    });
+
 // ─── Auth Controller ──────────────────────────────────────────────────────────
 
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
@@ -240,12 +315,36 @@ final homeNotifierProvider = StateNotifierProvider<HomeNotifier, HomeState>((
   return HomeNotifier();
 });
 
+final homeCheckinNotifierProvider =
+    StateNotifierProvider.autoDispose<HomeCheckinNotifier, HomeCheckinState>((
+      ref,
+    ) {
+      return HomeCheckinNotifier(
+        ref.watch(getTodayStatusUseCaseProvider),
+        ref.watch(checkinUseCaseProvider),
+        ref.watch(getSafetySettingsUseCaseProvider),
+        ref.watch(appMessageProvider.notifier),
+      );
+    });
+
 final postPreviewNotifierProvider =
     StateNotifierProvider.autoDispose<PostPreviewNotifier, PostPreviewState>((
       ref,
     ) {
       return PostPreviewNotifier(
         ref.watch(postPreviewUploadPostMediaUseCaseProvider),
+        ref.watch(appMessageProvider.notifier),
+      );
+    });
+
+final safetySettingsNotifierProvider =
+    StateNotifierProvider.autoDispose<
+      SafetySettingsNotifier,
+      SafetySettingsState
+    >((ref) {
+      return SafetySettingsNotifier(
+        ref.watch(getSafetySettingsUseCaseProvider),
+        ref.watch(updateSafetySettingsUseCaseProvider),
         ref.watch(appMessageProvider.notifier),
       );
     });

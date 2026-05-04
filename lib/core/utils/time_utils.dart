@@ -83,5 +83,53 @@ class TimeUtils {
     return diff.isNegative ? Duration.zero : diff;
   }
 
+  /// Chuyển chuỗi HH:MM từ giờ Việt Nam sang UTC
+  ///
+  /// Ví dụ:
+  /// "22:00" (Vietnam) → "15:00" (UTC, vì 22 - 7 = 15)
+  /// "02:00" (Vietnam) → "19:00" (UTC hôm trước, vì 2 - 7 = -5 → 24 - 5 = 19)
+  ///
+  /// Returns: HH:MM string trong UTC hoặc null nếu format không hợp lệ
+  static String? timeStringToUtc(String vietnamTimeString) {
+    final parts = vietnamTimeString.trim().split(':');
+    if (parts.length != 2) return null;
+
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return null;
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+
+    // Tạo DateTime tạm để convert
+    final today = DateTime.now();
+    final vietnamDateTime = DateTime(today.year, today.month, today.day, hour, minute);
+    final utcDateTime = toUtc(vietnamDateTime);
+
+    return '${_pad(utcDateTime.hour)}:${_pad(utcDateTime.minute)}';
+  }
+
+  /// Chuyển chuỗi HH:MM từ UTC sang giờ Việt Nam
+  ///
+  /// Ví dụ:
+  /// "15:00" (UTC) → "22:00" (Vietnam, vì 15 + 7 = 22)
+  /// "19:00" (UTC) → "02:00" (Vietnam hôm sau, vì 19 + 7 = 26 → 2 ngày sau)
+  ///
+  /// Returns: HH:MM string trong giờ Việt Nam hoặc null nếu format không hợp lệ
+  static String? timeStringToVietnam(String utcTimeString) {
+    final parts = utcTimeString.trim().split(':');
+    if (parts.length != 2) return null;
+
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return null;
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+
+    // Tạo DateTime tạm để convert (tạo UTC datetime)
+    final today = DateTime.now();
+    final utcDateTime = DateTime.utc(today.year, today.month, today.day, hour, minute);
+    final vietnamDateTime = toVietnamTime(utcDateTime);
+
+    return '${_pad(vietnamDateTime.hour)}:${_pad(vietnamDateTime.minute)}';
+  }
+
   static String _pad(int value) => value.toString().padLeft(2, '0');
 }

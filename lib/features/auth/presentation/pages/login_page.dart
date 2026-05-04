@@ -22,10 +22,7 @@ class LoginAutoFillData {
 }
 
 class LoginPage extends ConsumerStatefulWidget {
-  const LoginPage({
-    super.key,
-    this.autoFillData,
-  });
+  const LoginPage({super.key, this.autoFillData});
 
   final LoginAutoFillData? autoFillData;
 
@@ -37,19 +34,37 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
   bool _didApplyAutoFill = false;
+
+  late final ProviderSubscription<AuthState> _subscription;
 
   @override
   void initState() {
     super.initState();
+
     _applyAutoFillIfNeeded();
+
+    /// 🔥 listen đúng lifecycle + tránh trigger lại nhiều lần
+    _subscription = ref.listenManual<AuthState>(
+      authNotifierProvider,
+      (previous, state) {
+        if (state is AuthSuccess && previous is! AuthSuccess) {
+          if (!mounted) return;
+
+          /// tránh navigate trong cùng frame
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            context.go(AppRoutes.home);
+          });
+        }
+      },
+    );
   }
 
   void _applyAutoFillIfNeeded() {
     final autoFillData = widget.autoFillData;
-    if (_didApplyAutoFill || autoFillData == null) {
-      return;
-    }
+    if (_didApplyAutoFill || autoFillData == null) return;
 
     _didApplyAutoFill = true;
     _usernameController.text = autoFillData.username;
@@ -57,9 +72,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     if (autoFillData.autoSubmit) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
         _onSubmit();
       });
     }
@@ -67,15 +80,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   void dispose() {
+    _subscription.close();
+
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   void _onSubmit() {
-    ref
-        .read(authNotifierProvider.notifier)
-        .login(
+    if (!_formKey.currentState!.validate()) return;
+
+    ref.read(authNotifierProvider.notifier).login(
           username: _usernameController.text.trim(),
           password: _passwordController.text,
         );
@@ -83,12 +98,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AuthState>(authNotifierProvider, (_, state) {
-      // if (state is AuthSuccess) {
-        context.go(AppRoutes.home);
-      // }
-    });
-
     final authState = ref.watch(authNotifierProvider);
     final isLoading = authState is AuthLoading;
 

@@ -6,7 +6,10 @@ import 'interceptor.dart';
 class DioClient {
   late final Dio _dio;
 
-  DioClient(AuthLocalDatasource authLocalDatasource) {
+  DioClient(
+    AuthLocalDatasource authLocalDatasource, {
+    void Function(String message)? onAuthFailure,
+  }) {
     _dio =
         Dio(
             BaseOptions(
@@ -20,7 +23,10 @@ class DioClient {
             ),
           )
           ..interceptors.addAll([
-            AuthInterceptor(authLocalDatasource),
+            AuthInterceptor(
+              authLocalDatasource,
+              onAuthFailure: onAuthFailure,
+            ),
             LoggingInterceptor(),
           ]);
   }
