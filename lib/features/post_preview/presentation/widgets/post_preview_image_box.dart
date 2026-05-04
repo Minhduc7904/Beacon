@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/color/app_colors.dart';
 import '../controllers/post_preview_image_path_provider.dart';
 
 class PostPreviewImageBox extends ConsumerWidget {
@@ -11,18 +12,14 @@ class PostPreviewImageBox extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final filePath = ref.watch(postPreviewImagePathProvider);
-    final imageBoxSize = _imageBoxSize(context);
+    final imageBoxHeight = _imageBoxHeight(context);
 
     return Container(
-      width: imageBoxSize,
-      height: imageBoxSize,
+      width: double.infinity,
+      height: imageBoxHeight,
       decoration: BoxDecoration(
         color: Colors.black,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.2),
-          width: 1.2,
-        ),
+        borderRadius: BorderRadius.circular(60),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.18),
@@ -31,24 +28,39 @@ class PostPreviewImageBox extends ConsumerWidget {
           ),
         ],
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Image.file(
-        File(filePath),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return const Center(
-            child: Text(
-              'Không thể tải ảnh xem trước',
-              style: TextStyle(color: Colors.white70),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(60),
+            child: Image.file(
+              File(filePath),
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return const Center(
+                  child: Text(
+                    'Không thể tải ảnh xem trước',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+          IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(60),
+                border: Border.all(color: AppColors.sky400, width: 4),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  double _imageBoxSize(BuildContext context) {
+  double _imageBoxHeight(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    return (width - 48).clamp(240.0, 360.0);
+    return (width - 40).clamp(240.0, 420.0);
   }
 }

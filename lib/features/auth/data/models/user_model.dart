@@ -2,18 +2,12 @@ import '../../domain/entities/user.dart';
 
 class UserModel extends User {
   UserModel({
-    required String userId,
-    required String username,
-    required String email,
-    required String familyName,
-    required String givenName,
-  }) : super(
-         userId: userId,
-         username: username,
-         email: email,
-         familyName: familyName,
-         givenName: givenName,
-       );
+    required super.userId,
+    required super.username,
+    required super.email,
+    required super.familyName,
+    required super.givenName,
+  });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     final fullName = json['fullName']?.toString().trim() ?? '';

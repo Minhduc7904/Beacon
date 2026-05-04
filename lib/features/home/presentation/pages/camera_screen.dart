@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/app_routes.dart';
 import '../../../../core/providers/providers.dart';
-import '../../../../core/widgets/image/user_avatar.dart';
 import '../../../../core/widgets/layout/screen_layout.dart';
 import '../controllers/home_notifier.dart';
 import '../widgets/camera/action_button.dart';
 import '../widgets/camera/camera_box.dart';
+import '../widgets/camera/camera_header.dart';
 
 class CameraScreen extends ConsumerStatefulWidget {
   const CameraScreen({super.key, this.autoCaptureOnOpen = false});
@@ -22,7 +22,7 @@ class CameraScreen extends ConsumerStatefulWidget {
 class _CameraScreenState extends ConsumerState<CameraScreen>
     with WidgetsBindingObserver {
   bool _didAutoCapture = false;
-  
+
   /// 🔥 Store notifier reference to avoid using ref in dispose()
   HomeNotifier? _homeNotifier;
 
@@ -62,8 +62,6 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
 
   @override
   Widget build(BuildContext context) {
-    final profile = ref.watch(meProfileProvider).valueOrNull;
-
     ref.listen(homeNotifierProvider, (previous, next) {
       final previousPath = previous?.capturedImagePath;
       final nextPath = next.capturedImagePath;
@@ -121,32 +119,16 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
     });
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: GestureDetector(
-              onTap: () => context.pushNamed(AppRoutes.profileName),
-              child: UserAvatar(
-                avatarUrl: profile?.avatarUrl,
-                givenName: profile?.givenName,
-                size: 34,
-              ),
-            ),
-          ),
-        ],
-      ),
       body: SafeArea(
         child: AppScreenLayout(
           padding: const EdgeInsets.symmetric(vertical: 20),
           child: Column(
             children: [
-              const Spacer(),
+              const CameraHeader(),
+              const SizedBox(height: 96),
               const CameraBox(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 50),
               const ActionButton(),
-              const Spacer(flex: 2),
             ],
           ),
         ),

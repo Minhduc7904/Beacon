@@ -13,6 +13,9 @@ class HomeNotifier extends StateNotifier<HomeState> {
   static const Duration _cameraInitTimeout = Duration(seconds: 10);
 
   CameraController? _cameraController;
+  List<CameraDescription> _cameras = const [];
+  int _cameraIndex = 0;
+  FlashMode _flashMode = FlashMode.off;
   bool _isInitializingCamera = false;
 
   HomeNotifier() : super(const HomeState.initial());
@@ -20,47 +23,31 @@ class HomeNotifier extends StateNotifier<HomeState> {
   CameraController? get cameraController => _cameraController;
 
   Future<void> initializeCamera() async {
-    if (!mounted) {
-      return;
-    }
-
-    if (_isInitializingCamera) {
+    if (!mounted || _isInitializingCamera) {
       return;
     }
 
     _isInitializingCamera = true;
-
-    state = state.copyWith(
-      isCameraInitializing: true,
-      clearCameraError: true,
-    );
+    state = state.copyWith(isCameraInitializing: true, clearCameraError: true);
 
     try {
-      final cameras = await availableCameras().timeout(_cameraInitTimeout);
-      if (cameras.isEmpty) {
-        throw CameraException('NO_CAMERA', 'Thiết bị không có camera');
+      _cameras = await availableCameras().timeout(_cameraInitTimeout);
+      if (_cameras.isEmpty) {
+        throw CameraException('NO_CAMERA', 'Device has no camera');
       }
 
-      final selectedCamera = cameras.firstWhere(
+      _cameraIndex = _cameras.indexWhere(
         (camera) => camera.lensDirection == CameraLensDirection.back,
-        orElse: () => cameras.first,
       );
+      if (_cameraIndex < 0) {
+        _cameraIndex = 0;
+      }
 
-      final controller = CameraController(
-        selectedCamera,
-        ResolutionPreset.medium,
-        enableAudio: false,
-      );
-
-      await controller.initialize().timeout(_cameraInitTimeout);
-      await _cameraController?.dispose();
-
+      await _initializeCameraAtIndex(_cameraIndex);
       if (!mounted) {
-        await controller.dispose();
         return;
       }
 
-      _cameraController = controller;
       state = state.copyWith(
         isCameraInitializing: false,
         clearCameraError: true,
@@ -69,11 +56,10 @@ class HomeNotifier extends StateNotifier<HomeState> {
       if (!mounted) {
         return;
       }
-
       _cameraController = null;
       state = state.copyWith(
         isCameraInitializing: false,
-        cameraError: 'Mở camera quá lâu. Vui lòng thử lại.',
+        cameraError: 'Mo camera qua lau. Vui long thu lai.',
       );
     } on CameraException catch (error) {
       if (!mounted) {
@@ -83,27 +69,73 @@ class HomeNotifier extends StateNotifier<HomeState> {
       _cameraController = null;
       final code = error.code;
       final message = switch (code) {
-        'CameraAccessDenied' || 'CameraAccessDeniedWithoutPrompt' =>
-          'Bạn chưa cấp quyền camera.',
-        'CameraAccessRestricted' => 'Camera bị hạn chế trên thiết bị này.',
-        'AudioAccessDenied' || 'AudioAccessDeniedWithoutPrompt' =>
-          'Không có quyền microphone.',
-        _ => 'Không thể khởi tạo camera. Vui lòng thử lại.',
+        'CameraAccessDenied' ||
+        'CameraAccessDeniedWithoutPrompt' => 'Ban chua cap quyen camera.',
+        'CameraAccessRestricted' => 'Camera bi han che tren thiet bi nay.',
+        'AudioAccessDenied' ||
+        'AudioAccessDeniedWithoutPrompt' => 'Khong co quyen microphone.',
+        _ => 'Khong the khoi tao camera. Vui long thu lai.',
       };
-
       state = state.copyWith(isCameraInitializing: false, cameraError: message);
     } catch (_) {
       if (!mounted) {
         return;
       }
-
       _cameraController = null;
       state = state.copyWith(
         isCameraInitializing: false,
-        cameraError: 'Không thể khởi tạo camera. Vui lòng thử lại.',
+        cameraError: 'Khong the khoi tao camera. Vui long thu lai.',
       );
     } finally {
       _isInitializingCamera = false;
+    }
+  }
+
+  Future<void> switchCamera() async {
+    if (!mounted || _isInitializingCamera || _cameras.length < 2) {
+      return;
+    }
+
+    _isInitializingCamera = true;
+    state = state.copyWith(isCameraInitializing: true, clearCameraError: true);
+
+    try {
+      _cameraIndex = (_cameraIndex + 1) % _cameras.length;
+      await _initializeCameraAtIndex(_cameraIndex);
+      if (!mounted) {
+        return;
+      }
+      state = state.copyWith(
+        isCameraInitializing: false,
+        clearCameraError: true,
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      state = state.copyWith(
+        isCameraInitializing: false,
+        cameraError: 'Khong the doi camera. Vui long thu lai.',
+      );
+    } finally {
+      _isInitializingCamera = false;
+    }
+  }
+
+  Future<void> toggleFlash() async {
+    final controller = _cameraController;
+    if (controller == null || !controller.value.isInitialized) {
+      return;
+    }
+
+    try {
+      _flashMode = _flashMode == FlashMode.off
+          ? FlashMode.torch
+          : FlashMode.off;
+      await controller.setFlashMode(_flashMode);
+    } catch (_) {
+      _flashMode = FlashMode.off;
+      await controller.setFlashMode(FlashMode.off);
     }
   }
 
@@ -164,10 +196,9 @@ class HomeNotifier extends StateNotifier<HomeState> {
       if (!mounted) {
         return;
       }
-
       state = state.copyWith(
         isCapturing: false,
-        cameraError: 'Chụp ảnh thất bại. Vui lòng thử lại.',
+        cameraError: 'Chup anh that bai. Vui long thu lai.',
       );
     }
   }
@@ -177,9 +208,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
       return;
     }
 
-    state = state.copyWith(
-      clearCapturedImagePath: true,
-    );
+    state = state.copyWith(clearCapturedImagePath: true);
 
     if (_cameraController == null || !_cameraController!.value.isInitialized) {
       initializeCamera();
@@ -213,14 +242,30 @@ class HomeNotifier extends StateNotifier<HomeState> {
     );
 
     final lastDot = sourcePath.lastIndexOf('.');
-    final pathPrefix = lastDot == -1 ? sourcePath : sourcePath.substring(0, lastDot);
+    final pathPrefix = lastDot == -1
+        ? sourcePath
+        : sourcePath.substring(0, lastDot);
     final croppedPath = '${pathPrefix}_square.jpg';
 
-    await File(croppedPath).writeAsBytes(
-      img.encodeJpg(squareImage, quality: 92),
-      flush: true,
-    );
+    await File(
+      croppedPath,
+    ).writeAsBytes(img.encodeJpg(squareImage, quality: 92), flush: true);
 
     return croppedPath;
+  }
+
+  Future<void> _initializeCameraAtIndex(int index) async {
+    final selectedCamera = _cameras[index];
+    final controller = CameraController(
+      selectedCamera,
+      ResolutionPreset.medium,
+      enableAudio: false,
+    );
+
+    await controller.initialize().timeout(_cameraInitTimeout);
+    await controller.setFlashMode(_flashMode);
+
+    await _cameraController?.dispose();
+    _cameraController = controller;
   }
 }

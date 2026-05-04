@@ -4,7 +4,8 @@ import '../../domain/entities/friend_type.dart';
 class FriendProfileModel extends FriendProfile {
   const FriendProfileModel({
     required super.userId,
-    required super.username,
+    required super.familyName,
+    required super.givenName,
     required super.avatarUrl,
     required super.type,
     super.friendshipStatus,
@@ -15,7 +16,8 @@ class FriendProfileModel extends FriendProfile {
   factory FriendProfileModel.fromJson(Map<String, dynamic> json) {
     return FriendProfileModel(
       userId: json['userId']?.toString() ?? '',
-      username: json['username']?.toString() ?? '',
+      familyName: json['familyName']?.toString() ?? '',
+      givenName: json['givenName']?.toString() ?? '',
       avatarUrl: json['avatarUrl']?.toString(),
       type: FriendTypeValue.fromValue(_toInt(json['type'])),
       friendshipStatus: _toFriendshipStatus(json['friendshipStatus']),

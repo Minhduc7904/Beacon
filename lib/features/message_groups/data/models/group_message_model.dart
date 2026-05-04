@@ -5,7 +5,8 @@ class GroupMessageModel extends GroupMessage {
     required super.id,
     required super.groupId,
     required super.senderId,
-    required super.senderUsername,
+    required super.senderFamilyName,
+    required super.senderGivenName,
     required super.content,
     required super.createdAtUtc,
   });
@@ -15,7 +16,11 @@ class GroupMessageModel extends GroupMessage {
       id: json['id']?.toString() ?? '',
       groupId: json['groupId']?.toString() ?? '',
       senderId: json['senderId']?.toString() ?? '',
-      senderUsername: json['senderUsername']?.toString() ?? '',
+      senderFamilyName: json['senderFamilyName']?.toString() ?? '',
+      senderGivenName:
+          json['senderGivenName']?.toString() ??
+          json['senderUsername']?.toString() ??
+          '',
       content: json['content']?.toString() ?? '',
       createdAtUtc: _toDate(json['createdAtUtc']),
     );

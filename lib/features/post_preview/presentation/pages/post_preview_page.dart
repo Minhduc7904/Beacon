@@ -4,16 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/layout/screen_layout.dart';
 import '../controllers/post_preview_image_path_provider.dart';
 import '../widgets/post_preview_close_button.dart';
-import '../widgets/post_preview_download_button.dart';
+import '../widgets/post_preview_header.dart';
 import '../widgets/post_preview_image_box.dart';
 import '../widgets/post_preview_send_button.dart';
 import '../widgets/post_preview_status_message.dart';
 
 class PostPreviewPage extends ConsumerWidget {
-  const PostPreviewPage({
-    super.key,
-    required this.filePath,
-  });
+  const PostPreviewPage({super.key, required this.filePath});
 
   final String filePath;
 
@@ -22,15 +19,12 @@ class PostPreviewPage extends ConsumerWidget {
     return ProviderScope(
       overrides: [postPreviewImagePathProvider.overrideWithValue(filePath)],
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Gửi đến...'),
-          actions: const [PostPreviewDownloadButton()],
-        ),
         body: SafeArea(
           child: AppScreenLayout(
             padding: const EdgeInsets.symmetric(vertical: 20),
             child: Column(
               children: [
+                const PostPreviewHeader(),
                 const Spacer(),
                 const PostPreviewImageBox(),
                 const SizedBox(height: 24),

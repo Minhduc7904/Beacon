@@ -51,7 +51,7 @@ class ApiEndpoints {
 
   // Message groups
   static const String messageGroups = '/message-groups';
-  static const String messageGroupMessageTemplate = '/message-groups/{groupId}/message';
+  static const String messageGroupMessageTemplate = '/message-groups/{groupId}/messages';
   static const String messageGroupDetailTemplate = '/message-groups/group/{groupId}';
 
   static String mediaById(String id) => '/media/$id';
@@ -61,6 +61,6 @@ class ApiEndpoints {
   static String friendByUserId(String userId) => '/friends/$userId';
   static String friendTypeByUserId(String userId) => '/friends/$userId/type';
   static String friendDeleteByUserId(String userId) => '/friend/$userId';
-  static String messageGroupMessage(String groupId) => '/message-groups/$groupId/message';
+  static String messageGroupMessage(String groupId) => '/message-groups/$groupId/messages';
   static String messageGroupDetail(String groupId) => '/message-groups/group/$groupId';
 }

@@ -4,7 +4,8 @@ class MessageGroup {
   final DateTime? createdAtUtc;
   final String? lastMessageContent;
   final DateTime? lastMessageAtUtc;
-  final String? lastMessageSenderUsername;
+  final String? lastMessageSenderFamilyName;
+  final String? lastMessageSenderGivenName;
 
   const MessageGroup({
     required this.groupId,
@@ -12,6 +13,14 @@ class MessageGroup {
     required this.createdAtUtc,
     required this.lastMessageContent,
     required this.lastMessageAtUtc,
-    required this.lastMessageSenderUsername,
+    required this.lastMessageSenderFamilyName,
+    required this.lastMessageSenderGivenName,
   });
+
+  String get lastMessageSenderFullName {
+    return [
+      lastMessageSenderFamilyName?.trim() ?? '',
+      lastMessageSenderGivenName?.trim() ?? '',
+    ].where((part) => part.isNotEmpty).join(' ');
+  }
 }

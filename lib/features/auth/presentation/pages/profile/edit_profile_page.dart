@@ -6,7 +6,6 @@ import '../../../../../core/constants/error_messages.dart';
 import '../../../../../core/widgets/button/button.dart';
 import '../../../../../core/widgets/input/input.dart';
 import '../../../../../core/widgets/layout/screen_layout.dart';
-import '../../../../../core/widgets/text/text.dart';
 import '../../../domain/entities/user_profile.dart';
 import '../../../domain/usecase/update_me_usecase.dart';
 import '../../controllers/profile_state.dart';

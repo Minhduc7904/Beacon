@@ -3,24 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/providers/providers.dart';
+import '../../../../../core/theme/color/app_colors.dart';
 
 class CameraBox extends ConsumerWidget {
   const CameraBox({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cameraBoxSize = _cameraBoxSize(context);
+    final cameraBoxSize = _cameraBoxHeight(context);
 
     return Container(
-      width: cameraBoxSize,
+      width: double.infinity,
       height: cameraBoxSize,
       decoration: BoxDecoration(
         color: Colors.black,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.2),
-          width: 1.2,
-        ),
+        borderRadius: BorderRadius.circular(60),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.18),
@@ -29,14 +26,29 @@ class CameraBox extends ConsumerWidget {
           ),
         ],
       ),
-      clipBehavior: Clip.antiAlias,
-      child: _HomeCameraPreview(cameraBoxSize: cameraBoxSize),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(60),
+            child: _HomeCameraPreview(cameraBoxSize: cameraBoxSize),
+          ),
+          IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(60),
+                border: Border.all(color: AppColors.sky400, width: 4),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  double _cameraBoxSize(BuildContext context) {
+  double _cameraBoxHeight(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    return (width - 48).clamp(240.0, 360.0);
+    return (width - 40).clamp(240.0, 420.0);
   }
 }
 
