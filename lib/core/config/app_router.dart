@@ -13,9 +13,10 @@ import '../../features/auth/presentation/pages/register/register_page_password.d
 import '../../features/auth/presentation/pages/register/register_page_username.dart';
 import '../../features/home/presentation/pages/camera_screen.dart';
 import '../../features/home/presentation/pages/home_page.dart';
-import '../../features/message/presentation/pages/message_list_page.dart';
-import '../../features/message/presentation/pages/chat_detail_page.dart';
-import '../../features/message/domain/entities/conversation.dart';
+import '../../features/friends/presentation/pages/add_friends_page.dart';
+import '../../features/message_groups/presentation/pages/message_group_list_page.dart';
+import '../../features/message_groups/presentation/pages/group_chat_detail_page.dart';
+import '../../features/message_groups/domain/entities/message_group.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/post_preview/presentation/pages/post_preview_page.dart';
 import '../../features/safety/presentation/pages/safety_settings_page.dart';
@@ -51,6 +52,26 @@ CustomTransitionPage<void> _buildSlidePage(GoRouterState state, Widget child) {
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       final tween = Tween<Offset>(
         begin: const Offset(1, 0),
+        end: Offset.zero,
+      ).chain(CurveTween(curve: Curves.easeOutCubic));
+
+      return SlideTransition(position: animation.drive(tween), child: child);
+    },
+  );
+}
+
+CustomTransitionPage<void> _buildSlideFromLeftPage(
+  GoRouterState state,
+  Widget child,
+) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    name: _resolvePageName(state),
+    arguments: state.extra,
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final tween = Tween<Offset>(
+        begin: const Offset(-1, 0),
         end: Offset.zero,
       ).chain(CurveTween(curve: Curves.easeOutCubic));
 
@@ -225,7 +246,7 @@ final appRouter = GoRouter(
       path: AppRoutes.profile,
       name: AppRoutes.profileName,
       pageBuilder: (context, state) =>
-          _buildSlidePage(state, const AuthGuard(child: ProfilePage())),
+          _buildSlideFromLeftPage(state, const AuthGuard(child: ProfilePage())),
     ),
     GoRoute(
       path: AppRoutes.editProfile,
@@ -287,23 +308,31 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.messageList,
       name: AppRoutes.messageListName,
-      pageBuilder: (context, state) =>
-          _buildSlidePage(state, const AuthGuard(child: MessageListPage())),
+      pageBuilder: (context, state) => _buildSlidePage(
+        state,
+        const AuthGuard(child: MessageGroupListPage()),
+      ),
     ),
     GoRoute(
       path: AppRoutes.chatDetail,
       name: AppRoutes.chatDetailName,
       pageBuilder: (context, state) {
-        final conversation = state.extra;
-        if (conversation is! Conversation) {
+        final group = state.extra;
+        if (group is! MessageGroup) {
           return _buildSlidePage(state, const NotFoundPage());
         }
 
         return _buildSlidePage(
           state,
-          AuthGuard(child: ChatDetailPage(conversation: conversation)),
+          AuthGuard(child: GroupChatDetailPage(group: group)),
         );
       },
+    ),
+    GoRoute(
+      path: AppRoutes.addFriends,
+      name: AppRoutes.addFriendsName,
+      pageBuilder: (context, state) =>
+          _buildSlidePage(state, const AuthGuard(child: AddFriendsPage())),
     ),
   ],
 );

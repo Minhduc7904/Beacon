@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 
-import '../../../../core/constants/validation_messages.dart';
+import '../../../../core/constants/error_messages.dart';
 import '../../../../core/errors/failures.dart';
 import '../entities/checkin_record.dart';
 import '../repositories/checkin_repository.dart';

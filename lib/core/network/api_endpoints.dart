@@ -34,7 +34,33 @@ class ApiEndpoints {
   static const String postMediaUpload = '/media';
   static const String mediaByIdTemplate = '/media/{id}';
   static const String mediaSoftDeleteTemplate = '/media/{id}/soft';
+  
+  // Friend requests
+  static const String friendRequests = '/friend-requests';
+  static const String friendRequestsReceived = '/friend-requests/received';
+  static const String friendRequestsSent = '/friend-requests/sent';
+  static const String friendRequestAcceptTemplate = '/friend-requests/{id}/accept';
+  static const String friendRequestDeclineTemplate = '/friend-requests/{id}/decline';
+
+  // Friends
+  static const String friends = '/friends';
+  static const String friendsSearch = '/friends/search';
+  static const String friendByUserIdTemplate = '/friends/{userId}';
+  static const String friendTypeByUserIdTemplate = '/friends/{userId}/type';
+  static const String friendDeleteByUserIdTemplate = '/friend/{userId}';
+
+  // Message groups
+  static const String messageGroups = '/message-groups';
+  static const String messageGroupMessageTemplate = '/message-groups/{groupId}/message';
+  static const String messageGroupDetailTemplate = '/message-groups/group/{groupId}';
 
   static String mediaById(String id) => '/media/$id';
   static String mediaSoftDelete(String id) => '/media/$id/soft';
+  static String friendRequestAccept(String id) => '/friend-requests/$id/accept';
+  static String friendRequestDecline(String id) => '/friend-requests/$id/decline';
+  static String friendByUserId(String userId) => '/friends/$userId';
+  static String friendTypeByUserId(String userId) => '/friends/$userId/type';
+  static String friendDeleteByUserId(String userId) => '/friend/$userId';
+  static String messageGroupMessage(String groupId) => '/message-groups/$groupId/message';
+  static String messageGroupDetail(String groupId) => '/message-groups/group/$groupId';
 }

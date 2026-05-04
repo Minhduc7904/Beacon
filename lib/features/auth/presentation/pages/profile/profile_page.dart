@@ -68,10 +68,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Hồ sơ'),
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-        ),
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_forward_ios_rounded),
+          ),
+        ],
       ),
       body: SafeArea(
         child: AppScreenLayout(
@@ -118,9 +121,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                 context.pushNamed(AppRoutes.safetySettingsName),
                           ),
                           const SizedBox(height: 10),
-                          const _ProfileMenuItem(
-                            icon: Icons.credit_card_rounded,
-                            title: 'Phương thức thanh toán',
+                          _ProfileMenuItem(
+                            icon: Icons.person_add_alt_1_rounded,
+                            title: 'Thêm bạn bè',
+                            onTap: () =>
+                                context.pushNamed(AppRoutes.addFriendsName),
                           ),
                           const SizedBox(height: 10),
                           const _ProfileMenuItem(

@@ -46,7 +46,7 @@ class SafetyRemoteDatasourceImpl implements SafetyRemoteDatasource {
     try {
       /// 🔥 log debug (rất hữu ích)
       // ignore: avoid_print
-      print('PATCH /safety-settings: $body');
+      // print('PATCH /safety-settings: $body');
 
       final response = await _dioClient.patch(
         ApiEndpoints.safetySettings,

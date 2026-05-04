@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../entities/auth_result.dart';
 import '../repositories/auth_repository.dart';
-import '../../../../core/constants/validation_messages.dart';
+import '../../../../core/constants/error_messages.dart';
 
 class LoginValidationFailure extends ValidationFailure {
   final String? usernameError;

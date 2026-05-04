@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 
-import '../../../../core/constants/validation_messages.dart';
+import '../../../../core/constants/error_messages.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/email_utils.dart';
 import '../../../../core/utils/phone_number_utils.dart';

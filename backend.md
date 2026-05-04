@@ -1,134 +1,103 @@
-API cần dùng
+GET /friends/search?search
 
-1. /checkin
-- Method: GET
-- Mục đích: Checkin
-- Input:
-"{
-  ""note"": ""string"",
-  ""latitude"": 0,
-  ""longitude"": 0, 
-  ""mediaId"": ""3fa85f64-5717-4562-b3fc-2c963f66afa6""
-}"
-
-- 2 trường latitude và longtitude hiện chưa có, không truyền gì vào 2 trường này
-
-- Output
-"#region
-    /// <summary>Người dùng thực hiện check-in an toàn hàng ngày.</summary>
+#region
+    /// <summary>Tìm kiếm bạn bè theo số điện thoại.</summary>
     /// <remarks>
     /// Yêu cầu: <c>Authorization: Bearer &lt;token&gt;</c>
     ///
-    /// Mỗi người dùng chỉ được check-in 1 lần mỗi ngày.
-    /// Nếu chưa có record an toàn hôm nay, hệ thống tự tạo dựa trên cài đặt <c>SafetySetting</c>.
-    /// Nếu chưa có <c>SafetySetting</c>, deadline mặc định là 23:59 UTC.
+    /// Tìm trong danh sách bạn bè của user hiện tại theo số điện thoại (partial match).
+    /// Kết quả sắp xếp theo thời gian kết bạn mới nhất trước.
     ///
-    /// Các giá trị <c>code</c>:
-    /// - <c>null</c>: Thành công.
-    /// - <c>VALIDATION_ERROR</c>: Dữ liệu không hợp lệ (note &gt; 1000 ký tự, lat/long sai range hoặc thiếu cặp).
-    /// - <c>MEDIA_NOT_FOUND</c>: mediaId không tồn tại.
-    /// - <c>ALREADY_CHECKED_IN</c>: Đã check-in hôm nay rồi.
+    /// **Query params:**
+    /// - <c>search</c> (string, bắt buộc, tối thiểu 3 ký tự): Chuỗi tìm kiếm khớp một phần với số điện thoại.
+    /// - <c>cursor</c> (string ISO-8601 UTC, tuỳ chọn): Load kết quả cũ hơn mốc này.
+    /// - <c>limit</c> (int, tuỳ chọn, mặc định 20, tối đa 100): Số bản ghi mỗi trang.
     ///
-    /// Cấu trúc <c>data</c> khi thành công:
+    /// **Response khi thành công (HTTP 200):**
     /// <code>
     /// {
-    ///   ""id"": ""guid"",
-    ///   ""dailySafetyRecordId"": ""guid"",
-    ///   ""checkinDate"": ""yyyy-MM-dd"",
-    ///   ""checkedInAtUtc"": ""datetime"",
-    ///   ""type"": ""Manual|Recovery|Emergency"",
-    ///   ""note"": ""string|null"",
-    ///   ""latitude"": ""decimal|null"",
-    ///   ""longitude"": ""decimal|null"",
-    ///   ""mediaObjectId"": ""guid|null""
+    ///   "success": true,
+    ///   "message": "...",
+    ///   "code": null,
+    ///   "data": {
+    ///     "data": [
+    ///       {
+    ///         "userId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    ///         "username": "alice",
+    ///         "avatarUrl": null,
+    ///         "type": 2,
+    ///         "createdAtUtc": "2026-05-01T08:00:00Z",
+    ///         "messageGroupId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+    ///       }
+    ///     ],
+    ///     "meta": {
+    ///       "nextCursor": "2026-05-01T08:00:00Z",
+    ///       "limit": 20,
+    ///       "hasMore": false
+    ///     }
+    ///   },
+    ///   "errors": null
     /// }
     /// </code>
     ///
-    /// Format: <c>{ success, message, code, data, errors }</c>
+    /// **Giải thích các trường:**
+    /// - <c>userId</c>: Id của người bạn (không phải của user hiện tại).
+    /// - <c>type</c>: Loại bạn bè — <c>0</c> = Family, <c>1</c> = CloseFriend, <c>2</c> = Normal, <c>3</c> = Custom.
+    /// - <c>messageGroupId</c>: Id nhóm chat riêng tư với người bạn này. Dùng để gọi GET /api/v1/message-groups/{groupId}/messages.
+    ///
+    /// **Các giá trị <c>code</c>:**
+    /// - <c>null</c>: Thành công (HTTP 200).
+    /// - <c>VALIDATION_ERROR</c>: <c>search</c> trống hoặc ngắn hơn 3 ký tự (HTTP 400).
+    /// - <c>401</c>: Token không hợp lệ hoặc hết hạn.
     /// </remarks>
-    #endregion"
 
+GET /message-groups/group{id}
 
-2. /today-status
-- Method: GET
-- Mục đích: Lấy tình trạng người dùng trong hôm nay
-- Input/Output
-
-"#region
-    /// <summary>Lấy trạng thái check-in và thời gian đếm ngược đến deadline trong ngày hôm nay.</summary>
+#region
+    /// <summary>Xem thông tin chi tiết nhóm chat kèm danh sách thành viên.</summary>
     /// <remarks>
     /// Yêu cầu: <c>Authorization: Bearer &lt;token&gt;</c>
     ///
-    /// Deadline lấy từ <c>SafetySetting</c> của user. Nếu chưa cấu hình, mặc định là 23:59 UTC.
+    /// Trả về metadata của nhóm và toàn bộ danh sách thành viên.
+    /// Chỉ thành viên của nhóm mới được xem.
     ///
-    /// Hành vi theo trạng thái monitoring:
-    /// - <c>isMonitoringEnabled = false</c>: không có countdown, không có overdue — <c>remainingSeconds</c> luôn null, <c>status</c> không bao giờ là <c>Overdue</c>.
-    /// - <c>isAutoAlertEnabled = false</c>: vẫn tính overdue, nhưng hệ thống không gửi cảnh báo tự động.
+    /// **Path param:**
+    /// - <c>groupId</c> (guid, bắt buộc): Id của nhóm. Lấy từ <c>groupId</c> trong danh sách hội thoại
+    ///   hoặc <c>messageGroupId</c> trong danh sách bạn bè.
     ///
-    /// Các giá trị <c>code</c>:
-    /// - <c>null</c>: Thành công.
-    ///
-    /// Cấu trúc <c>data</c> khi thành công:
+    /// **Response khi thành công (HTTP 200):**
     /// <code>
     /// {
-    ///   ""hasCheckedIn"": ""bool"",
-    ///   ""status"": ""Pending | CheckedIn | Overdue"",
-    ///   ""deadlineAtUtc"": ""datetime"",
-    ///   ""remainingSeconds"": ""long | null — null khi CheckedIn hoặc monitoring tắt, âm khi Overdue"",
-    ///   ""checkedInAtUtc"": ""datetime | null"",
-    ///   ""isMonitoringEnabled"": ""bool — false: tắt toàn bộ countdown và overdue"",
-    ///   ""isAutoAlertEnabled"": ""bool — false: vẫn overdue nhưng không gửi alert tự động""
+    ///   "success": true,
+    ///   "message": "...",
+    ///   "code": null,
+    ///   "data": {
+    ///     "groupId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    ///     "isPrivate": true,
+    ///     "createdAtUtc": "2026-05-01T08:00:00Z",
+    ///     "members": [
+    ///       {
+    ///         "userId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    ///         "username": "alice",
+    ///         "familyName": "Nguyen",
+    ///         "givenName": "Alice",
+    ///         "avatarUrl": null
+    ///       }
+    ///     ]
+    ///   },
+    ///   "errors": null
     /// }
     /// </code>
     ///
-    /// Format: <c>{ success, message, code, data, errors }</c>
+    /// **Giải thích các trường:**
+    /// - <c>isPrivate</c>: <c>true</c> nếu là chat 1-1 (giữa 2 bạn bè), <c>false</c> nếu là nhóm nhiều người.
+    /// - <c>members</c>: Toàn bộ thành viên của nhóm, bao gồm cả user hiện tại.
+    /// - <c>familyName</c> / <c>givenName</c>: Họ và tên của thành viên, có thể <c>null</c> nếu chưa cập nhật.
+    /// - <c>avatarUrl</c>: URL ảnh đại diện, <c>null</c> nếu chưa có.
+    ///
+    /// **Các giá trị <c>code</c>:**
+    /// - <c>null</c>: Thành công (HTTP 200).
+    /// - <c>MESSAGE_GROUP_NOT_FOUND</c>: Nhóm không tồn tại (HTTP 404).
+    /// - <c>MESSAGE_GROUP_FORBIDDEN</c>: Không phải thành viên nhóm (HTTP 403).
+    /// - <c>401</c>: Token không hợp lệ hoặc hết hạn.
     /// </remarks>
-    #endregion"
-
-
-3. Các kịch bản check-in
-
-"Scenario 1 — Check-in nhanh (không ảnh)
-
-POST /api/v1/checkins
-Frontend chỉ cần 1 nút bấm. Đơn giản nhất.
-
-Scenario 2 — Check-in có ảnh
-
-Bước 1: User chụp ảnh
-        ↓
-Bước 2: POST /api/v1/media  (multipart/form-data)
-        ↓ nhận về
-        { ""data"": { ""id"": ""abc-123"", ... } }
-        ↓
-Bước 3: POST /api/v1/checkins
-        { ""mediaId"": ""abc-123"" }
-
-
-ví dụ: 
-{
-  ""note"": ""Tôi đang ổn, check-in từ văn phòng."",
-  ""latitude"": 10.7769,
-  ""longitude"": 106.7009,
-  ""mediaId"": ""3fa85f64-5717-4562-b3fc-2c963f66afa6""
-}
-
-{
-  ""success"": true,
-  ""message"": null,
-  ""code"": null,
-  ""data"": {
-    ""id"": ""xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"",
-    ""dailySafetyRecordId"": ""xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"",
-    ""checkinDate"": ""2026-04-28"",
-    ""checkedInAtUtc"": ""2026-04-27T16:52:00Z"",
-    ""type"": ""Manual"",
-    ""note"": ""Tôi đang ổn, check-in từ văn phòng."",
-    ""latitude"": 10.7769,
-    ""longitude"": 106.7009,
-    ""mediaObjectId"": ""3fa85f64-5717-4562-b3fc-2c963f66afa6""
-  },
-  ""errors"": null
-}
-
-

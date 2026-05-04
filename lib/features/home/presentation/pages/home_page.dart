@@ -6,7 +6,7 @@ import '../../../../core/config/app_routes.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../core/widgets/button/icon_circle_button.dart';
 import '../../../../core/widgets/image/user_avatar.dart';
-import '../../../feed/presentation/controllers/feed_state.dart';
+import '../../../feed/presentation/pages/feed_page.dart';
 import '../widgets/home/home_body.dart';
 import '../widgets/home/home_streak_chip.dart';
 

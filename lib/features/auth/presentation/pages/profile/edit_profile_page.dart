@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/constants/validation_messages.dart';
+import '../../../../../core/constants/error_messages.dart';
 import '../../../../../core/widgets/button/button.dart';
 import '../../../../../core/widgets/input/input.dart';
 import '../../../../../core/widgets/layout/screen_layout.dart';

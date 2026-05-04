@@ -19,6 +19,7 @@ class AppRoutes {
   static const String widgetsName = 'widgets';
   static const String messageListName = 'message-list';
   static const String chatDetailName = 'chat-detail';
+  static const String addFriendsName = 'add-friends';
 
   static const String splash = '/';
   static const String onboarding = '/onboarding';
@@ -38,6 +39,7 @@ class AppRoutes {
   static const String widgets = '/widgets';
   static const String messageList = '/messages';
   static const String chatDetail = '/messages/chat';
+  static const String addFriends = '/friends/add';
 
   static const List<AppRouteItem> all = [
     AppRouteItem(title: 'Splash', path: splash),
@@ -58,6 +60,7 @@ class AppRoutes {
     AppRouteItem(title: 'Widgets', path: widgets),
     AppRouteItem(title: 'Messages', path: messageList),
     AppRouteItem(title: 'Chat Detail', path: chatDetail),
+    AppRouteItem(title: 'Add Friends', path: addFriends),
   ];
 }
 

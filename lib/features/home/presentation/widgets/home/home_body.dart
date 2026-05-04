@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/config/app_routes.dart';
 import '../../../../../core/providers/providers.dart';
 import '../../../../../core/widgets/layout/screen_layout.dart';
-import '../../../feed/presentation/controllers/feed_state.dart';
-import '../../../feed/presentation/widgets/feed_post_card.dart';
+import '../../../../feed/domain/entities/feed_post.dart';
+import '../../../../feed/presentation/controllers/feed_state.dart';
+import '../../../../feed/presentation/pages/feed_page.dart';
+import '../../../../feed/presentation/widgets/feed_post_card.dart';
 import '../../controllers/home_checkin_state.dart';
 import 'countdown_bubble.dart';
 import 'home_action_row.dart';
@@ -83,7 +85,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
 
     final feedPosts = feedState.status == FeedStatus.loaded
         ? feedState.posts
-        : <dynamic>[];
+        : <FeedPost>[];
     final pageCount = 1 + feedPosts.length;
 
     return PageView.builder(

@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../../../core/constants/validation_messages.dart';
+import '../../../../core/constants/error_messages.dart';
 import '../../../../core/errors/failures.dart';
 import '../entities/safety_settings.dart';
 import '../repositories/safety_repository.dart';

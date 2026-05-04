@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../network/api_endpoints.dart';
 import '../../providers/providers.dart';
 
-enum DevApiHttpMethod { get, post, put, delete }
+enum DevApiHttpMethod { get, post, put, patch, delete }
 
 class DevApiItem {
   const DevApiItem({
@@ -115,6 +115,78 @@ class _DevApiMenuSheetState extends ConsumerState<DevApiMenuSheet> {
       method: DevApiHttpMethod.delete,
       sampleInput: '{"id":""}',
     ),
+    DevApiItem(
+      title: 'Create Friend Request',
+      path: ApiEndpoints.friendRequests,
+      method: DevApiHttpMethod.post,
+      sampleInput: '{"receiverId":""}',
+    ),
+    DevApiItem(
+      title: 'Accept Friend Request',
+      path: ApiEndpoints.friendRequestAcceptTemplate,
+      method: DevApiHttpMethod.post,
+      sampleInput: '{"id":""}',
+    ),
+    DevApiItem(
+      title: 'Decline Friend Request',
+      path: ApiEndpoints.friendRequestDeclineTemplate,
+      method: DevApiHttpMethod.post,
+      sampleInput: '{"id":""}',
+    ),
+    DevApiItem(
+      title: 'Received Friend Requests',
+      path: ApiEndpoints.friendRequestsReceived,
+      method: DevApiHttpMethod.get,
+      sampleInput: '{"cursor":"","limit":20}',
+    ),
+    DevApiItem(
+      title: 'Sent Friend Requests',
+      path: ApiEndpoints.friendRequestsSent,
+      method: DevApiHttpMethod.get,
+      sampleInput: '{"cursor":"","limit":20}',
+    ),
+    DevApiItem(
+      title: 'Friends',
+      path: ApiEndpoints.friends,
+      method: DevApiHttpMethod.get,
+      sampleInput: '{"cursor":"","limit":20}',
+    ),
+    DevApiItem(
+      title: 'Friend Detail',
+      path: ApiEndpoints.friendByUserIdTemplate,
+      method: DevApiHttpMethod.get,
+      sampleInput: '{"userId":""}',
+    ),
+    DevApiItem(
+      title: 'Update Friend Type',
+      path: ApiEndpoints.friendTypeByUserIdTemplate,
+      method: DevApiHttpMethod.patch,
+      sampleInput: '{"userId":"","type":2}',
+    ),
+    DevApiItem(
+      title: 'Delete Friend',
+      path: ApiEndpoints.friendDeleteByUserIdTemplate,
+      method: DevApiHttpMethod.delete,
+      sampleInput: '{"userId":""}',
+    ),
+    DevApiItem(
+      title: 'Message Groups',
+      path: ApiEndpoints.messageGroups,
+      method: DevApiHttpMethod.get,
+      sampleInput: '{"cursor":"","limit":20}',
+    ),
+    DevApiItem(
+      title: 'Send Group Message',
+      path: ApiEndpoints.messageGroupMessageTemplate,
+      method: DevApiHttpMethod.post,
+      sampleInput: '{"groupId":"","content":""}',
+    ),
+    DevApiItem(
+      title: 'Group Messages',
+      path: ApiEndpoints.messageGroupMessageTemplate,
+      method: DevApiHttpMethod.get,
+      sampleInput: '{"groupId":"","cursor":"","limit":20}',
+    ),
   ];
 
   final _bearerController = TextEditingController();
@@ -189,6 +261,22 @@ class _DevApiMenuSheetState extends ConsumerState<DevApiMenuSheet> {
         (payload['id']?.toString().trim().isEmpty ?? true)) {
       setState(() {
         _output = 'Input cần có trường "id" cho endpoint này.';
+      });
+      return;
+    }
+
+    if (_requiresUserIdPathParam &&
+        (payload['userId']?.toString().trim().isEmpty ?? true)) {
+      setState(() {
+        _output = 'Input can co truong "userId" cho endpoint nay.';
+      });
+      return;
+    }
+
+    if (_requiresGroupIdPathParam &&
+        (payload['groupId']?.toString().trim().isEmpty ?? true)) {
+      setState(() {
+        _output = 'Input can co truong "groupId" cho endpoint nay.';
       });
       return;
     }
@@ -309,6 +397,12 @@ class _DevApiMenuSheetState extends ConsumerState<DevApiMenuSheet> {
           data: requestData,
           options: requestOptions,
         );
+      case DevApiHttpMethod.patch:
+        return dio.patch(
+          path,
+          data: requestData,
+          options: requestOptions,
+        );
       case DevApiHttpMethod.delete:
         return dio.delete(
           path,
@@ -323,7 +417,17 @@ class _DevApiMenuSheetState extends ConsumerState<DevApiMenuSheet> {
 
   bool get _requiresIdPathParam =>
       _selectedApi.path == ApiEndpoints.mediaByIdTemplate ||
-      _selectedApi.path == ApiEndpoints.mediaSoftDeleteTemplate;
+      _selectedApi.path == ApiEndpoints.mediaSoftDeleteTemplate ||
+      _selectedApi.path == ApiEndpoints.friendRequestAcceptTemplate ||
+      _selectedApi.path == ApiEndpoints.friendRequestDeclineTemplate;
+
+  bool get _requiresUserIdPathParam =>
+      _selectedApi.path == ApiEndpoints.friendByUserIdTemplate ||
+      _selectedApi.path == ApiEndpoints.friendTypeByUserIdTemplate ||
+      _selectedApi.path == ApiEndpoints.friendDeleteByUserIdTemplate;
+
+  bool get _requiresGroupIdPathParam =>
+      _selectedApi.path == ApiEndpoints.messageGroupMessageTemplate;
 
   String _resolvePath(Map<String, dynamic> payload) {
     if (_selectedApi.path == ApiEndpoints.mediaByIdTemplate) {
@@ -334,17 +438,56 @@ class _DevApiMenuSheetState extends ConsumerState<DevApiMenuSheet> {
       return ApiEndpoints.mediaSoftDelete(payload['id'].toString().trim());
     }
 
+    if (_selectedApi.path == ApiEndpoints.friendRequestAcceptTemplate) {
+      return ApiEndpoints.friendRequestAccept(payload['id'].toString().trim());
+    }
+
+    if (_selectedApi.path == ApiEndpoints.friendRequestDeclineTemplate) {
+      return ApiEndpoints.friendRequestDecline(payload['id'].toString().trim());
+    }
+
+    if (_selectedApi.path == ApiEndpoints.friendByUserIdTemplate) {
+      return ApiEndpoints.friendByUserId(payload['userId'].toString().trim());
+    }
+
+    if (_selectedApi.path == ApiEndpoints.friendTypeByUserIdTemplate) {
+      return ApiEndpoints.friendTypeByUserId(
+        payload['userId'].toString().trim(),
+      );
+    }
+
+    if (_selectedApi.path == ApiEndpoints.friendDeleteByUserIdTemplate) {
+      return ApiEndpoints.friendDeleteByUserId(
+        payload['userId'].toString().trim(),
+      );
+    }
+
+    if (_selectedApi.path == ApiEndpoints.messageGroupMessageTemplate) {
+      return ApiEndpoints.messageGroupMessage(
+        payload['groupId'].toString().trim(),
+      );
+    }
+
     return _selectedApi.path;
   }
 
   Map<String, dynamic> _stripPathParams(Map<String, dynamic> payload) {
-    if (!_requiresIdPathParam && !_isMediaUploadEndpoint) {
+    if (!_requiresIdPathParam &&
+        !_requiresUserIdPathParam &&
+        !_requiresGroupIdPathParam &&
+        !_isMediaUploadEndpoint) {
       return payload;
     }
 
     final sanitized = Map<String, dynamic>.from(payload);
     if (_requiresIdPathParam) {
       sanitized.remove('id');
+    }
+    if (_requiresUserIdPathParam) {
+      sanitized.remove('userId');
+    }
+    if (_requiresGroupIdPathParam) {
+      sanitized.remove('groupId');
     }
     return sanitized;
   }

@@ -1,5 +1,5 @@
 import '../../../../core/constants/api_error_codes.dart';
-import '../../../../core/constants/validation_messages.dart';
+import '../../../../core/constants/error_messages.dart';
 
 class SafetyErrorCodeMapper {
   SafetyErrorCodeMapper._();

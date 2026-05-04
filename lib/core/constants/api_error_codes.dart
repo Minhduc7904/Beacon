@@ -28,4 +28,19 @@ class ApiErrorCodes {
   // Check-in
   static const String mediaNotFound = 'MEDIA_NOT_FOUND';
   static const String alreadyCheckedIn = 'ALREADY_CHECKED_IN';
+
+  // Friend requests
+  static const String selfFriendRequest = 'SELF_FRIEND_REQUEST';
+  static const String friendRequestDuplicate = 'FRIEND_REQUEST_DUPLICATE';
+  static const String alreadyFriends = 'ALREADY_FRIENDS';
+  static const String friendRequestNotFound = 'FRIEND_REQUEST_NOT_FOUND';
+  static const String friendRequestForbidden = 'FRIEND_REQUEST_FORBIDDEN';
+  static const String friendRequestNotPending = 'FRIEND_REQUEST_NOT_PENDING';
+
+  // Friends
+  static const String friendNotFound = 'FRIEND_NOT_FOUND';
+
+  // Message groups
+  static const String messageGroupForbidden = 'MESSAGE_GROUP_FORBIDDEN';
+  static const String messageGroupNotFound = 'MESSAGE_GROUP_NOT_FOUND';
 }
