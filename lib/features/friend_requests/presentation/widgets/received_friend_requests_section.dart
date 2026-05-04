@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/providers.dart';
+import '../../../../core/widgets/image/user_avatar.dart';
 import '../../domain/entities/friend_request.dart';
+import 'accept_friend_request_icon_button.dart';
+import 'decline_friend_request_icon_button.dart';
 
 class ReceivedFriendRequestsSection extends ConsumerStatefulWidget {
   const ReceivedFriendRequestsSection({super.key});
@@ -56,32 +59,11 @@ class _ReceivedFriendRequestsSectionState
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return _FriendRequestSectionCard(
-      title: 'Lời mời đã nhận',
-      isLoading: _isLoading,
-      error: _error,
-      emptyText: 'Chưa có lời mời nào',
-      items: _items,
-    );
+  void _removeItem(String requestId) {
+    setState(() {
+      _items = _items.where((item) => item.id != requestId).toList();
+    });
   }
-}
-
-class _FriendRequestSectionCard extends StatelessWidget {
-  const _FriendRequestSectionCard({
-    required this.title,
-    required this.isLoading,
-    required this.error,
-    required this.emptyText,
-    required this.items,
-  });
-
-  final String title;
-  final bool isLoading;
-  final String? error;
-  final String emptyText;
-  final List<FriendRequest> items;
 
   @override
   Widget build(BuildContext context) {
@@ -96,26 +78,49 @@ class _FriendRequestSectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            'Lời mời đã nhận',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
-          if (isLoading)
+          if (_isLoading)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Center(child: CircularProgressIndicator()),
             )
-          else if (error != null)
-            Text(error!, style: TextStyle(color: colorScheme.error))
-          else if (items.isEmpty)
-            Text(emptyText)
+          else if (_error != null)
+            Text(_error!, style: TextStyle(color: colorScheme.error))
+          else if (_items.isEmpty)
+            const Text('Chưa có lời mời nào')
           else
             Column(
-              children: items
+              children: _items
                   .map(
                     (item) => ListTile(
                       dense: true,
                       contentPadding: EdgeInsets.zero,
-                      title: Text(item.senderUsername),
-                      subtitle: Text(item.senderId),
+                      leading: UserAvatar(
+                        avatarUrl: item.avatarUrl,
+                        givenName: item.givenName,
+                      ),
+                      title: Text(
+                        item.fullName.isEmpty ? 'Người dùng' : item.fullName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AcceptFriendRequestIconButton(
+                            requestId: item.id,
+                            onSuccess: () => _removeItem(item.id),
+                          ),
+                          DeclineFriendRequestIconButton(
+                            requestId: item.id,
+                            onSuccess: () => _removeItem(item.id),
+                          ),
+                        ],
+                      ),
                     ),
                   )
                   .toList(),

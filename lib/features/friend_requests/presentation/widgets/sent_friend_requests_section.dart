@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/providers.dart';
+import '../../../../core/widgets/image/user_avatar.dart';
 import '../../domain/entities/friend_request.dart';
 
 class SentFriendRequestsSection extends ConsumerStatefulWidget {
@@ -90,8 +91,15 @@ class _SentFriendRequestsSectionState
                     (item) => ListTile(
                       dense: true,
                       contentPadding: EdgeInsets.zero,
-                      title: Text(item.senderUsername),
-                      subtitle: Text(item.senderId),
+                      leading: UserAvatar(
+                        avatarUrl: item.avatarUrl,
+                        givenName: item.givenName,
+                      ),
+                      title: Text(
+                        item.fullName.isEmpty ? 'Người dùng' : item.fullName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   )
                   .toList(),

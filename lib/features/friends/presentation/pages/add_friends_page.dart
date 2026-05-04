@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/providers.dart';
+import '../../../../core/widgets/image/user_avatar.dart';
 import '../../../../core/widgets/input/input.dart';
 import '../../../friend_requests/presentation/widgets/received_friend_requests_section.dart';
 import '../../../friend_requests/presentation/widgets/send_friend_request_button.dart';
@@ -147,8 +148,15 @@ class _AddFriendsPageState extends ConsumerState<AddFriendsPage> {
       itemBuilder: (context, index) {
         final friend = _results[index];
         return ListTile(
-          title: Text(friend.username),
-          subtitle: Text(friend.userId),
+          leading: UserAvatar(
+            avatarUrl: friend.avatarUrl,
+            givenName: friend.givenName,
+          ),
+          title: Text(
+            friend.fullName.isEmpty ? 'Người dùng' : friend.fullName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           trailing: _buildTrailingAction(friend),
         );
       },

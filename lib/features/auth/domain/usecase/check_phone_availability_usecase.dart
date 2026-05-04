@@ -1,10 +1,8 @@
 import 'package:dartz/dartz.dart';
 
-import '../../../../core/constants/api_error_codes.dart';
 import '../../../../core/constants/error_messages.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/phone_number_utils.dart';
-import '../../data/mappers/auth_error_code_mapper.dart';
 import '../repositories/auth_repository.dart';
 
 class CheckPhoneAvailabilityParams {

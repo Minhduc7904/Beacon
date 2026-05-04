@@ -52,7 +52,7 @@ class AppDropdown<T> extends m.StatelessWidget {
     final effectiveHintColor = AppColors.sky600;
 
     return m.DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       validator: validator,
       isExpanded: isExpanded,
       icon: m.Icon(

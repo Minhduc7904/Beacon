@@ -7,6 +7,7 @@ import '../../../../core/providers/providers.dart';
 import '../../../../core/theme/text/app_text_theme.dart';
 import '../../../../core/widgets/layout/screen_layout.dart';
 import '../../../../core/widgets/text/text.dart';
+import '../../../friends/domain/entities/friend_profile.dart';
 import '../../domain/entities/message_group.dart';
 import '../controllers/message_group_list_notifier.dart';
 import '../controllers/message_group_list_state.dart';
@@ -35,11 +36,33 @@ class MessageGroupListPage extends ConsumerStatefulWidget {
 }
 
 class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
+  Map<String, FriendProfile> _friendByGroupId = const {};
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(messageGroupListProvider.notifier).load();
+      _loadFriends();
+    });
+  }
+
+  Future<void> _loadFriends() async {
+    final result = await ref.read(getFriendsUseCaseProvider).call(limit: 100);
+    if (!mounted) {
+      return;
+    }
+    result.fold((_) {}, (page) {
+      final map = <String, FriendProfile>{};
+      for (final friend in page.items) {
+        final key = friend.messageGroupId.trim();
+        if (key.isNotEmpty) {
+          map[key] = friend;
+        }
+      }
+      setState(() {
+        _friendByGroupId = map;
+      });
     });
   }
 
@@ -100,8 +123,12 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
           ),
           itemBuilder: (context, index) {
             final group = state.groups[index];
+            final friend = _friendByGroupId[group.groupId];
             return MessageGroupTile(
               group: group,
+              displayName: friend?.fullName,
+              avatarUrl: friend?.avatarUrl,
+              avatarGivenName: friend?.givenName,
               onTap: () => _openDetail(group),
             );
           },

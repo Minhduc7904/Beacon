@@ -82,21 +82,17 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
           (m) => m.userId != meId,
           orElse: () => members.first,
         );
-        final fullName = '${peer.familyName ?? ''} ${peer.givenName ?? ''}'
-            .trim();
+        final fullName = peer.fullName;
         if (fullName.isNotEmpty) {
           return fullName;
-        }
-        if (peer.username.trim().isNotEmpty) {
-          return peer.username;
         }
       }
 
       return 'Nhóm ${members.length} thành viên';
     }
 
-    final hint = widget.group.lastMessageSenderUsername?.trim();
-    if (hint != null && hint.isNotEmpty) {
+    final hint = widget.group.lastMessageSenderFullName.trim();
+    if (hint.isNotEmpty) {
       return hint;
     }
     final gid = widget.group.groupId;
