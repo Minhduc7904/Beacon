@@ -84,9 +84,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     ref.listen<AuthState>(authNotifierProvider, (_, state) {
-      if (state is AuthSuccess) {
+      // if (state is AuthSuccess) {
         context.go(AppRoutes.home);
-      }
+      // }
     });
 
     final authState = ref.watch(authNotifierProvider);
