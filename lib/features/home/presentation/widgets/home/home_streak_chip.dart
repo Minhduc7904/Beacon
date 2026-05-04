@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/theme/color/app_colors.dart';
 import '../../../../../core/theme/text/app_text_theme.dart';
 import '../../../../../core/widgets/text/text.dart';
 
@@ -10,29 +11,30 @@ class HomeStreakChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: colorScheme.secondary,
+        color: AppColors.coral400,
         borderRadius: BorderRadius.circular(999),
       ),
+      alignment: Alignment.center,
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(
             Icons.local_fire_department_rounded,
-            color: colorScheme.onSecondary,
-            size: 18,
+            color: Color(0xFFFC6311),
+            size: 28,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           AppText(
             '$days ngày',
-            size: AppTextSize.tiny,
-            spacing: AppTextSpacing.tight,
+            size: AppTextSize.regular,
+            spacing: AppTextSpacing.none,
             weight: AppTextWeight.bold,
-            color: colorScheme.onSecondary,
+            color: AppColors.sky100,
           ),
         ],
       ),

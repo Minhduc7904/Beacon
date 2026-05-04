@@ -76,7 +76,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
             onCameraPressed: () =>
                 context.pushNamed(AppRoutes.cameraScreenName),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 36),
           HomeFeedIndicator(onTap: _scrollToFeed),
         ],
       ),
