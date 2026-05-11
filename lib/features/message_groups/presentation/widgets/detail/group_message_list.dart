@@ -7,7 +7,7 @@ import '../../../domain/entities/group_message.dart';
 import '../../../domain/entities/message_group_member.dart';
 import 'group_chat_bubble.dart';
 
-class GroupMessageList extends StatelessWidget {
+class GroupMessageList extends StatefulWidget {
   const GroupMessageList({
     super.key,
     required this.messages,
@@ -21,10 +21,55 @@ class GroupMessageList extends StatelessWidget {
   final ScrollController scrollController;
   final String? currentUserId;
 
+  @override
+  State<GroupMessageList> createState() => _GroupMessageListState();
+}
+
+class _GroupMessageListState extends State<GroupMessageList>
+    with SingleTickerProviderStateMixin {
+  static const double _timeRevealDistance = 72;
+  static const double _timeRevealShift = 72;
+
+  late final AnimationController _timeRevealController;
+
+  @override
+  void initState() {
+    super.initState();
+    _timeRevealController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 140),
+    )..addListener(() {
+        if (mounted) {
+          setState(() {});
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _timeRevealController.dispose();
+    super.dispose();
+  }
+
+  void _handleHorizontalDragUpdate(DragUpdateDetails details) {
+    _timeRevealController.stop();
+    final nextValue =
+        _timeRevealController.value - details.delta.dx / _timeRevealDistance;
+    _timeRevealController.value = nextValue.clamp(0.0, 1.0);
+  }
+
+  void _handleHorizontalDragEnd([DragEndDetails? _]) {
+    _timeRevealController.animateTo(
+      0,
+      curve: Curves.easeOut,
+      duration: const Duration(milliseconds: 160),
+    );
+  }
+
   Map<String, List<GroupMessage>> _groupByDate() {
     final groups = <String, List<GroupMessage>>{};
 
-    for (final msg in messages) {
+    for (final msg in widget.messages) {
       final dt = msg.createdAtUtc ?? DateTime.now().toUtc();
       final vietnamTime = TimeUtils.toVietnamTime(dt);
       final key = _dateLabel(vietnamTime);
@@ -49,7 +94,7 @@ class GroupMessageList extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    if (messages.isEmpty) {
+    if (widget.messages.isEmpty) {
       return Center(
         child: AppText(
           'Chưa có tin nhắn nào.\nHãy bắt đầu cuộc trò chuyện!',
@@ -74,58 +119,76 @@ class GroupMessageList extends StatelessWidget {
       }
     }
 
-    return ListView.builder(
-      controller: scrollController,
-      reverse: true,
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[items.length - 1 - index];
-        if (item.isHeader) {
-          return Padding(
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragUpdate: _handleHorizontalDragUpdate,
+      onHorizontalDragEnd: _handleHorizontalDragEnd,
+      onHorizontalDragCancel: _handleHorizontalDragEnd,
+      child: Stack(
+        children: [
+          ListView.builder(
+            controller: widget.scrollController,
+            reverse: true,
             padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withValues(
-                    alpha: 0.6,
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              final item = items[items.length - 1 - index];
+              if (item.isHeader) {
+                return Transform.translate(
+                  offset: Offset(
+                    -_timeRevealShift * _timeRevealController.value,
+                    0,
                   ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: AppText(
-                  item.headerText!,
-                  size: AppTextSize.veryTiny,
-                  spacing: AppTextSpacing.tight,
-                  weight: AppTextWeight.medium,
-                  color: colorScheme.onSurface.withValues(alpha: 0.55),
-                ),
-              ),
-            ),
-          );
-        }
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHighest.withValues(
+                            alpha: 0.6,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: AppText(
+                          item.headerText!,
+                          size: AppTextSize.veryTiny,
+                          spacing: AppTextSpacing.tight,
+                          weight: AppTextWeight.medium,
+                          color: colorScheme.onSurface.withValues(alpha: 0.55),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }
 
-        return GroupChatBubble(
-          message: item.message!,
-          seenMembers: seenByMessageId[item.message!.id] ?? const [],
-          currentUserId: currentUserId,
-        );
-      },
+              return GroupChatBubble(
+                message: item.message!,
+                seenMembers: seenByMessageId[item.message!.id] ?? const [],
+                currentUserId: widget.currentUserId,
+                timeRevealProgress: _timeRevealController.value,
+                contentShift: _timeRevealShift * _timeRevealController.value,
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
   Map<String, List<MessageGroupMember>> _buildSeenByMessageId() {
     final messageIndexById = <String, int>{};
-    for (var i = 0; i < messages.length; i++) {
-      messageIndexById[messages[i].id] = i;
+    for (var i = 0; i < widget.messages.length; i++) {
+      messageIndexById[widget.messages[i].id] = i;
     }
 
     final seenByMessageId = <String, List<MessageGroupMember>>{};
-    for (final member in members) {
-      if (member.userId == currentUserId) {
+    for (final member in widget.members) {
+      if (member.userId == widget.currentUserId) {
         continue;
       }
       final seenId = member.lastSeenMessageId;
@@ -136,7 +199,7 @@ class GroupMessageList extends StatelessWidget {
       if (seenIndex == null) {
         continue;
       }
-      final seenMessageId = messages[seenIndex].id;
+      final seenMessageId = widget.messages[seenIndex].id;
       seenByMessageId.putIfAbsent(seenMessageId, () => []).add(member);
     }
     return seenByMessageId;
