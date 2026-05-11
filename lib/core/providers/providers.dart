@@ -54,8 +54,14 @@ import '../../features/home/presentation/controllers/home_state.dart';
 import '../../features/message_groups/data/datasources/message_groups_remote_datasource.dart';
 import '../../features/message_groups/data/datasources/message_groups_remote_datasource_impl.dart';
 import '../../features/message_groups/data/repositories/message_groups_repository_impl.dart';
+import '../../features/message_groups/data/services/message_group_realtime_service_impl.dart';
 import '../../features/message_groups/domain/repositories/message_groups_repository.dart';
+import '../../features/message_groups/domain/services/message_group_realtime_service.dart';
 import '../../features/message_groups/domain/usecase/get_group_messages_usecase.dart';
+import '../../features/message_groups/domain/usecase/join_message_group_realtime_usecase.dart';
+import '../../features/message_groups/domain/usecase/leave_message_group_realtime_usecase.dart';
+import '../../features/message_groups/domain/usecase/mark_message_group_seen_usecase.dart';
+import '../../features/message_groups/domain/usecase/subscribe_new_messages_realtime_usecase.dart';
 import '../../features/message_groups/domain/usecase/get_message_group_detail_usecase.dart';
 import '../../features/message_groups/domain/usecase/get_message_groups_usecase.dart';
 import '../../features/message_groups/domain/usecase/send_group_message_usecase.dart';
@@ -89,6 +95,7 @@ import '../network/dio_client.dart';
 import '../network/network_info.dart';
 import '../preferences/app_preferences.dart';
 import '../preferences/app_preferences_impl.dart';
+import '../realtime/signalr_service.dart';
 import '../storage/local_storage.dart';
 import '../storage/secure_storage.dart';
 import '../storage/flutter_secure_storage_impl.dart';
@@ -139,6 +146,17 @@ final networkInfoProvider = Provider<NetworkInfo>((ref) {
 final authLocalDatasourceProvider = Provider<AuthLocalDatasource>((ref) {
   return AuthLocalDatasourceImpl(ref.watch(secureStorageProvider));
 });
+
+// ─── Realtime ───────────────────────────────────────────────────────────────
+
+final signalRServiceProvider = Provider<SignalRService>((ref) {
+  return SignalRService(ref.watch(authLocalDatasourceProvider));
+});
+
+final messageGroupRealtimeServiceProvider =
+    Provider<MessageGroupRealtimeService>((ref) {
+      return MessageGroupRealtimeServiceImpl(ref.watch(signalRServiceProvider));
+    });
 
 final dioClientProvider = Provider<DioClient>((ref) {
   return DioClient(
@@ -436,6 +454,34 @@ final getMessageGroupDetailUseCaseProvider =
       );
     });
 
+final joinMessageGroupRealtimeUseCaseProvider =
+    Provider<JoinMessageGroupRealtimeUseCase>((ref) {
+      return JoinMessageGroupRealtimeUseCase(
+        ref.watch(messageGroupRealtimeServiceProvider),
+      );
+    });
+
+final leaveMessageGroupRealtimeUseCaseProvider =
+    Provider<LeaveMessageGroupRealtimeUseCase>((ref) {
+      return LeaveMessageGroupRealtimeUseCase(
+        ref.watch(messageGroupRealtimeServiceProvider),
+      );
+    });
+
+final markMessageGroupSeenUseCaseProvider =
+    Provider<MarkMessageGroupSeenUseCase>((ref) {
+      return MarkMessageGroupSeenUseCase(
+        ref.watch(messageGroupsRepositoryProvider),
+      );
+    });
+
+final subscribeNewMessagesRealtimeUseCaseProvider =
+    Provider<SubscribeNewMessagesRealtimeUseCase>((ref) {
+      return SubscribeNewMessagesRealtimeUseCase(
+        ref.watch(messageGroupRealtimeServiceProvider),
+      );
+    });
+
 // ─── Auth Controller ──────────────────────────────────────────────────────────
 
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
@@ -448,6 +494,7 @@ final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
     ref.watch(logoutUseCaseProvider),
     ref.watch(meProfileProvider.notifier),
     ref.watch(appMessageProvider.notifier),
+    ref.watch(signalRServiceProvider),
   );
 });
 

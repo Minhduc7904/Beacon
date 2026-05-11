@@ -96,4 +96,24 @@ class MessageGroupsRepositoryImpl implements MessageGroupsRepository {
       return Left(e.toFailure());
     }
   }
+
+  @override
+  Future<Either<Failure, void>> markSeen({
+    required String groupId,
+    required String lastSeenMessageId,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      await _remoteDatasource.markSeen(
+        groupId: groupId,
+        lastSeenMessageId: lastSeenMessageId,
+      );
+      return const Right(null);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
 }

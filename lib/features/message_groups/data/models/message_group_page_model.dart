@@ -10,14 +10,21 @@ class MessageGroupPageModel extends MessageGroupPage {
   });
 
   factory MessageGroupPageModel.fromJson(Map<String, dynamic> json) {
-    final rows = json['data'];
-    final meta = json['meta'];
+    final payload = json['data'] is Map<String, dynamic>
+        ? json['data'] as Map<String, dynamic>
+        : json;
+    final rows = payload['data'];
+    final meta = payload['meta'];
 
     return MessageGroupPageModel(
       items: rows is List
           ? rows
-                .whereType<Map<String, dynamic>>()
-                .map(MessageGroupModel.fromJson)
+                .whereType<Map>()
+                .map(
+                  (row) => MessageGroupModel.fromJson(
+                    Map<String, dynamic>.from(row),
+                  ),
+                )
                 .toList()
           : const <MessageGroupModel>[],
       nextCursor: meta is Map<String, dynamic>

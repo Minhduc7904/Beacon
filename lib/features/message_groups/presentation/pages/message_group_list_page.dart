@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +9,7 @@ import '../../../../core/providers/providers.dart';
 import '../../../../core/theme/text/app_text_theme.dart';
 import '../../../../core/widgets/layout/screen_layout.dart';
 import '../../../../core/widgets/text/text.dart';
-import '../../../friends/domain/entities/friend_profile.dart';
+import '../../domain/entities/group_message.dart';
 import '../../domain/entities/message_group.dart';
 import '../controllers/message_group_list_notifier.dart';
 import '../controllers/message_group_list_state.dart';
@@ -36,34 +38,59 @@ class MessageGroupListPage extends ConsumerStatefulWidget {
 }
 
 class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
-  Map<String, FriendProfile> _friendByGroupId = const {};
+  final Set<String> _receivedMessageIds = <String>{};
+  void Function()? _unsubscribeNewMessages;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(messageGroupListProvider.notifier).load();
-      _loadFriends();
+      unawaited(_subscribeRealtimeMessages());
     });
   }
 
-  Future<void> _loadFriends() async {
-    final result = await ref.read(getFriendsUseCaseProvider).call(limit: 100);
-    if (!mounted) {
+  Future<void> _subscribeRealtimeMessages() async {
+    await ref
+        .read(subscribeNewMessagesRealtimeUseCaseProvider)
+        .call(onMessage: _handleIncomingMessage);
+    _unsubscribeNewMessages = ref
+        .read(subscribeNewMessagesRealtimeUseCaseProvider)
+        .unsubscribe();
+  }
+
+  void _handleIncomingMessage(GroupMessage message) {
+    if (!_receivedMessageIds.add(message.id)) {
       return;
     }
-    result.fold((_) {}, (page) {
-      final map = <String, FriendProfile>{};
-      for (final friend in page.items) {
-        final key = friend.messageGroupId.trim();
-        if (key.isNotEmpty) {
-          map[key] = friend;
-        }
-      }
-      setState(() {
-        _friendByGroupId = map;
-      });
-    });
+
+    final meId = ref.read(meProfileProvider).valueOrNull?.id;
+    final isFromMe = meId != null && meId == message.senderId;
+    if (!isFromMe) {
+      final sender = message.senderFullName.trim().isEmpty
+          ? 'Tin nhan moi'
+          : message.senderFullName.trim();
+      final content = message.content.trim();
+      final toast = content.isEmpty ? sender : '$sender: $content';
+      ref.read(appMessageProvider.notifier).addInfo(toast);
+    }
+
+    final listNotifier = ref.read(messageGroupListProvider.notifier);
+    listNotifier.applyIncomingMessage(message, isFromCurrentUser: isFromMe);
+    final hasGroup = ref
+        .read(messageGroupListProvider)
+        .groups
+        .any((g) => g.groupId == message.groupId);
+    if (!hasGroup) {
+      unawaited(listNotifier.refreshSilently());
+    }
+  }
+
+  @override
+  void dispose() {
+    _unsubscribeNewMessages?.call();
+    _unsubscribeNewMessages = null;
+    super.dispose();
   }
 
   @override
@@ -114,7 +141,7 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
 
         return ListView.separated(
           padding: const EdgeInsets.symmetric(vertical: 8),
-          itemCount: state.groups.length,
+          itemCount: state.groups.length + 1,
           separatorBuilder: (_, _) => Divider(
             height: 1,
             indent: 82,
@@ -122,13 +149,13 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
             color: colorScheme.outline.withValues(alpha: 0.2),
           ),
           itemBuilder: (context, index) {
-            final group = state.groups[index];
-            final friend = _friendByGroupId[group.groupId];
+            if (index == 0) {
+              return _MessageGroupListHeader(count: state.groups.length);
+            }
+
+            final group = state.groups[index - 1];
             return MessageGroupTile(
               group: group,
-              displayName: friend?.fullName,
-              avatarUrl: friend?.avatarUrl,
-              avatarGivenName: friend?.givenName,
               onTap: () => _openDetail(group),
             );
           },
@@ -138,5 +165,46 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
 
   void _openDetail(MessageGroup group) {
     context.pushNamed(AppRoutes.chatDetailName, extra: group);
+  }
+}
+
+class _MessageGroupListHeader extends StatelessWidget {
+  const _MessageGroupListHeader({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText(
+                  'Hoi thoai',
+                  size: AppTextSize.large,
+                  spacing: AppTextSpacing.tight,
+                  weight: AppTextWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+                const SizedBox(height: 4),
+                AppText(
+                  '$count cuoc tro chuyen',
+                  size: AppTextSize.small,
+                  spacing: AppTextSpacing.tight,
+                  weight: AppTextWeight.regular,
+                  color: colorScheme.onSurface.withValues(alpha: 0.55),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

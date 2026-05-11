@@ -26,4 +26,9 @@ abstract class MessageGroupsRepository {
   Future<Either<Failure, MessageGroupDetail>> getGroupDetail({
     required String groupId,
   });
+
+  Future<Either<Failure, void>> markSeen({
+    required String groupId,
+    required String lastSeenMessageId,
+  });
 }

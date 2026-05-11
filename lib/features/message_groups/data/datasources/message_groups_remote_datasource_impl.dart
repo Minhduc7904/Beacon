@@ -10,7 +10,8 @@ import '../models/group_message_page_model.dart';
 import '../models/message_group_page_model.dart';
 import 'message_groups_remote_datasource.dart';
 
-class MessageGroupsRemoteDatasourceImpl implements MessageGroupsRemoteDatasource {
+class MessageGroupsRemoteDatasourceImpl
+    implements MessageGroupsRemoteDatasource {
   final DioClient _dioClient;
 
   MessageGroupsRemoteDatasourceImpl(this._dioClient);
@@ -117,9 +118,13 @@ class MessageGroupsRemoteDatasourceImpl implements MessageGroupsRemoteDatasource
   }
 
   @override
-  Future<MessageGroupDetailModel> getGroupDetail({required String groupId}) async {
+  Future<MessageGroupDetailModel> getGroupDetail({
+    required String groupId,
+  }) async {
     try {
-      final response = await _dioClient.get(ApiEndpoints.messageGroupDetail(groupId));
+      final response = await _dioClient.get(
+        ApiEndpoints.messageGroupDetail(groupId),
+      );
 
       final result = ApiHandler.handle<MessageGroupDetailModel>(
         response,
@@ -129,6 +134,29 @@ class MessageGroupsRemoteDatasourceImpl implements MessageGroupsRemoteDatasource
       );
 
       return result.data!;
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> markSeen({
+    required String groupId,
+    required String lastSeenMessageId,
+  }) async {
+    try {
+      final response = await _dioClient.patch(
+        ApiEndpoints.messageGroupSeen(groupId),
+        data: {'lastSeenMessageId': lastSeenMessageId},
+      );
+      ApiHandler.handle<void>(
+        response,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
     } on DioException catch (e) {
       ApiHandler.rethrowDioException(
         e,

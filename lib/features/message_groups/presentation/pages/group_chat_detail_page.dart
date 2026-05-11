@@ -8,6 +8,7 @@ import '../../../../core/widgets/image/user_avatar.dart';
 import '../../../../core/widgets/layout/screen_layout.dart';
 import '../../../../core/widgets/text/text.dart';
 import '../../domain/entities/message_group.dart';
+import '../../domain/entities/message_group_member.dart';
 import '../controllers/group_chat_detail_notifier.dart';
 import '../controllers/group_chat_detail_state.dart';
 import '../widgets/detail/group_message_input_bar.dart';
@@ -25,7 +26,17 @@ final groupChatDetailProvider = StateNotifierProvider.autoDispose
           getMessageGroupDetailUseCaseProvider,
         ),
         sendGroupMessageUseCase: ref.watch(sendGroupMessageUseCaseProvider),
+        markMessageGroupSeenUseCase: ref.watch(
+          markMessageGroupSeenUseCaseProvider,
+        ),
         messageNotifier: ref.watch(appMessageProvider.notifier),
+        joinMessageGroupRealtimeUseCase: ref.watch(
+          joinMessageGroupRealtimeUseCaseProvider,
+        ),
+        leaveMessageGroupRealtimeUseCase: ref.watch(
+          leaveMessageGroupRealtimeUseCaseProvider,
+        ),
+        currentUserId: ref.watch(meProfileProvider).valueOrNull?.id,
       );
     });
 
@@ -74,14 +85,19 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
   }
 
   String _title(GroupChatDetailState state) {
-    final members = state.groupDetail?.members ?? const [];
+    final members = List<MessageGroupMember>.from(
+      state.groupDetail?.members ?? const <MessageGroupMember>[],
+    );
     if (members.isNotEmpty) {
       if (members.length == 2) {
         final meId = ref.read(meProfileProvider).valueOrNull?.id;
-        final peer = members.firstWhere(
-          (m) => m.userId != meId,
-          orElse: () => members.first,
-        );
+        var peer = members.first;
+        for (final member in members) {
+          if (member.userId != meId) {
+            peer = member;
+            break;
+          }
+        }
         final fullName = peer.fullName;
         if (fullName.isNotEmpty) {
           return fullName;
@@ -91,13 +107,7 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
       return 'Nhóm ${members.length} thành viên';
     }
 
-    final hint = widget.group.lastMessageSenderFullName.trim();
-    if (hint.isNotEmpty) {
-      return hint;
-    }
-    final gid = widget.group.groupId;
-    final shortId = gid.length > 8 ? gid.substring(0, 8) : gid;
-    return 'Nhom $shortId';
+    return widget.group.resolvedDisplayName;
   }
 
   @override
@@ -122,7 +132,11 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            UserAvatar(avatarUrl: null, givenName: _title(state), size: 34),
+            UserAvatar(
+              avatarUrl: widget.group.displayAvatarUrl,
+              givenName: _title(state),
+              size: 34,
+            ),
             const SizedBox(width: 10),
             Flexible(
               child: Column(

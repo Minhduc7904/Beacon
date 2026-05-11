@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/usecase/login_usecase.dart';
@@ -6,6 +8,7 @@ import '../../domain/usecase/register_usecase.dart';
 import '../../domain/usecase/get_me_usecase.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/messages/app_message_notifier.dart';
+import '../../../../core/realtime/signalr_service.dart';
 import 'me_profile_notifier.dart';
 import 'auth_state.dart';
 
@@ -16,6 +19,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final LogoutUseCase _logoutUseCase;
   final MeProfileNotifier _meProfileNotifier;
   final AppMessageNotifier _messageNotifier;
+  final SignalRService _signalRService;
 
   AuthNotifier(
     this._loginUseCase,
@@ -24,6 +28,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     this._logoutUseCase,
     this._meProfileNotifier,
     this._messageNotifier,
+    this._signalRService,
   ) : super(const AuthInitial());
 
   static const String _registerUsernameExistsMessage =
@@ -88,6 +93,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
             _messageNotifier.addSuccess(successMessage);
             state = AuthSuccess(user, successMessage: successMessage);
+
+            unawaited(_signalRService.connect());
           },
         );
       },
@@ -148,6 +155,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     state = const AuthLoading();
     _meProfileNotifier.clearProfile();
+
+    await _signalRService.disconnect();
 
     final result = await _logoutUseCase();
     result.fold((failure) {

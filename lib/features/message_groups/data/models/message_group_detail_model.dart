@@ -6,6 +6,8 @@ class MessageGroupDetailModel extends MessageGroupDetail {
     required super.groupId,
     required super.isPrivate,
     required super.createdAtUtc,
+    required super.displayName,
+    required super.displayAvatarUrl,
     required super.members,
   });
 
@@ -13,8 +15,10 @@ class MessageGroupDetailModel extends MessageGroupDetail {
     final membersRaw = json['members'];
     return MessageGroupDetailModel(
       groupId: json['groupId']?.toString() ?? '',
-      isPrivate: json['isPrivate'] == true,
+      isPrivate: _toBool(json['isPrivate']) ?? json['type'] == 0,
       createdAtUtc: _toDate(json['createdAtUtc']),
+      displayName: json['displayName']?.toString(),
+      displayAvatarUrl: json['displayAvatarUrl']?.toString(),
       members: membersRaw is List
           ? membersRaw
                 .whereType<Map<String, dynamic>>()
@@ -22,6 +26,26 @@ class MessageGroupDetailModel extends MessageGroupDetail {
                 .toList()
           : const <MessageGroupMemberModel>[],
     );
+  }
+
+  static bool? _toBool(dynamic value) {
+    if (value is bool) {
+      return value;
+    }
+    if (value is num) {
+      return value != 0;
+    }
+    final raw = value?.toString().trim().toLowerCase();
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+    if (raw == 'true' || raw == '1') {
+      return true;
+    }
+    if (raw == 'false' || raw == '0') {
+      return false;
+    }
+    return null;
   }
 
   static DateTime? _toDate(dynamic value) {

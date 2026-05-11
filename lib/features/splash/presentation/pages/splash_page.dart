@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -53,6 +55,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     await Future.delayed(const Duration(seconds: 2));
 
     if (isAuthenticated) {
+      unawaited(_connectSignalR());
       context.go(AppRoutes.home);
       return;
     }
@@ -62,6 +65,10 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     }
 
     context.go(AppRoutes.onboarding);
+  }
+
+  Future<void> _connectSignalR() async {
+    await ref.read(signalRServiceProvider).connect();
   }
 
   @override

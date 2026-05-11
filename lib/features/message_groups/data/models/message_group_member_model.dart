@@ -6,6 +6,8 @@ class MessageGroupMemberModel extends MessageGroupMember {
     required super.familyName,
     required super.givenName,
     required super.avatarUrl,
+    required super.role,
+    required super.lastSeenMessageId,
   });
 
   factory MessageGroupMemberModel.fromJson(Map<String, dynamic> json) {
@@ -14,6 +16,18 @@ class MessageGroupMemberModel extends MessageGroupMember {
       familyName: json['familyName']?.toString(),
       givenName: json['givenName']?.toString() ?? json['username']?.toString(),
       avatarUrl: json['avatarUrl']?.toString(),
+      role: _toInt(json['role']),
+      lastSeenMessageId: json['lastSeenMessageId']?.toString(),
     );
+  }
+
+  static int _toInt(dynamic value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 }
