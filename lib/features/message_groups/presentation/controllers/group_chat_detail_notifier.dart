@@ -10,6 +10,8 @@ import '../../domain/usecase/join_message_group_realtime_usecase.dart';
 import '../../domain/usecase/leave_message_group_realtime_usecase.dart';
 import '../../domain/usecase/mark_message_group_seen_usecase.dart';
 import '../../domain/usecase/send_group_message_usecase.dart';
+import '../../domain/usecase/send_typing_status_realtime_usecase.dart';
+import '../../domain/usecase/subscribe_typing_status_realtime_usecase.dart';
 import 'group_chat_detail_state.dart';
 
 class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
@@ -21,9 +23,13 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
   final AppMessageNotifier _messageNotifier;
   final JoinMessageGroupRealtimeUseCase _joinMessageGroupRealtimeUseCase;
   final LeaveMessageGroupRealtimeUseCase _leaveMessageGroupRealtimeUseCase;
+  final SendTypingStatusRealtimeUseCase _sendTypingStatusRealtimeUseCase;
+  final SubscribeTypingStatusRealtimeUseCase
+  _subscribeTypingStatusRealtimeUseCase;
   final String? _currentUserId;
   String? _lastSeenMessageId;
   bool _markingSeen = false;
+  void Function(String groupId)? _unsubscribeTypingStatus;
 
   GroupChatDetailNotifier({
     required this.groupId,
@@ -34,6 +40,9 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
     required AppMessageNotifier messageNotifier,
     required JoinMessageGroupRealtimeUseCase joinMessageGroupRealtimeUseCase,
     required LeaveMessageGroupRealtimeUseCase leaveMessageGroupRealtimeUseCase,
+    required SendTypingStatusRealtimeUseCase sendTypingStatusRealtimeUseCase,
+    required SubscribeTypingStatusRealtimeUseCase
+    subscribeTypingStatusRealtimeUseCase,
     required String? currentUserId,
   }) : _getGroupMessagesUseCase = getGroupMessagesUseCase,
        _getMessageGroupDetailUseCase = getMessageGroupDetailUseCase,
@@ -42,6 +51,9 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
        _messageNotifier = messageNotifier,
        _joinMessageGroupRealtimeUseCase = joinMessageGroupRealtimeUseCase,
        _leaveMessageGroupRealtimeUseCase = leaveMessageGroupRealtimeUseCase,
+       _sendTypingStatusRealtimeUseCase = sendTypingStatusRealtimeUseCase,
+       _subscribeTypingStatusRealtimeUseCase =
+           subscribeTypingStatusRealtimeUseCase,
        _currentUserId = currentUserId,
        super(const GroupChatDetailState());
 
@@ -52,12 +64,12 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
       groupId: groupId,
     );
     detailResult.fold((_) {}, (detail) {
-      _lastSeenMessageId = detail.members
-          .where((member) => member.userId == _currentUserId)
-          .map((member) => member.lastSeenMessageId)
-          .whereType<String>()
-          .cast<String?>()
-          .firstWhere((_) => true, orElse: () => null);
+      for (final member in detail.members) {
+        if (member.userId == _currentUserId) {
+          _lastSeenMessageId = member.lastSeenMessageId;
+          break;
+        }
+      }
       state = state.copyWith(groupDetail: detail);
     });
 
@@ -113,6 +125,7 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
         state = state.copyWith(isSending: false, errorMessage: failure.message);
       },
       (sentMessage) {
+        unawaited(sendTypingStatus(false));
         final nextMessages = _upsertSorted(state.messages, sentMessage);
         state = state.copyWith(
           messages: nextMessages,
@@ -123,7 +136,23 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
     );
   }
 
+  Future<void> sendTypingStatus(bool isTyping) async {
+    try {
+      await _sendTypingStatusRealtimeUseCase.call(
+        groupId: groupId,
+        isTyping: isTyping,
+      );
+    } catch (_) {}
+  }
+
   Future<void> _bindRealtime() async {
+    await _subscribeTypingStatusRealtimeUseCase.call(
+      groupId: groupId,
+      onTypingStatus: _onTypingStatus,
+    );
+    _unsubscribeTypingStatus = _subscribeTypingStatusRealtimeUseCase
+        .unsubscribe();
+
     await _joinMessageGroupRealtimeUseCase.call(
       groupId: groupId,
       onMessage: (message) {
@@ -135,6 +164,25 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
         unawaited(_markLatestSeenIfNeeded());
       },
     );
+  }
+
+  void _onTypingStatus(String typingUserId, bool isTyping) {
+    final currentUserId = _currentUserId;
+    if (typingUserId == currentUserId) {
+      return;
+    }
+
+    final nextTypingUserIds = List<String>.from(state.typingUserIds);
+    final existingIndex = nextTypingUserIds.indexOf(typingUserId);
+    if (isTyping) {
+      if (existingIndex < 0) {
+        nextTypingUserIds.add(typingUserId);
+      }
+    } else if (existingIndex >= 0) {
+      nextTypingUserIds.removeAt(existingIndex);
+    }
+
+    state = state.copyWith(typingUserIds: nextTypingUserIds);
   }
 
   Future<void> _markLatestSeenIfNeeded() async {
@@ -190,6 +238,9 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
 
   @override
   void dispose() {
+    unawaited(sendTypingStatus(false));
+    _unsubscribeTypingStatus?.call(groupId);
+    _unsubscribeTypingStatus = null;
     unawaited(_leaveMessageGroupRealtimeUseCase.call(groupId));
     super.dispose();
   }

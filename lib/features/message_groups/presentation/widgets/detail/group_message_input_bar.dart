@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../../core/widgets/input/input.dart';
@@ -6,10 +8,12 @@ class GroupMessageInputBar extends StatefulWidget {
   const GroupMessageInputBar({
     super.key,
     required this.onSend,
+    this.onTypingChanged,
     this.isSending = false,
   });
 
   final ValueChanged<String> onSend;
+  final ValueChanged<bool>? onTypingChanged;
   final bool isSending;
 
   @override
@@ -19,6 +23,8 @@ class GroupMessageInputBar extends StatefulWidget {
 class _GroupMessageInputBarState extends State<GroupMessageInputBar> {
   final _controller = TextEditingController();
   bool _hasText = false;
+  Timer? _typingDebounce;
+  bool _typingSent = false;
 
   @override
   void initState() {
@@ -28,11 +34,33 @@ class _GroupMessageInputBarState extends State<GroupMessageInputBar> {
       if (hasText != _hasText) {
         setState(() => _hasText = hasText);
       }
+
+      if (hasText) {
+        if (!_typingSent) {
+          _typingSent = true;
+          widget.onTypingChanged?.call(true);
+        }
+        _typingDebounce?.cancel();
+        _typingDebounce = Timer(const Duration(milliseconds: 1200), () {
+          _typingSent = false;
+          widget.onTypingChanged?.call(false);
+        });
+      } else {
+        _typingDebounce?.cancel();
+        if (_typingSent) {
+          _typingSent = false;
+          widget.onTypingChanged?.call(false);
+        }
+      }
     });
   }
 
   @override
   void dispose() {
+    _typingDebounce?.cancel();
+    if (_typingSent) {
+      widget.onTypingChanged?.call(false);
+    }
     _controller.dispose();
     super.dispose();
   }
@@ -43,6 +71,10 @@ class _GroupMessageInputBarState extends State<GroupMessageInputBar> {
 
     widget.onSend(text);
     _controller.clear();
+    if (_typingSent) {
+      _typingSent = false;
+      widget.onTypingChanged?.call(false);
+    }
   }
 
   @override
@@ -54,9 +86,7 @@ class _GroupMessageInputBarState extends State<GroupMessageInputBar> {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(
-          top: BorderSide(
-            color: colorScheme.outline.withValues(alpha: 0.3),
-          ),
+          top: BorderSide(color: colorScheme.outline.withValues(alpha: 0.3)),
         ),
       ),
       child: SafeArea(

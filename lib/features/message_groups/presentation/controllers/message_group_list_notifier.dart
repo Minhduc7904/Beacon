@@ -57,6 +57,43 @@ class MessageGroupListNotifier extends StateNotifier<MessageGroupListState> {
     );
   }
 
+  void applyMessageGroupSeen({
+    required String groupId,
+    required String lastSeenMessageId,
+  }) {
+    final groups = List<MessageGroup>.from(state.groups);
+    final index = groups.indexWhere((g) => g.groupId == groupId);
+    if (index < 0) {
+      return;
+    }
+
+    final current = groups[index];
+    final isSeenByEvent = current.lastSeenMessageId == lastSeenMessageId;
+    final isSeenLatest =
+        isSeenByEvent || current.lastMessageId == lastSeenMessageId;
+
+    groups[index] = MessageGroup(
+      groupId: current.groupId,
+      isPrivate: current.isPrivate,
+      createdAtUtc: current.createdAtUtc,
+      lastMessageId: current.lastMessageId,
+      lastMessageContent: current.lastMessageContent,
+      lastMessageAtUtc: current.lastMessageAtUtc,
+      lastMessageSenderFamilyName: current.lastMessageSenderFamilyName,
+      lastMessageSenderGivenName: current.lastMessageSenderGivenName,
+      lastSeenMessageId: lastSeenMessageId,
+      isSeenLatest: isSeenLatest,
+      unreadCount: isSeenLatest ? 0 : current.unreadCount,
+      displayName: current.displayName,
+      displayAvatarUrl: current.displayAvatarUrl,
+    );
+
+    state = state.copyWith(
+      status: MessageGroupListStatus.loaded,
+      groups: groups,
+    );
+  }
+
   Future<void> _loadInternal({required bool showErrorBanner}) async {
     final result = await _getMessageGroupsUseCase.call(limit: 20);
     result.fold(

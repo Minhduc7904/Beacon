@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/utils/time_utils.dart';
 import '../../../../../core/theme/text/app_text_theme.dart';
 import '../../../../../core/widgets/text/text.dart';
 import '../../../domain/entities/group_message.dart';
@@ -17,9 +18,7 @@ class GroupChatBubble extends StatelessWidget {
   bool get _isMe => currentUserId != null && currentUserId == message.senderId;
 
   String _formatTime(DateTime dt) {
-    final h = dt.hour.toString().padLeft(2, '0');
-    final m = dt.minute.toString().padLeft(2, '0');
-    return '$h:$m';
+    return TimeUtils.formatTime(TimeUtils.toVietnamTime(dt));
   }
 
   @override

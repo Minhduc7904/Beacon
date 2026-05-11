@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/text/app_text_theme.dart';
+import '../../../../../core/utils/time_utils.dart';
 import '../../../../../core/widgets/text/text.dart';
 import '../../../domain/entities/group_message.dart';
 import 'group_chat_bubble.dart';
@@ -21,23 +22,24 @@ class GroupMessageList extends StatelessWidget {
     final groups = <String, List<GroupMessage>>{};
 
     for (final msg in messages) {
-      final dt = msg.createdAtUtc ?? DateTime.now();
-      final key = _dateLabel(dt);
+      final dt = msg.createdAtUtc ?? DateTime.now().toUtc();
+      final vietnamTime = TimeUtils.toVietnamTime(dt);
+      final key = _dateLabel(vietnamTime);
       groups.putIfAbsent(key, () => []).add(msg);
     }
 
     return groups;
   }
 
-  String _dateLabel(DateTime dt) {
-    final now = DateTime.now();
+  String _dateLabel(DateTime vietnamTime) {
+    final now = TimeUtils.nowVietnam();
     final today = DateTime(now.year, now.month, now.day);
-    final date = DateTime(dt.year, dt.month, dt.day);
+    final date = DateTime(vietnamTime.year, vietnamTime.month, vietnamTime.day);
     final diff = today.difference(date).inDays;
 
     if (diff == 0) return 'Hom nay';
     if (diff == 1) return 'Hom qua';
-    return '${dt.day}/${dt.month}/${dt.year}';
+    return TimeUtils.formatDate(vietnamTime);
   }
 
   @override
@@ -79,9 +81,14 @@ class GroupMessageList extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+                  color: colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.6,
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: AppText(
@@ -112,10 +119,8 @@ class _GroupListItem {
   bool get isHeader => headerText != null;
 
   _GroupListItem.message(GroupMessage value)
-      : message = value,
-        headerText = null;
+    : message = value,
+      headerText = null;
 
-  _GroupListItem.header(String value)
-      : message = null,
-        headerText = value;
+  _GroupListItem.header(String value) : message = null, headerText = value;
 }

@@ -40,6 +40,7 @@ class MessageGroupListPage extends ConsumerStatefulWidget {
 class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
   final Set<String> _receivedMessageIds = <String>{};
   void Function()? _unsubscribeNewMessages;
+  void Function()? _unsubscribeMessageGroupSeen;
 
   @override
   void initState() {
@@ -47,6 +48,7 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(messageGroupListProvider.notifier).load();
       unawaited(_subscribeRealtimeMessages());
+      unawaited(_subscribeMessageGroupSeen());
     });
   }
 
@@ -56,6 +58,24 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
         .call(onMessage: _handleIncomingMessage);
     _unsubscribeNewMessages = ref
         .read(subscribeNewMessagesRealtimeUseCaseProvider)
+        .unsubscribe();
+  }
+
+  Future<void> _subscribeMessageGroupSeen() async {
+    await ref
+        .read(subscribeMessageGroupSeenRealtimeUseCaseProvider)
+        .call(
+          onMessageGroupSeen: (groupId, lastSeenMessageId) {
+            ref
+                .read(messageGroupListProvider.notifier)
+                .applyMessageGroupSeen(
+                  groupId: groupId,
+                  lastSeenMessageId: lastSeenMessageId,
+                );
+          },
+        );
+    _unsubscribeMessageGroupSeen = ref
+        .read(subscribeMessageGroupSeenRealtimeUseCaseProvider)
         .unsubscribe();
   }
 
@@ -90,6 +110,8 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
   void dispose() {
     _unsubscribeNewMessages?.call();
     _unsubscribeNewMessages = null;
+    _unsubscribeMessageGroupSeen?.call();
+    _unsubscribeMessageGroupSeen = null;
     super.dispose();
   }
 

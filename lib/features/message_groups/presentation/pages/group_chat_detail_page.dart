@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -35,6 +37,12 @@ final groupChatDetailProvider = StateNotifierProvider.autoDispose
         ),
         leaveMessageGroupRealtimeUseCase: ref.watch(
           leaveMessageGroupRealtimeUseCaseProvider,
+        ),
+        sendTypingStatusRealtimeUseCase: ref.watch(
+          sendTypingStatusRealtimeUseCaseProvider,
+        ),
+        subscribeTypingStatusRealtimeUseCase: ref.watch(
+          subscribeTypingStatusRealtimeUseCaseProvider,
         ),
         currentUserId: ref.watch(meProfileProvider).valueOrNull?.id,
       );
@@ -122,6 +130,8 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
       }
     });
 
+    final typingText = _typingText(state);
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -152,11 +162,13 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   AppText(
-                    'Dang hoat dong',
+                    typingText,
                     size: AppTextSize.veryTiny,
                     spacing: AppTextSpacing.tight,
                     weight: AppTextWeight.regular,
-                    color: colorScheme.primary,
+                    color: typingText == 'Dang nhap...'
+                        ? colorScheme.primary
+                        : colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ],
               ),
@@ -173,6 +185,17 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
               ),
               GroupMessageInputBar(
                 isSending: state.isSending,
+                onTypingChanged: (isTyping) {
+                  unawaited(
+                    ref
+                        .read(
+                          groupChatDetailProvider(
+                            widget.group.groupId,
+                          ).notifier,
+                        )
+                        .sendTypingStatus(isTyping),
+                  );
+                },
                 onSend: (text) {
                   ref
                       .read(
@@ -186,6 +209,10 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
         ),
       ),
     );
+  }
+
+  String _typingText(GroupChatDetailState state) {
+    return state.typingUserIds.isNotEmpty ? 'Dang nhap...' : 'Dang hoat dong';
   }
 
   Widget _buildMessages(

@@ -31,6 +31,28 @@ class GroupMessageModel extends GroupMessage {
     if (raw == null || raw.trim().isEmpty) {
       return null;
     }
-    return DateTime.tryParse(raw);
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) {
+      return null;
+    }
+
+    final hasTimezoneSuffix =
+        raw.endsWith('Z') ||
+        raw.contains('+') ||
+        raw.substring(10).contains('-');
+    if (hasTimezoneSuffix) {
+      return parsed.toUtc();
+    }
+
+    return DateTime.utc(
+      parsed.year,
+      parsed.month,
+      parsed.day,
+      parsed.hour,
+      parsed.minute,
+      parsed.second,
+      parsed.millisecond,
+      parsed.microsecond,
+    );
   }
 }

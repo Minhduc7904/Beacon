@@ -68,6 +68,21 @@ class SignalRService {
     String eventName,
     void Function(Map<String, dynamic>) handler,
   ) {
+    return onArgs(eventName, (args) {
+      if (args == null || args.isEmpty) {
+        return;
+      }
+      final payload = args.first;
+      if (payload is Map) {
+        handler(Map<String, dynamic>.from(payload));
+      }
+    });
+  }
+
+  VoidCallback onArgs(
+    String eventName,
+    void Function(List<Object?>? args) handler,
+  ) {
     final trimmedEventName = eventName.trim();
     if (trimmedEventName.isEmpty) {
       return () {};
@@ -75,20 +90,8 @@ class SignalRService {
 
     final connection = _connection ?? _buildConnection();
     _connection = connection;
-
-    void onEvent(List<Object?>? args) {
-      if (args == null || args.isEmpty) {
-        return;
-      }
-
-      final payload = args.first;
-      if (payload is Map) {
-        handler(Map<String, dynamic>.from(payload));
-      }
-    }
-
-    connection.on(trimmedEventName, onEvent);
-    return () => connection.off(trimmedEventName, method: onEvent);
+    connection.on(trimmedEventName, handler);
+    return () => connection.off(trimmedEventName, method: handler);
   }
 
   HubConnection _buildConnection() {

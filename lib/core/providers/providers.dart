@@ -62,9 +62,13 @@ import '../../features/message_groups/domain/usecase/join_message_group_realtime
 import '../../features/message_groups/domain/usecase/leave_message_group_realtime_usecase.dart';
 import '../../features/message_groups/domain/usecase/mark_message_group_seen_usecase.dart';
 import '../../features/message_groups/domain/usecase/subscribe_new_messages_realtime_usecase.dart';
+import '../../features/message_groups/domain/usecase/subscribe_message_group_seen_realtime_usecase.dart';
+import '../../features/message_groups/domain/usecase/subscribe_typing_status_realtime_usecase.dart';
+import '../../features/message_groups/domain/usecase/subscribe_unread_message_count_realtime_usecase.dart';
 import '../../features/message_groups/domain/usecase/get_message_group_detail_usecase.dart';
 import '../../features/message_groups/domain/usecase/get_message_groups_usecase.dart';
 import '../../features/message_groups/domain/usecase/send_group_message_usecase.dart';
+import '../../features/message_groups/domain/usecase/send_typing_status_realtime_usecase.dart';
 import '../../features/onboarding/data/datasources/onboarding_local_datasource.dart';
 import '../../features/onboarding/data/datasources/onboarding_local_datasource_impl.dart';
 import '../../features/onboarding/data/repositories/onboarding_repository_impl.dart';
@@ -478,6 +482,34 @@ final markMessageGroupSeenUseCaseProvider =
 final subscribeNewMessagesRealtimeUseCaseProvider =
     Provider<SubscribeNewMessagesRealtimeUseCase>((ref) {
       return SubscribeNewMessagesRealtimeUseCase(
+        ref.watch(messageGroupRealtimeServiceProvider),
+      );
+    });
+
+final subscribeTypingStatusRealtimeUseCaseProvider =
+    Provider<SubscribeTypingStatusRealtimeUseCase>((ref) {
+      return SubscribeTypingStatusRealtimeUseCase(
+        ref.watch(messageGroupRealtimeServiceProvider),
+      );
+    });
+
+final subscribeUnreadMessageCountRealtimeUseCaseProvider =
+    Provider<SubscribeUnreadMessageCountRealtimeUseCase>((ref) {
+      return SubscribeUnreadMessageCountRealtimeUseCase(
+        ref.watch(messageGroupRealtimeServiceProvider),
+      );
+    });
+
+final subscribeMessageGroupSeenRealtimeUseCaseProvider =
+    Provider<SubscribeMessageGroupSeenRealtimeUseCase>((ref) {
+      return SubscribeMessageGroupSeenRealtimeUseCase(
+        ref.watch(messageGroupRealtimeServiceProvider),
+      );
+    });
+
+final sendTypingStatusRealtimeUseCaseProvider =
+    Provider<SendTypingStatusRealtimeUseCase>((ref) {
+      return SendTypingStatusRealtimeUseCase(
         ref.watch(messageGroupRealtimeServiceProvider),
       );
     });

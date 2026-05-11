@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,13 +21,14 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage>
     with WidgetsBindingObserver {
-  static const int _unreadMessageCount = 2;
   static const int _profilePageIndex = 0;
   static const int _homePageIndex = 1;
   static const int _messagePageIndex = 2;
 
   late final PageController _horizontalController;
   AppLifecycleState? _lastLifecycleState;
+  final Map<String, int> _unreadByGroupId = <String, int>{};
+  void Function()? _unsubscribeUnreadMessageCount;
 
   @override
   void initState() {
@@ -45,11 +48,15 @@ class _HomePageState extends ConsumerState<HomePage>
 
       ref.read(homeCheckinNotifierProvider.notifier).load();
       ref.read(feedProvider.notifier).load();
+      unawaited(_seedUnreadMessageCount());
+      unawaited(_subscribeUnreadMessageCount());
     });
   }
 
   @override
   void dispose() {
+    _unsubscribeUnreadMessageCount?.call();
+    _unsubscribeUnreadMessageCount = null;
     WidgetsBinding.instance.removeObserver(this);
     _horizontalController.dispose();
     super.dispose();
@@ -61,11 +68,15 @@ class _HomePageState extends ConsumerState<HomePage>
         state == AppLifecycleState.resumed &&
         mounted) {
       ref.read(homeCheckinNotifierProvider.notifier).load(forceRefresh: true);
+      unawaited(_seedUnreadMessageCount());
     }
     _lastLifecycleState = state;
   }
 
   Future<void> _animateToPage(int page) {
+    if (page == _homePageIndex) {
+      unawaited(_seedUnreadMessageCount());
+    }
     return _horizontalController.animateToPage(
       page,
       duration: const Duration(milliseconds: 280),
@@ -73,10 +84,59 @@ class _HomePageState extends ConsumerState<HomePage>
     );
   }
 
+  Future<void> _seedUnreadMessageCount() async {
+    final result = await ref
+        .read(getMessageGroupsUseCaseProvider)
+        .call(limit: 100);
+    if (!mounted) {
+      return;
+    }
+    result.fold(
+      (failure) {
+        ref.read(appMessageProvider.notifier).addWarning(
+          'Khong the tai so tin nhan chua doc: ${failure.message}',
+        );
+      },
+      (page) {
+        final next = <String, int>{};
+        for (final group in page.items) {
+          next[group.groupId] = group.unreadCount;
+        }
+        setState(() {
+          _unreadByGroupId
+            ..clear()
+            ..addAll(next);
+        });
+      },
+    );
+  }
+
+  Future<void> _subscribeUnreadMessageCount() async {
+    await ref
+        .read(subscribeUnreadMessageCountRealtimeUseCaseProvider)
+        .call(
+          onUnreadCount: (groupId, unreadCount) {
+            if (!mounted) {
+              return;
+            }
+            setState(() {
+              _unreadByGroupId[groupId] = unreadCount;
+            });
+          },
+        );
+    _unsubscribeUnreadMessageCount = ref
+        .read(subscribeUnreadMessageCountRealtimeUseCaseProvider)
+        .unsubscribe();
+  }
+
   @override
   Widget build(BuildContext context) {
     final checkinState = ref.watch(homeCheckinNotifierProvider);
     final streakDays = checkinState.streakDays;
+    final unreadMessageCount = _unreadByGroupId.values.fold<int>(
+      0,
+      (sum, item) => sum + item,
+    );
 
     return PageView(
       controller: _horizontalController,
@@ -91,7 +151,7 @@ class _HomePageState extends ConsumerState<HomePage>
             onOpenProfile: () => _animateToPage(_profilePageIndex),
             onOpenMessages: () => _animateToPage(_messagePageIndex),
             streakDays: streakDays,
-            unreadMessages: _unreadMessageCount,
+            unreadMessages: unreadMessageCount,
           ),
         ),
         HomeKeepAlivePage(
