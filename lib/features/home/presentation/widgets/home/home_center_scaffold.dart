@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/constants/app_images.dart';
 import '../../../../../core/providers/providers.dart';
 import 'home_app_bar_content.dart';
 import 'home_body.dart';
@@ -43,7 +44,16 @@ class HomeCenterScaffold extends ConsumerWidget {
           onOpenMessages: onOpenMessages,
         ),
       ),
-      body: const SafeArea(child: HomeBody()),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            AppImages.homeBackground,
+            fit: BoxFit.cover,
+          ),
+          const SafeArea(child: HomeBody()),
+        ],
+      ),
     );
   }
 }

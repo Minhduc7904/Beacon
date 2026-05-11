@@ -38,6 +38,12 @@ class _CountdownBubbleState extends State<CountdownBubble>
     }
   }
 
+  @override
+  void reassemble() {
+    super.reassemble();
+    _configurePulse(widget.state.phase);
+  }
+
   void _configurePulse(HomeCheckinPhase phase) {
     final config = _resolvePulseConfig(phase);
     _pulseConfig = config;
@@ -107,6 +113,7 @@ class _CountdownBubbleState extends State<CountdownBubble>
   Widget build(BuildContext context) {
     final palette = _resolvePalette(context, widget.state.phase);
     final size = widget.size ?? 280.0;
+    final auraOutset = (size * 0.18).clamp(36.0, 64.0).toDouble();
 
     return AnimatedBuilder(
       animation: _controller,
@@ -116,34 +123,71 @@ class _CountdownBubbleState extends State<CountdownBubble>
         final glowBlur = _pulseConfig.glowBlur(pulseIntensity);
         final glowSpread = _pulseConfig.glowSpread(pulseIntensity);
         final innerGlowBlur = (glowBlur * 0.6).clamp(12.0, 28.0).toDouble();
+        final auraProgress = _pulseConfig.shouldPulse ? _controller.value : 0.0;
+        final auraOpacity = _pulseConfig.auraOpacity(pulseIntensity);
 
-        return Transform.scale(
-          scale: scale,
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                center: Alignment.topLeft,
-                radius: 0.9,
-                colors: [palette.highlight, palette.base],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: palette.innerGlow.withValues(alpha: 0.55),
-                  blurRadius: innerGlowBlur,
-                  spreadRadius: -4,
-                  blurStyle: ui.BlurStyle.inner,
+        return RepaintBoundary(
+          child: SizedBox.square(
+            dimension: size + auraOutset * 2,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _BubbleAuraPainter(
+                      palette: palette,
+                      progress: auraProgress,
+                      intensity: pulseIntensity,
+                      opacity: auraOpacity,
+                    ),
+                  ),
                 ),
-                BoxShadow(
-                  color: palette.glow.withValues(alpha: 0.45),
-                  blurRadius: glowBlur,
-                  spreadRadius: glowSpread,
+                Transform.scale(
+                  scale: scale,
+                  child: Container(
+                    width: size,
+                    height: size,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        center: Alignment.topLeft,
+                        radius: 0.95,
+                        colors: [
+                          palette.sheen,
+                          palette.highlight,
+                          palette.base,
+                        ],
+                        stops: const [0, 0.42, 1],
+                      ),
+                      border: Border.all(
+                        color: palette.sheen.withValues(alpha: 0.58),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: palette.innerGlow.withValues(alpha: 0.58),
+                          blurRadius: innerGlowBlur,
+                          spreadRadius: -4,
+                          blurStyle: ui.BlurStyle.inner,
+                        ),
+                        BoxShadow(
+                          color: palette.glow.withValues(alpha: 0.22),
+                          blurRadius: glowBlur * 0.55,
+                          spreadRadius: glowSpread * 0.35,
+                        ),
+                        BoxShadow(
+                          color: palette.glow.withValues(
+                            alpha: 0.2 + auraOpacity * 0.34,
+                          ),
+                          blurRadius: glowBlur,
+                          spreadRadius: glowSpread,
+                        ),
+                      ],
+                    ),
+                    child: child,
+                  ),
                 ),
               ],
             ),
-            child: child,
           ),
         );
       },
@@ -166,6 +210,8 @@ class _CountdownBubbleState extends State<CountdownBubble>
           maxGlow: 30,
           minSpread: 2,
           maxSpread: 8,
+          minAuraAlpha: 0.14,
+          maxAuraAlpha: 0.32,
         );
       case HomeCheckinPhase.grace:
         return const _PulseConfig(
@@ -176,6 +222,8 @@ class _CountdownBubbleState extends State<CountdownBubble>
           maxGlow: 38,
           minSpread: 4,
           maxSpread: 12,
+          minAuraAlpha: 0.18,
+          maxAuraAlpha: 0.42,
         );
       case HomeCheckinPhase.emergency:
         return const _PulseConfig(
@@ -186,6 +234,8 @@ class _CountdownBubbleState extends State<CountdownBubble>
           maxGlow: 48,
           minSpread: 8,
           maxSpread: 16,
+          minAuraAlpha: 0.24,
+          maxAuraAlpha: 0.56,
         );
       case HomeCheckinPhase.checkedIn:
         return const _PulseConfig(
@@ -196,6 +246,8 @@ class _CountdownBubbleState extends State<CountdownBubble>
           maxGlow: 22,
           minSpread: 2,
           maxSpread: 6,
+          minAuraAlpha: 0.1,
+          maxAuraAlpha: 0.24,
         );
       case HomeCheckinPhase.monitoringOff:
         return const _PulseConfig(
@@ -206,6 +258,8 @@ class _CountdownBubbleState extends State<CountdownBubble>
           maxGlow: 18,
           minSpread: 1,
           maxSpread: 5,
+          minAuraAlpha: 0.08,
+          maxAuraAlpha: 0.18,
         );
       case HomeCheckinPhase.unknown:
         return const _PulseConfig(
@@ -216,6 +270,8 @@ class _CountdownBubbleState extends State<CountdownBubble>
           maxGlow: 16,
           minSpread: 1,
           maxSpread: 4,
+          minAuraAlpha: 0.07,
+          maxAuraAlpha: 0.16,
         );
     }
   }
@@ -229,6 +285,7 @@ class _CountdownBubbleState extends State<CountdownBubble>
         return _BubblePalette(
           base: base,
           highlight: _mix(colorScheme.surface, base, 0.35),
+          sheen: _mix(colorScheme.surface, base, 0.18),
           innerGlow: _mix(colorScheme.surface, base, 0.6),
           glow: colorScheme.primary,
         );
@@ -237,6 +294,7 @@ class _CountdownBubbleState extends State<CountdownBubble>
         return _BubblePalette(
           base: base,
           highlight: _mix(colorScheme.surface, base, 0.35),
+          sheen: _mix(colorScheme.surface, base, 0.16),
           innerGlow: _mix(colorScheme.surface, base, 0.6),
           glow: colorScheme.secondary,
         );
@@ -245,6 +303,7 @@ class _CountdownBubbleState extends State<CountdownBubble>
         return _BubblePalette(
           base: base,
           highlight: _mix(colorScheme.surface, base, 0.35),
+          sheen: _mix(colorScheme.surface, base, 0.18),
           innerGlow: _mix(colorScheme.surface, base, 0.65),
           glow: colorScheme.error,
         );
@@ -253,6 +312,7 @@ class _CountdownBubbleState extends State<CountdownBubble>
         return _BubblePalette(
           base: base,
           highlight: _mix(colorScheme.surface, base, 0.5),
+          sheen: _mix(colorScheme.surface, AppColors.success, 0.12),
           innerGlow: _mix(colorScheme.surface, base, 0.7),
           glow: AppColors.success,
         );
@@ -261,6 +321,7 @@ class _CountdownBubbleState extends State<CountdownBubble>
         return _BubblePalette(
           base: base,
           highlight: _mix(colorScheme.surface, base, 0.2),
+          sheen: colorScheme.surface,
           innerGlow: colorScheme.outline.withValues(alpha: 0.45),
           glow: colorScheme.outline,
         );
@@ -269,6 +330,7 @@ class _CountdownBubbleState extends State<CountdownBubble>
         return _BubblePalette(
           base: base,
           highlight: _mix(colorScheme.surface, base, 0.2),
+          sheen: colorScheme.surface,
           innerGlow: colorScheme.outline.withValues(alpha: 0.35),
           glow: colorScheme.outline,
         );
@@ -390,15 +452,78 @@ class _BubbleTextContent {
 class _BubblePalette {
   final Color base;
   final Color highlight;
+  final Color sheen;
   final Color glow;
   final Color innerGlow;
 
   const _BubblePalette({
     required this.base,
     required this.highlight,
+    required this.sheen,
     required this.glow,
     required this.innerGlow,
   });
+}
+
+class _BubbleAuraPainter extends CustomPainter {
+  const _BubbleAuraPainter({
+    required this.palette,
+    required this.progress,
+    required this.intensity,
+    required this.opacity,
+  });
+
+  final _BubblePalette palette;
+  final double progress;
+  final double intensity;
+  final double opacity;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final bubbleRadius = size.shortestSide / 2.72;
+    final maxRadius = size.shortestSide / 2;
+    final haloRadius = ui.lerpDouble(
+      bubbleRadius * 1.02,
+      bubbleRadius * 1.1,
+      intensity,
+    )!;
+
+    final haloPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          palette.glow.withValues(alpha: opacity * 0.34),
+          palette.glow.withValues(alpha: opacity * 0.12),
+          palette.glow.withValues(alpha: 0),
+        ],
+        stops: const [0.58, 0.78, 1],
+      ).createShader(Rect.fromCircle(center: center, radius: haloRadius * 1.32))
+      ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 18);
+    canvas.drawCircle(center, haloRadius * 1.25, haloPaint);
+
+    for (final wave in const [0.0, 0.42]) {
+      final waveProgress = (progress + wave) % 1.0;
+      final eased = Curves.easeOutCubic.transform(waveProgress);
+      final radius = ui.lerpDouble(bubbleRadius * 0.94, maxRadius, eased)!;
+      final fade = (1 - eased).clamp(0.0, 1.0);
+      final strokeWidth = ui.lerpDouble(8, 1.4, eased)!;
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..color = palette.glow.withValues(alpha: opacity * fade * 0.72)
+        ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 6);
+
+      canvas.drawCircle(center, radius, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BubbleAuraPainter oldDelegate) {
+    return oldDelegate.palette != palette ||
+        oldDelegate.progress != progress ||
+        oldDelegate.intensity != intensity ||
+        oldDelegate.opacity != opacity;
+  }
 }
 
 class _PulseConfig {
@@ -409,6 +534,8 @@ class _PulseConfig {
   final double maxGlow;
   final double minSpread;
   final double maxSpread;
+  final double? minAuraAlpha;
+  final double? maxAuraAlpha;
 
   const _PulseConfig({
     required this.duration,
@@ -418,6 +545,8 @@ class _PulseConfig {
     required this.maxGlow,
     required this.minSpread,
     required this.maxSpread,
+    required this.minAuraAlpha,
+    required this.maxAuraAlpha,
   });
 
   const _PulseConfig.disabled()
@@ -427,7 +556,9 @@ class _PulseConfig {
       minGlow = 0,
       maxGlow = 0,
       minSpread = 0,
-      maxSpread = 0;
+      maxSpread = 0,
+      minAuraAlpha = 0,
+      maxAuraAlpha = 0;
 
   bool get shouldPulse => duration != Duration.zero;
 
@@ -435,6 +566,12 @@ class _PulseConfig {
 
   double glowSpread(double t) =>
       ui.lerpDouble(minSpread, maxSpread, t) ?? minSpread;
+
+  double auraOpacity(double t) {
+    final minAlpha = minAuraAlpha ?? 0;
+    final maxAlpha = maxAuraAlpha ?? minAlpha;
+    return ui.lerpDouble(minAlpha, maxAlpha, t) ?? minAlpha;
+  }
 
   double intensityForScale(double scale) {
     final range = (maxScale - minScale).abs();
