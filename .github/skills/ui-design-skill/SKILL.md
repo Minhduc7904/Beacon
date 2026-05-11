@@ -56,6 +56,21 @@ description: "Use when: creating or updating Flutter UI while enforcing Beacon t
 - Khi text có thể dài, thêm `maxLines`, `overflow`, và kiểm tra không vỡ layout trên mobile nhỏ.
 - Nếu cần override màu, dùng `color` của `AppText` hoặc `copyWith(color: ...)`; tránh override `fontWeight/style` nếu không có chỉ định thiết kế.
 
+#### Text color roles
+
+- Heading/page title: dùng `AppColors.ink600` hoặc `colorScheme.onSurface` với weight mạnh.
+- Section title/item title/body chính: dùng `AppColors.ink500` hoặc `colorScheme.onSurface`.
+- Subtitle/description/helper/timestamp: dùng `AppColors.ink100` hoặc `colorScheme.onSurface.withValues(alpha: 0.55-0.72)`.
+- Disabled/placeholder-like text: dùng `AppColors.sky600` hoặc token disabled từ component theme.
+- Text trên nền tối/primary/accent: dùng `AppColors.sky100`, `colorScheme.onPrimary`, hoặc `colorScheme.onSecondary`.
+- Link/action text: dùng `AppColors.teal500` hoặc `colorScheme.primary`.
+- Accent/fun highlight text: dùng `AppColors.coral500` hoặc `colorScheme.secondary`, dùng tiết chế.
+- Error text: dùng `AppColors.red500` hoặc `colorScheme.error`.
+- Success text: dùng `AppColors.success`, chỉ cho trạng thái thành công.
+- Warning text nhỏ nên tránh vàng quá sáng; ưu tiên `AppColors.coral500` nếu cần tương phản tốt hơn `AppColors.amber400`.
+- Nếu text đang nằm trên surface/card thông thường, ưu tiên `colorScheme.onSurface` và alpha thay vì gọi sắc độ ngẫu nhiên.
+- Không dùng `AppColors.ink300/ink400` cho text mới nếu không có lý do thiết kế rõ; chúng thường khó đọc hoặc tạo hierarchy lửng giữa body và muted.
+
 ### 3) Dùng icon system thống nhất
 
 - UI mới hoặc phần icon đang chạm tới dùng `AppIcon(AppIcons.xxx)` thay vì import trực tiếp `PhosphorIcons`, thêm mới `Icons.*`, hoặc hardcode path SVG.
@@ -104,6 +119,7 @@ description: "Use when: creating or updating Flutter UI while enforcing Beacon t
 12. Không hardcode route/endpoint/storage key trong UI.
 13. Chạy `flutter analyze` và verify tay flow liên quan khi môi trường cho phép.
 14. Page body được bọc bởi `AppScreenLayout` nếu không thuộc ngoại lệ full-bleed/media/dev/demo.
+15. Text color có role rõ: heading/body/muted/action/error/success, không chọn sắc độ chỉ vì giống Figma từng điểm.
 
 ## Done khi
 

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart' as m;
 
-import '../../theme/color/app_colors.dart';
-
 class AppDropdownItem<T> {
   const AppDropdownItem({
     required this.value,
@@ -44,12 +42,14 @@ class AppDropdown<T> extends m.StatelessWidget {
   m.Widget build(m.BuildContext context) {
     final theme = m.Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final enabledBorderColor = AppColors.outline;
+    final enabledBorderColor = colorScheme.outline;
     final focusedBorderColor = colorScheme.primary;
-    final disabledFillColor = AppColors.sky300;
-    final fillColor = enabled ? AppColors.surface : disabledFillColor;
-    final effectiveTextColor = enabled ? AppColors.onSurface : AppColors.ink100;
-    final effectiveHintColor = AppColors.sky600;
+    final disabledFillColor = colorScheme.outline.withValues(alpha: 0.16);
+    final fillColor = enabled ? colorScheme.surface : disabledFillColor;
+    final effectiveTextColor = enabled
+        ? colorScheme.onSurface
+        : colorScheme.onSurface.withValues(alpha: 0.48);
+    final effectiveHintColor = colorScheme.onSurface.withValues(alpha: 0.55);
 
     return m.DropdownButtonFormField<T>(
       initialValue: value,
@@ -57,9 +57,11 @@ class AppDropdown<T> extends m.StatelessWidget {
       isExpanded: isExpanded,
       icon: m.Icon(
         m.Icons.keyboard_arrow_down_rounded,
-        color: enabled ? AppColors.ink300 : AppColors.ink100,
+        color: enabled
+            ? colorScheme.onSurface.withValues(alpha: 0.72)
+            : colorScheme.onSurface.withValues(alpha: 0.48),
       ),
-      dropdownColor: AppColors.surface,
+      dropdownColor: colorScheme.surface,
       borderRadius: m.BorderRadius.circular(12),
       onChanged: enabled ? onChanged : null,
       decoration: m.InputDecoration(

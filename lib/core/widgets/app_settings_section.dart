@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme/color/app_colors.dart';
 import '../theme/text/app_text_theme.dart';
 
 class AppSettingsSection extends StatelessWidget {
@@ -46,7 +45,7 @@ class AppSettingsSection extends StatelessWidget {
           Text(
             title,
             style: resolvedTitleStyle.copyWith(
-              color: titleColor ?? AppColors.ink500,
+              color: titleColor ?? Theme.of(context).colorScheme.onSurface,
             ),
           ),
           SizedBox(height: titleToChildrenGap),

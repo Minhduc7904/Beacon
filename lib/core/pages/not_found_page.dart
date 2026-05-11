@@ -35,9 +35,11 @@ class NotFoundPage extends StatelessWidget {
                   Text(
                     'Đường dẫn bạn truy cập không hợp lệ hoặc đã bị xoá.',
                     textAlign: TextAlign.center,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton.icon(

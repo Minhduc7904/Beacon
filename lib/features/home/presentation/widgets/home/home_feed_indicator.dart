@@ -53,7 +53,7 @@ class _HomeFeedIndicatorState extends State<HomeFeedIndicator>
               size: AppTextSize.large,
               spacing: AppTextSpacing.normal,
               weight: AppTextWeight.medium,
-              color: AppColors.ink400,
+              color: AppColors.ink500,
             ),
             const SizedBox(width: 4),
             AnimatedBuilder(
@@ -67,7 +67,7 @@ class _HomeFeedIndicatorState extends State<HomeFeedIndicator>
               child: const Icon(
                 Icons.keyboard_arrow_down_rounded,
                 size: 24,
-                color: AppColors.ink400,
+                color: AppColors.ink500,
               ),
             ),
           ],
