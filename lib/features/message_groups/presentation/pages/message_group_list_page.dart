@@ -127,7 +127,7 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
           onPressed: widget.onBackToHome ?? () => context.pop(),
         ),
         title: AppText(
-          'Tin nhan',
+          'Tin nhắn',
           size: AppTextSize.large,
           spacing: AppTextSpacing.tight,
           weight: AppTextWeight.bold,
@@ -149,7 +149,7 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
       case MessageGroupListStatus.error:
         return Center(
           child: AppText(
-            state.errorMessage ?? 'Da xay ra loi',
+            state.errorMessage ?? 'Đã xảy ra lỗi',
             size: AppTextSize.small,
             spacing: AppTextSpacing.normal,
             weight: AppTextWeight.regular,
@@ -200,7 +200,7 @@ class _MessageGroupListHeader extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
       child: Row(
         children: [
           Expanded(
@@ -208,7 +208,7 @@ class _MessageGroupListHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AppText(
-                  'Hoi thoai',
+                  'Hội thoại',
                   size: AppTextSize.large,
                   spacing: AppTextSpacing.tight,
                   weight: AppTextWeight.bold,
@@ -216,7 +216,7 @@ class _MessageGroupListHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 AppText(
-                  '$count cuoc tro chuyen',
+                  '$count cuộc trò chuyện',
                   size: AppTextSize.small,
                   spacing: AppTextSpacing.tight,
                   weight: AppTextWeight.regular,
