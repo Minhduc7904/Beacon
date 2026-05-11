@@ -31,7 +31,7 @@ class MessageGroupEmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             AppText(
-              'Chua co tin nhan',
+              'Chưa có tin nhắn nào',
               size: AppTextSize.large,
               spacing: AppTextSpacing.tight,
               weight: AppTextWeight.bold,
@@ -40,7 +40,7 @@ class MessageGroupEmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             AppText(
-              'Khi ban bat dau tro chuyen,\ntin nhan se xuat hien o day.',
+              'Khi bạn bắt đầu trò chuyện,\ntin nhắn sẽ xuất hiện ở đây.',
               size: AppTextSize.small,
               spacing: AppTextSpacing.normal,
               weight: AppTextWeight.regular,

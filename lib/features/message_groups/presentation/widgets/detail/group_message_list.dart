@@ -52,7 +52,7 @@ class GroupMessageList extends StatelessWidget {
     if (messages.isEmpty) {
       return Center(
         child: AppText(
-          'Chua co tin nhan nao.\nHay bat dau cuoc tro chuyen!',
+          'Chưa có tin nhắn nào.\nHãy bắt đầu cuộc trò chuyện!',
           size: AppTextSize.small,
           spacing: AppTextSpacing.normal,
           weight: AppTextWeight.regular,
@@ -76,10 +76,11 @@ class GroupMessageList extends StatelessWidget {
 
     return ListView.builder(
       controller: scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      reverse: true,
+      padding: const EdgeInsets.symmetric(vertical: 12),
       itemCount: items.length,
       itemBuilder: (context, index) {
-        final item = items[index];
+        final item = items[items.length - 1 - index];
         if (item.isHeader) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),

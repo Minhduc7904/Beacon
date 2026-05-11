@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -71,7 +72,7 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
       ref
           .read(groupChatDetailProvider(widget.group.groupId).notifier)
           .load()
-          .then((_) => _scrollToBottom());
+          .then((_) => _scrollToBottom(animated: false));
     });
   }
 
@@ -81,17 +82,30 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
     super.dispose();
   }
 
-  void _scrollToBottom() {
-    if (!_scrollController.hasClients) return;
-
+  void _scrollToBottom({bool animated = true}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
+      if (!mounted || !_scrollController.hasClients) {
+        return;
+      }
+
+      final targetOffset = _scrollController.position.minScrollExtent;
+      if (animated) {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
+          targetOffset,
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut,
         );
+      } else {
+        _scrollController.jumpTo(targetOffset);
       }
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_scrollController.hasClients) {
+          return;
+        }
+
+        _scrollController.jumpTo(_scrollController.position.minScrollExtent);
+      });
     });
   }
 
@@ -135,8 +149,6 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
       }
     });
 
-    final typingText = _typingText(state);
-
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -167,13 +179,11 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   AppText(
-                    typingText,
+                    'Đang hoạt động',
                     size: AppTextSize.veryTiny,
                     spacing: AppTextSpacing.tight,
                     weight: AppTextWeight.regular,
-                    color: typingText == 'Dang nhap...'
-                        ? colorScheme.primary
-                        : colorScheme.onSurface.withValues(alpha: 0.6),
+                    color: colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ],
               ),
@@ -181,43 +191,35 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
           ],
         ),
       ),
-      body: SafeArea(
-        child: AppScreenLayout(
-          child: Column(
-            children: [
-              Expanded(
+      body: Column(
+        children: [
+          Expanded(
+            child: SafeArea(
+              bottom: false,
+              child: AppScreenLayout(
                 child: _buildMessages(state, colorScheme, currentUserId),
               ),
-              GroupMessageInputBar(
-                isSending: state.isSending,
-                onTypingChanged: (isTyping) {
-                  unawaited(
-                    ref
-                        .read(
-                          groupChatDetailProvider(
-                            widget.group.groupId,
-                          ).notifier,
-                        )
-                        .sendTypingStatus(isTyping),
-                  );
-                },
-                onSend: (text) {
-                  ref
-                      .read(
-                        groupChatDetailProvider(widget.group.groupId).notifier,
-                      )
-                      .sendMessage(text);
-                },
-              ),
-            ],
+            ),
           ),
-        ),
+          _TypingStatusBar(isTyping: state.typingUserIds.isNotEmpty),
+          GroupMessageInputBar(
+            isSending: state.isSending,
+            onTypingChanged: (isTyping) {
+              unawaited(
+                ref
+                    .read(groupChatDetailProvider(widget.group.groupId).notifier)
+                    .sendTypingStatus(isTyping),
+              );
+            },
+            onSend: (text) {
+              ref
+                  .read(groupChatDetailProvider(widget.group.groupId).notifier)
+                  .sendMessage(text);
+            },
+          ),
+        ],
       ),
     );
-  }
-
-  String _typingText(GroupChatDetailState state) {
-    return state.typingUserIds.isNotEmpty ? 'Dang nhap...' : 'Dang hoat dong';
   }
 
   Widget _buildMessages(
@@ -232,7 +234,7 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
       case GroupChatDetailStatus.error:
         return Center(
           child: AppText(
-            state.errorMessage ?? 'Da xay ra loi',
+            state.errorMessage ?? 'Đã xảy ra lỗi',
             size: AppTextSize.small,
             spacing: AppTextSpacing.normal,
             weight: AppTextWeight.regular,
@@ -247,5 +249,60 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
           currentUserId: currentUserId,
         );
     }
+  }
+}
+
+class _TypingStatusBar extends StatelessWidget {
+  const _TypingStatusBar({required this.isTyping});
+
+  final bool isTyping;
+
+  double _contentWidthForColumns(int columns) {
+    return (AppScreenLayout.columnWidth * columns) +
+        (AppScreenLayout.gutter * (columns - 1));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isTyping) {
+      return const SizedBox.shrink();
+    }
+
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
+        final isTablet = maxWidth >= AppScreenLayout.tabletBreakpoint;
+        final columnCount = isTablet
+            ? AppScreenLayout.tabletColumnCount
+            : AppScreenLayout.mobileColumnCount;
+        final designWidth = _contentWidthForColumns(columnCount);
+        final safeWidth = math.max(
+          0.0,
+          maxWidth - AppScreenLayout.minHorizontalSafeInset * 2,
+        );
+        final layoutWidth = math.min(designWidth, safeWidth);
+
+        return Align(
+          alignment: Alignment.center,
+          child: SizedBox(
+            width: layoutWidth,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: AppText(
+                'Đang nhập...',
+                size: AppTextSize.tiny,
+                spacing: AppTextSpacing.tight,
+                weight: AppTextWeight.regular,
+                color: colorScheme.primary,
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
