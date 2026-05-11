@@ -15,6 +15,7 @@ class MessageGroupModel extends MessageGroup {
     required super.unreadCount,
     required super.displayName,
     required super.displayAvatarUrl,
+    required super.peerUserId,
   });
 
   factory MessageGroupModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +36,7 @@ class MessageGroupModel extends MessageGroup {
       unreadCount: _toInt(json['unreadCount']),
       displayName: json['displayName']?.toString(),
       displayAvatarUrl: json['displayAvatarUrl']?.toString(),
+      peerUserId: json['peerUserId']?.toString(),
     );
   }
 

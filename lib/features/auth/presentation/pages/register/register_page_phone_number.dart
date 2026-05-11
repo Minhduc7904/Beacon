@@ -57,8 +57,7 @@ class _RegisterPagePhoneNumberState
           _isLoading = false;
         });
       },
-      (e164Phone) {
-
+      (rawPhone) {
         setState(() {
           _isLoading = false;
         });
@@ -66,7 +65,7 @@ class _RegisterPagePhoneNumberState
         FocusScope.of(context).unfocus();
         context.pushNamed(
           AppRoutes.registerPasswordName,
-          extra: widget.draft.copyWith(phoneNumber: e164Phone),
+          extra: widget.draft.copyWith(phoneNumber: rawPhone),
         );
       },
     );

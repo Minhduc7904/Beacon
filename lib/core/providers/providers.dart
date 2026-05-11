@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/auth/data/datasources/auth_local_datasource.dart';
@@ -14,9 +18,11 @@ import '../../features/auth/domain/usecase/logout_usecase.dart';
 import '../../features/auth/domain/usecase/register_usecase.dart';
 import '../../features/auth/domain/usecase/check_email_availability_usecase.dart';
 import '../../features/auth/domain/usecase/check_phone_availability_usecase.dart';
+import '../../features/auth/domain/usecase/delete_fcm_token_usecase.dart';
 import '../../features/auth/domain/usecase/get_me_usecase.dart';
 import '../../features/auth/domain/usecase/update_me_usecase.dart';
 import '../../features/auth/domain/usecase/update_my_avatar_usecase.dart';
+import '../../features/auth/domain/usecase/update_fcm_token_usecase.dart';
 import '../../features/auth/domain/entities/user_profile.dart';
 import '../../features/auth/presentation/controllers/auth_notifier.dart';
 import '../../features/auth/presentation/controllers/auth_state.dart';
@@ -103,6 +109,7 @@ import '../observers/app_provider_observer.dart';
 import '../messages/app_message.dart';
 import '../messages/app_message_notifier.dart';
 import '../network/dio_client.dart';
+import '../notifications/push_notification_service.dart';
 import '../network/network_info.dart';
 import '../preferences/app_preferences.dart';
 import '../preferences/app_preferences_impl.dart';
@@ -143,6 +150,17 @@ final appPreferencesProvider = Provider<AppPreferences>((ref) {
 final isDarkModeProvider = FutureProvider<bool>((ref) async {
   return ref.watch(appPreferencesProvider).isDarkMode();
 });
+
+// ─── Push Notifications ─────────────────────────────────────────────────────
+
+final firebaseMessagingProvider = Provider<FirebaseMessaging>((ref) {
+  return FirebaseMessaging.instance;
+});
+
+final flutterLocalNotificationsProvider =
+    Provider<FlutterLocalNotificationsPlugin>((ref) {
+      return FlutterLocalNotificationsPlugin();
+    });
 
 // ─── Network ──────────────────────────────────────────────────────────────────
 
@@ -334,6 +352,29 @@ final updateMyAvatarUseCaseProvider = Provider<UpdateMyAvatarUseCase>((ref) {
   return UpdateMyAvatarUseCase(ref.watch(authRepositoryProvider));
 });
 
+final updateFcmTokenUseCaseProvider = Provider<UpdateFcmTokenUseCase>((ref) {
+  return UpdateFcmTokenUseCase(ref.watch(authRepositoryProvider));
+});
+
+final deleteFcmTokenUseCaseProvider = Provider<DeleteFcmTokenUseCase>((ref) {
+  return DeleteFcmTokenUseCase(ref.watch(authRepositoryProvider));
+});
+
+final pushNotificationServiceProvider = Provider<PushNotificationService>((
+  ref,
+) {
+  final service = PushNotificationService(
+    messaging: ref.watch(firebaseMessagingProvider),
+    localNotifications: ref.watch(flutterLocalNotificationsProvider),
+    updateFcmTokenUseCase: ref.watch(updateFcmTokenUseCaseProvider),
+    deleteFcmTokenUseCase: ref.watch(deleteFcmTokenUseCaseProvider),
+  );
+  ref.onDispose(() {
+    unawaited(service.dispose());
+  });
+  return service;
+});
+
 final shouldShowOnboardingUseCaseProvider =
     Provider<ShouldShowOnboardingUseCase>((ref) {
       return ShouldShowOnboardingUseCase(
@@ -426,10 +467,11 @@ final getFriendsUseCaseProvider = Provider<GetFriendsUseCase>((ref) {
   return GetFriendsUseCase(ref.watch(friendsRepositoryProvider));
 });
 
-final getFriendsPresenceUseCaseProvider =
-    Provider<GetFriendsPresenceUseCase>((ref) {
-      return GetFriendsPresenceUseCase(ref.watch(friendsRepositoryProvider));
-    });
+final getFriendsPresenceUseCaseProvider = Provider<GetFriendsPresenceUseCase>((
+  ref,
+) {
+  return GetFriendsPresenceUseCase(ref.watch(friendsRepositoryProvider));
+});
 
 final searchFriendsUseCaseProvider = Provider<SearchFriendsUseCase>((ref) {
   return SearchFriendsUseCase(ref.watch(friendsRepositoryProvider));
@@ -557,6 +599,7 @@ final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
     ref.watch(meProfileProvider.notifier),
     ref.watch(appMessageProvider.notifier),
     ref.watch(signalRServiceProvider),
+    ref.watch(pushNotificationServiceProvider),
   );
 });
 

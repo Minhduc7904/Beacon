@@ -54,8 +54,17 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
     await Future.delayed(const Duration(seconds: 2));
 
+    if (!mounted) {
+      return;
+    }
+
     if (isAuthenticated) {
       unawaited(_connectSignalR());
+      unawaited(
+        ref
+            .read(pushNotificationServiceProvider)
+            .syncCurrentDeviceTokenIfAuthorized(),
+      );
       context.go(AppRoutes.home);
       return;
     }

@@ -45,4 +45,13 @@ abstract class AuthRemoteDatasource {
 
   /// Cập nhật avatar người dùng bằng file ảnh.
   Future<UserProfileModel> updateMyAvatar({required String filePath});
+
+  /// Đăng ký hoặc cập nhật push token của thiết bị hiện tại.
+  Future<void> updateFcmToken({
+    required String token,
+    required String platform,
+  });
+
+  /// Thu hồi push token của thiết bị hiện tại.
+  Future<void> deleteFcmToken({required String token});
 }

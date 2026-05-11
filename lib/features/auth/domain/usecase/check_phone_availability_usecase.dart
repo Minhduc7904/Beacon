@@ -53,7 +53,7 @@ class CheckPhoneAvailabilityUseCase {
         return Left(ValidationFailure(message: mappedMessage));
       }
 
-      return Right(e164Phone);
+      return Right(phoneNumber);
     });
   }
 }

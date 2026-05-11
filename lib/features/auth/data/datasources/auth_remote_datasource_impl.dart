@@ -262,4 +262,25 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       );
     }
   }
+
+  @override
+  Future<void> updateFcmToken({
+    required String token,
+    required String platform,
+  }) async {
+    final response = await _dioClient.post(
+      ApiEndpoints.deviceTokens,
+      data: {'token': token, 'platform': platform},
+    );
+    ApiHandler.handle<void>(response);
+  }
+
+  @override
+  Future<void> deleteFcmToken({required String token}) async {
+    final response = await _dioClient.delete(
+      ApiEndpoints.deviceTokens,
+      data: {'token': token},
+    );
+    ApiHandler.handle<void>(response);
+  }
 }

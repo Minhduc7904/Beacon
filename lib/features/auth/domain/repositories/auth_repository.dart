@@ -38,4 +38,11 @@ abstract class AuthRepository {
   Future<Either<Failure, UserProfile>> updateMyAvatar({
     required String filePath,
   });
+
+  Future<Either<Failure, void>> updateFcmToken({
+    required String token,
+    required String platform,
+  });
+
+  Future<Either<Failure, void>> deleteFcmToken({required String token});
 }

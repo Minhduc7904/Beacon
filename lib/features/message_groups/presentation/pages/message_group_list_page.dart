@@ -24,9 +24,7 @@ final messageGroupListProvider =
     >((ref) {
       return MessageGroupListNotifier(
         ref.watch(getMessageGroupsUseCaseProvider),
-        ref.watch(getMessageGroupDetailUseCaseProvider),
         ref.watch(appMessageProvider.notifier),
-        ref.watch(meProfileProvider).valueOrNull?.id,
       );
     });
 
@@ -187,8 +185,7 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
             }
 
             final group = state.groups[index - 1];
-            final peerUserId = state.peerUserIdByGroupId[group.groupId];
-            final presence = presenceState.friendByUserId(peerUserId);
+            final presence = presenceState.friendByUserId(group.peerUserId);
             return MessageGroupTile(
               group: group,
               isOnline: group.isPrivate ? presence?.isOnline ?? false : null,

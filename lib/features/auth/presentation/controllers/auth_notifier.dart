@@ -8,6 +8,7 @@ import '../../domain/usecase/register_usecase.dart';
 import '../../domain/usecase/get_me_usecase.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/messages/app_message_notifier.dart';
+import '../../../../core/notifications/push_notification_service.dart';
 import '../../../../core/realtime/signalr_service.dart';
 import 'me_profile_notifier.dart';
 import 'auth_state.dart';
@@ -20,6 +21,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final MeProfileNotifier _meProfileNotifier;
   final AppMessageNotifier _messageNotifier;
   final SignalRService _signalRService;
+  final PushNotificationService _pushNotificationService;
 
   AuthNotifier(
     this._loginUseCase,
@@ -29,6 +31,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     this._meProfileNotifier,
     this._messageNotifier,
     this._signalRService,
+    this._pushNotificationService,
   ) : super(const AuthInitial());
 
   static const String _registerUsernameExistsMessage =
@@ -95,6 +98,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
             state = AuthSuccess(user, successMessage: successMessage);
 
             unawaited(_signalRService.connect());
+            unawaited(_pushNotificationService.registerCurrentDeviceToken());
           },
         );
       },
@@ -157,6 +161,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _meProfileNotifier.clearProfile();
 
     await _signalRService.disconnect();
+    await _pushNotificationService.deleteCurrentDeviceToken();
 
     final result = await _logoutUseCase();
     result.fold((failure) {

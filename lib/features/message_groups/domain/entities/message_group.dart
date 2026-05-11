@@ -12,6 +12,7 @@ class MessageGroup {
   final int unreadCount;
   final String? displayName;
   final String? displayAvatarUrl;
+  final String? peerUserId;
 
   const MessageGroup({
     required this.groupId,
@@ -27,6 +28,7 @@ class MessageGroup {
     required this.unreadCount,
     required this.displayName,
     required this.displayAvatarUrl,
+    required this.peerUserId,
   });
 
   String get lastMessageSenderFullName {

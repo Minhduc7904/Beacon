@@ -17,6 +17,7 @@ class ApiEndpoints {
   static const String me = '/auth/me';
   static const String userMe = '/users/me';
   static const String userMeAvatar = '/users/me/avatar';
+  static const String deviceTokens = '/device-tokens';
   static const String safetySettings = '/safety/settings';
 
   // Check-in
