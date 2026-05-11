@@ -126,6 +126,8 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final state = ref.watch(groupChatDetailProvider(widget.group.groupId));
     final currentUserId = ref.watch(meProfileProvider).valueOrNull?.id;
+    final resolvedAvatarUrl =
+        state.groupDetail?.displayAvatarUrl ?? widget.group.displayAvatarUrl;
 
     ref.listen(groupChatDetailProvider(widget.group.groupId), (prev, next) {
       if ((prev?.messages.length ?? 0) < next.messages.length) {
@@ -146,7 +148,7 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             UserAvatar(
-              avatarUrl: widget.group.displayAvatarUrl,
+              avatarUrl: resolvedAvatarUrl,
               givenName: _title(state),
               size: 34,
             ),
