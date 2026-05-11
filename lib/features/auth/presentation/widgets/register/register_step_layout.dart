@@ -124,7 +124,7 @@ class RegisterStepLayout extends StatelessWidget {
       return AppText(
         customInstruction,
         preset: AppTextPreset.bodySmall,
-        color: AppColors.ink400,
+        color: AppColors.ink100,
         textAlign: TextAlign.center,
       );
     }
@@ -256,7 +256,7 @@ class _RegisterAgreementText extends StatelessWidget {
             AppText(
               'Bằng cách nhấn Tiếp tục, bạn đồng ý với',
               preset: AppTextPreset.bodySmall,
-              color: AppColors.ink400,
+              color: AppColors.ink100,
               textAlign: TextAlign.center,
             ),
             const SizedBox(width: 4),
@@ -279,7 +279,7 @@ class _RegisterAgreementText extends StatelessWidget {
             AppText(
               'của chúng tôi',
               preset: AppTextPreset.bodySmall,
-              color: AppColors.ink400,
+              color: AppColors.ink100,
               textAlign: TextAlign.center,
             ),
           ],

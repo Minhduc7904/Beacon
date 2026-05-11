@@ -7,6 +7,7 @@ Checklist nhanh để tự review màn hình UI trước khi merge.
 - [ ] Màu semantic dùng qua `Theme.of(context).colorScheme`
 - [ ] Typography dùng qua `Theme.of(context).textTheme`
 - [ ] Không hardcode `Colors.*`, `fontSize`, `fontWeight`, `height` nếu đã có token
+- [ ] Màu chữ có role rõ: heading/body/muted/action/error/success
 
 ## 2) Shared components
 

@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../messages/app_message.dart';
+import '../../theme/color/app_colors.dart';
+import '../../theme/text/app_text_theme.dart';
+import '../text/text.dart';
 
 class MessageToast extends StatefulWidget {
   final AppMessage message;
@@ -91,17 +94,12 @@ class _MessageToastState extends State<MessageToast>
   }
 
   Widget _buildCard() {
+    final colorScheme = Theme.of(context).colorScheme;
     final (Color bgColor, IconData icon) = switch (widget.message.type) {
-      MessageType.success => (
-        Colors.green.shade700,
-        Icons.check_circle_outline,
-      ),
-      MessageType.error => (Colors.red.shade700, Icons.error_outline),
-      MessageType.warning => (
-        Colors.orange.shade700,
-        Icons.warning_amber_outlined,
-      ),
-      MessageType.info => (Colors.blue.shade700, Icons.info_outline),
+      MessageType.success => (AppColors.success, Icons.check_circle_outline),
+      MessageType.error => (AppColors.red500, Icons.error_outline),
+      MessageType.warning => (AppColors.coral500, Icons.warning_amber_outlined),
+      MessageType.info => (colorScheme.primary, Icons.info_outline),
     };
 
     return Container(
@@ -111,27 +109,34 @@ class _MessageToastState extends State<MessageToast>
         color: bgColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4)),
+          BoxShadow(
+            color: AppColors.shadow,
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
         ],
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white, size: 20),
+          Icon(icon, color: AppColors.sky100, size: 20),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
+            child: AppText(
               widget.message.message,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                height: 1.4,
-              ),
+              size: AppTextSize.small,
+              spacing: AppTextSpacing.normal,
+              weight: AppTextWeight.medium,
+              color: AppColors.sky100,
             ),
           ),
           const SizedBox(width: 8),
           GestureDetector(
             onTap: _startExit,
-            child: const Icon(Icons.close, color: Colors.white70, size: 18),
+            child: Icon(
+              Icons.close,
+              color: AppColors.sky100.withValues(alpha: 0.72),
+              size: 18,
+            ),
           ),
         ],
       ),

@@ -39,13 +39,13 @@ Font mặc định lấy từ `AppFonts.defaultFamily`.
 Hiện tại:
 
 ```dart
-AppFonts.defaultFamily = AppFonts.inter
+AppFonts.defaultFamily = AppFonts.chironGoRoundTc
 ```
 
-`AppFonts.resolveTextTheme(...)` dùng `GoogleFonts.getTextTheme(...)` để áp font family vào `TextTheme`.
+`AppFonts.resolveTextTheme(...)` dùng `TextTheme.apply(...)` để áp font family local vào `TextTheme`.
 
 Lưu ý:
-- `AppFonts.sfPro` hiện được fallback sang `Inter`.
+- `AppFonts.sfPro` hiện được fallback sang `Chiron GoRound TC`.
 - Nếu cần đổi font toàn app, truyền `fontFamily` vào `AppTheme.lightTheme(...)` / `AppTheme.darkTheme(...)` hoặc cập nhật `AppFonts.defaultFamily`.
 
 ---
