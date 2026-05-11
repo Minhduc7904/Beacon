@@ -5,6 +5,7 @@ import '../../../../core/network/api_handler.dart';
 import '../../../../core/network/dio_client.dart';
 import '../mappers/friends_error_code_mapper.dart';
 import '../models/friend_page_model.dart';
+import '../models/friend_presence_page_model.dart';
 import '../models/friend_profile_model.dart';
 import 'friends_remote_datasource.dart';
 
@@ -33,6 +34,41 @@ class FriendsRemoteDatasourceImpl implements FriendsRemoteDatasource {
         response,
         fromJsonT: (json) =>
             FriendPageModel.fromJson(json as Map<String, dynamic>),
+        codeMessageMapper: FriendsErrorCodeMapper.mapCode,
+      );
+
+      return result.data!;
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: FriendsErrorCodeMapper.mapCode,
+      );
+    }
+  }
+
+  @override
+  Future<FriendPresencePageModel> getFriendsPresence({
+    String? cursor,
+    int? limit,
+  }) async {
+    try {
+      final query = <String, dynamic>{};
+      if (cursor != null && cursor.trim().isNotEmpty) {
+        query['cursor'] = cursor.trim();
+      }
+      if (limit != null) {
+        query['limit'] = limit;
+      }
+
+      final response = await _dioClient.get(
+        ApiEndpoints.friendsPresence,
+        queryParameters: query.isEmpty ? null : query,
+      );
+
+      final result = ApiHandler.handle<FriendPresencePageModel>(
+        response,
+        fromJsonT: (json) =>
+            FriendPresencePageModel.fromJson(json as Map<String, dynamic>),
         codeMessageMapper: FriendsErrorCodeMapper.mapCode,
       );
 

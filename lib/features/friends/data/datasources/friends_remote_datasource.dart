@@ -1,8 +1,14 @@
 import '../models/friend_page_model.dart';
+import '../models/friend_presence_page_model.dart';
 import '../models/friend_profile_model.dart';
 
 abstract class FriendsRemoteDatasource {
   Future<FriendPageModel> getFriends({
+    String? cursor,
+    int? limit,
+  });
+
+  Future<FriendPresencePageModel> getFriendsPresence({
     String? cursor,
     int? limit,
   });

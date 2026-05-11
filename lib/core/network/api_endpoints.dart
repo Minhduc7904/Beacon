@@ -46,6 +46,7 @@ class ApiEndpoints {
 
   // Friends
   static const String friends = '/friends';
+  static const String friendsPresence = '/friends/presence';
   static const String friendsSearch = '/friends/search';
   static const String friendByUserIdTemplate = '/friends/{userId}';
   static const String friendTypeByUserIdTemplate = '/friends/{userId}/type';

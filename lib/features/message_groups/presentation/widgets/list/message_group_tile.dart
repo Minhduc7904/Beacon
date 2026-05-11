@@ -6,10 +6,16 @@ import '../../../../../core/widgets/text/text.dart';
 import '../../../domain/entities/message_group.dart';
 
 class MessageGroupTile extends StatelessWidget {
-  const MessageGroupTile({super.key, required this.group, required this.onTap});
+  const MessageGroupTile({
+    super.key,
+    required this.group,
+    required this.onTap,
+    this.isOnline,
+  });
 
   final MessageGroup group;
   final VoidCallback onTap;
+  final bool? isOnline;
 
   String _formatTime(DateTime dateTime) {
     final now = DateTime.now();
@@ -40,10 +46,10 @@ class MessageGroupTile extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              UserAvatar(
+              _PresenceAvatar(
                 avatarUrl: group.displayAvatarUrl,
                 givenName: title,
-                size: 52,
+                isOnline: isOnline,
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -62,6 +68,10 @@ class MessageGroupTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (isOnline != null) ...[
+                      const SizedBox(height: 3),
+                      _PresenceStatusText(isOnline: isOnline!),
+                    ],
                     if (subtitle != null && subtitle.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       _MessagePreviewText(text: subtitle, hasUnread: hasUnread),
@@ -111,6 +121,69 @@ class MessageGroupTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PresenceAvatar extends StatelessWidget {
+  const _PresenceAvatar({
+    required this.avatarUrl,
+    required this.givenName,
+    required this.isOnline,
+  });
+
+  final String? avatarUrl;
+  final String givenName;
+  final bool? isOnline;
+
+  @override
+  Widget build(BuildContext context) {
+    final online = isOnline;
+    if (online == null) {
+      return UserAvatar(avatarUrl: avatarUrl, givenName: givenName, size: 52);
+    }
+
+    final colorScheme = Theme.of(context).colorScheme;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        UserAvatar(avatarUrl: avatarUrl, givenName: givenName, size: 52),
+        Positioned(
+          right: 1,
+          bottom: 1,
+          child: Container(
+            width: 13,
+            height: 13,
+            decoration: BoxDecoration(
+              color: online ? colorScheme.primary : colorScheme.outline,
+              shape: BoxShape.circle,
+              border: Border.all(color: colorScheme.surface, width: 2),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PresenceStatusText extends StatelessWidget {
+  const _PresenceStatusText({required this.isOnline});
+
+  final bool isOnline;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return AppText(
+      isOnline ? 'Đang hoạt động' : 'Không hoạt động',
+      size: AppTextSize.veryTiny,
+      spacing: AppTextSpacing.tight,
+      weight: AppTextWeight.regular,
+      color: isOnline
+          ? colorScheme.primary
+          : colorScheme.onSurface.withValues(alpha: 0.5),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 }

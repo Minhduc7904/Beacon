@@ -35,12 +35,18 @@ import '../../features/friend_requests/domain/usecase/send_friend_request_usecas
 import '../../features/friends/data/datasources/friends_remote_datasource.dart';
 import '../../features/friends/data/datasources/friends_remote_datasource_impl.dart';
 import '../../features/friends/data/repositories/friends_repository_impl.dart';
+import '../../features/friends/data/services/friends_realtime_service_impl.dart';
 import '../../features/friends/domain/repositories/friends_repository.dart';
+import '../../features/friends/domain/services/friends_realtime_service.dart';
 import '../../features/friends/domain/usecase/delete_friend_usecase.dart';
 import '../../features/friends/domain/usecase/get_friend_detail_usecase.dart';
 import '../../features/friends/domain/usecase/get_friends_usecase.dart';
+import '../../features/friends/domain/usecase/get_friends_presence_usecase.dart';
 import '../../features/friends/domain/usecase/search_friends_usecase.dart';
+import '../../features/friends/domain/usecase/subscribe_friend_presence_realtime_usecase.dart';
 import '../../features/friends/domain/usecase/update_friend_type_usecase.dart';
+import '../../features/friends/presentation/controllers/friends_presence_notifier.dart';
+import '../../features/friends/presentation/controllers/friends_presence_state.dart';
 import '../../features/home/data/datasources/checkin_remote_datasource.dart';
 import '../../features/home/data/datasources/checkin_remote_datasource_impl.dart';
 import '../../features/home/data/repositories/checkin_repository_impl.dart';
@@ -162,6 +168,10 @@ final messageGroupRealtimeServiceProvider =
     Provider<MessageGroupRealtimeService>((ref) {
       return MessageGroupRealtimeServiceImpl(ref.watch(signalRServiceProvider));
     });
+
+final friendsRealtimeServiceProvider = Provider<FriendsRealtimeService>((ref) {
+  return FriendsRealtimeServiceImpl(ref.watch(signalRServiceProvider));
+});
 
 final dioClientProvider = Provider<DioClient>((ref) {
   return DioClient(
@@ -416,6 +426,11 @@ final getFriendsUseCaseProvider = Provider<GetFriendsUseCase>((ref) {
   return GetFriendsUseCase(ref.watch(friendsRepositoryProvider));
 });
 
+final getFriendsPresenceUseCaseProvider =
+    Provider<GetFriendsPresenceUseCase>((ref) {
+      return GetFriendsPresenceUseCase(ref.watch(friendsRepositoryProvider));
+    });
+
 final searchFriendsUseCaseProvider = Provider<SearchFriendsUseCase>((ref) {
   return SearchFriendsUseCase(ref.watch(friendsRepositoryProvider));
 });
@@ -433,6 +448,13 @@ final updateFriendTypeUseCaseProvider = Provider<UpdateFriendTypeUseCase>((
 final deleteFriendUseCaseProvider = Provider<DeleteFriendUseCase>((ref) {
   return DeleteFriendUseCase(ref.watch(friendsRepositoryProvider));
 });
+
+final subscribeFriendPresenceRealtimeUseCaseProvider =
+    Provider<SubscribeFriendPresenceRealtimeUseCase>((ref) {
+      return SubscribeFriendPresenceRealtimeUseCase(
+        ref.watch(friendsRealtimeServiceProvider),
+      );
+    });
 
 final getMessageGroupsUseCaseProvider = Provider<GetMessageGroupsUseCase>((
   ref,
@@ -563,6 +585,14 @@ final homeCheckinNotifierProvider =
         ref.watch(appMessageProvider.notifier),
       );
     }, name: 'homeCheckinNotifierProvider ${ProviderLogFlags.noLog}');
+
+final friendsPresenceNotifierProvider =
+    StateNotifierProvider<FriendsPresenceNotifier, FriendsPresenceState>((ref) {
+      return FriendsPresenceNotifier(
+        ref.watch(getFriendsPresenceUseCaseProvider),
+        ref.watch(appMessageProvider.notifier),
+      );
+    });
 
 final postPreviewNotifierProvider =
     StateNotifierProvider.autoDispose<PostPreviewNotifier, PostPreviewState>((
