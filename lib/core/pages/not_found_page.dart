@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/config/app_routes.dart';
+import '../config/app_routes.dart';
+import '../theme/icons/app_icon.dart';
+import '../theme/icons/app_icons.dart';
 import '../widgets/layout/screen_layout.dart';
 
 class NotFoundPage extends StatelessWidget {
@@ -40,7 +42,7 @@ class NotFoundPage extends StatelessWidget {
                   const SizedBox(height: 32),
                   ElevatedButton.icon(
                     onPressed: () => context.go(AppRoutes.login),
-                    icon: const Icon(Icons.home_outlined),
+                    icon: const AppIcon(AppIcons.home),
                     label: const Text('Về trang chủ'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(

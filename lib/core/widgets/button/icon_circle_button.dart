@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/icons/app_icon.dart';
+import '../../theme/icons/app_icon_data.dart';
+
 class IconCircleButton extends StatelessWidget {
-  final IconData icon;
+  final AppIconData icon;
   final VoidCallback? onPressed;
   final double size;
   final double iconSize;
@@ -45,7 +48,7 @@ class IconCircleButton extends StatelessWidget {
               color: effectiveBackground,
               border: Border.all(color: effectiveBorder, width: borderWidth),
             ),
-            child: Icon(icon, size: iconSize, color: effectiveIcon),
+            child: AppIcon(icon, size: iconSize, color: effectiveIcon),
           ),
         ),
       ),

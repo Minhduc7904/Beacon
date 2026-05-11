@@ -49,3 +49,4 @@ app.*.map.json
 AGENTS.md
 CLAUDE.md
 /.claude
+.vscode/

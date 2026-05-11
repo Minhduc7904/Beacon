@@ -16,6 +16,7 @@ class AppScreenLayout extends StatelessWidget {
 
   static const double columnWidth = 80;
   static const double gutter = 20;
+  static const double minHorizontalSafeInset = 16;
   static const int mobileColumnCount = 4;
   static const int tabletColumnCount = 8;
   static const double tabletBreakpoint = 768;
@@ -26,6 +27,17 @@ class AppScreenLayout extends StatelessWidget {
 
   double _contentWidthForColumns(int columns) {
     return (columnWidth * columns) + (gutter * (columns - 1));
+  }
+
+  double _layoutWidth({
+    required double availableWidth,
+    required double designWidth,
+  }) {
+    final maxSafeWidth = math.max(
+      0.0,
+      availableWidth - minHorizontalSafeInset * 2,
+    );
+    return math.min(designWidth, maxSafeWidth);
   }
 
   @override
@@ -45,14 +57,19 @@ class AppScreenLayout extends StatelessWidget {
   Widget _buildLayout(BuildContext context, {required bool showGrid}) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth;
+        final maxWidth = constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
         final layoutHeight = constraints.hasBoundedHeight
             ? constraints.maxHeight
             : MediaQuery.sizeOf(context).height;
         final isTablet = maxWidth >= tabletBreakpoint;
         final columnCount = isTablet ? tabletColumnCount : mobileColumnCount;
         final contentWidth = _contentWidthForColumns(columnCount);
-        final layoutWidth = math.min(maxWidth, contentWidth);
+        final layoutWidth = _layoutWidth(
+          availableWidth: maxWidth,
+          designWidth: contentWidth,
+        );
 
         return Align(
           alignment: alignment,

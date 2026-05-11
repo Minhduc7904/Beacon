@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/providers.dart';
 import '../../../../core/theme/color/app_colors.dart';
+import '../../../../core/theme/icons/app_icon.dart';
+import '../../../../core/theme/icons/app_icons.dart';
 import '../../../../core/widgets/dev/test/test_post_media_send_signal_provider.dart';
 import '../controllers/post_preview_image_path_provider.dart';
 
@@ -69,8 +71,8 @@ class _PostPreviewSendButtonState extends ConsumerState<PostPreviewSendButton> {
               color: canTap ? AppColors.coral500 : AppColors.coral200,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.send_rounded,
+            child: AppIcon(
+              AppIcons.send,
               color: canTap ? AppColors.sky100 : AppColors.sky400,
               size: 28,
             ),
