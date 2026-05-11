@@ -11,6 +11,7 @@ class MessageGroupRealtimeServiceImpl implements MessageGroupRealtimeService {
   final SignalRService _signalRService;
   final Map<String, void Function()> _unsubscribeByGroupId = {};
   final Map<String, void Function()> _unsubscribeTypingByGroupId = {};
+  final Map<String, void Function()> _unsubscribeSeenByGroupId = {};
   void Function()? _unsubscribeGlobalNewMessage;
   void Function()? _unsubscribeUnreadCount;
   void Function()? _unsubscribeMessageGroupSeen;
@@ -99,6 +100,69 @@ class MessageGroupRealtimeServiceImpl implements MessageGroupRealtimeService {
     return () {
       _unsubscribeMessageGroupSeen?.call();
       _unsubscribeMessageGroupSeen = null;
+    };
+  }
+
+  @override
+  Future<void> subscribeMessageSeenStatus({
+    required String groupId,
+    required void Function(String? seenByUserId, String lastSeenMessageId)
+    onSeenStatus,
+  }) async {
+    final trimmedGroupId = groupId.trim();
+    if (trimmedGroupId.isEmpty) {
+      return;
+    }
+
+    await _signalRService.connect();
+    _unsubscribeSeenByGroupId[trimmedGroupId]?.call();
+
+    final unsubscribeMessageSeen = _signalRService.onArgs(
+      MessageGroupRealtimeConstants.receiveMessageSeenEvent,
+      (args) {
+        if (args == null || args.length < 3) {
+          return;
+        }
+        final incomingGroupId = args[0]?.toString() ?? '';
+        final seenByUserId = args[1]?.toString();
+        final lastSeenMessageId = args[2]?.toString() ?? '';
+        if (incomingGroupId != trimmedGroupId || lastSeenMessageId.isEmpty) {
+          return;
+        }
+        onSeenStatus(seenByUserId, lastSeenMessageId);
+      },
+    );
+
+    // Backward-compatible fallback if backend only sends (groupId, lastSeenMessageId).
+    final unsubscribeMessageGroupSeen = _signalRService.onArgs(
+      MessageGroupRealtimeConstants.receiveMessageGroupSeenEvent,
+      (args) {
+        if (args == null || args.length < 2) {
+          return;
+        }
+        final incomingGroupId = args[0]?.toString() ?? '';
+        final lastSeenMessageId = args[1]?.toString() ?? '';
+        if (incomingGroupId != trimmedGroupId || lastSeenMessageId.isEmpty) {
+          return;
+        }
+        onSeenStatus(null, lastSeenMessageId);
+      },
+    );
+
+    _unsubscribeSeenByGroupId[trimmedGroupId] = () {
+      unsubscribeMessageSeen();
+      unsubscribeMessageGroupSeen();
+    };
+  }
+
+  @override
+  void Function(String groupId) unsubscribeMessageSeenStatus() {
+    return (groupId) {
+      final trimmedGroupId = groupId.trim();
+      if (trimmedGroupId.isEmpty) {
+        return;
+      }
+      _unsubscribeSeenByGroupId.remove(trimmedGroupId)?.call();
     };
   }
 

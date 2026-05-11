@@ -69,8 +69,7 @@ class MessageGroupListNotifier extends StateNotifier<MessageGroupListState> {
 
     final current = groups[index];
     final isSeenByEvent = current.lastSeenMessageId == lastSeenMessageId;
-    final isSeenLatest =
-        isSeenByEvent || current.lastMessageId == lastSeenMessageId;
+    final isSeenLatest = isSeenByEvent;
 
     groups[index] = MessageGroup(
       groupId: current.groupId,

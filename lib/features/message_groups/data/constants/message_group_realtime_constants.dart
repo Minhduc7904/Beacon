@@ -10,4 +10,5 @@ class MessageGroupRealtimeConstants {
   static const String receiveUnreadMessageCountEvent =
       'ReceiveUnreadMessageCount';
   static const String receiveMessageGroupSeenEvent = 'ReceiveMessageGroupSeen';
+  static const String receiveMessageSeenEvent = 'ReceiveMessageSeen';
 }

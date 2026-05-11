@@ -41,6 +41,9 @@ final groupChatDetailProvider = StateNotifierProvider.autoDispose
         sendTypingStatusRealtimeUseCase: ref.watch(
           sendTypingStatusRealtimeUseCaseProvider,
         ),
+        subscribeMessageSeenStatusRealtimeUseCase: ref.watch(
+          subscribeMessageSeenStatusRealtimeUseCaseProvider,
+        ),
         subscribeTypingStatusRealtimeUseCase: ref.watch(
           subscribeTypingStatusRealtimeUseCaseProvider,
         ),
@@ -237,6 +240,7 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
       case GroupChatDetailStatus.loaded:
         return GroupMessageList(
           messages: state.messages,
+          members: state.groupDetail?.members ?? const [],
           scrollController: _scrollController,
           currentUserId: currentUserId,
         );

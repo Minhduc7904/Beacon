@@ -4,17 +4,20 @@ import '../../../../../core/theme/text/app_text_theme.dart';
 import '../../../../../core/utils/time_utils.dart';
 import '../../../../../core/widgets/text/text.dart';
 import '../../../domain/entities/group_message.dart';
+import '../../../domain/entities/message_group_member.dart';
 import 'group_chat_bubble.dart';
 
 class GroupMessageList extends StatelessWidget {
   const GroupMessageList({
     super.key,
     required this.messages,
+    required this.members,
     required this.scrollController,
     required this.currentUserId,
   });
 
   final List<GroupMessage> messages;
+  final List<MessageGroupMember> members;
   final ScrollController scrollController;
   final String? currentUserId;
 
@@ -61,6 +64,7 @@ class GroupMessageList extends StatelessWidget {
 
     final groups = _groupByDate();
     final entries = groups.entries.toList();
+    final seenByMessageId = _buildSeenByMessageId();
 
     final items = <_GroupListItem>[];
     for (final entry in entries) {
@@ -105,10 +109,36 @@ class GroupMessageList extends StatelessWidget {
 
         return GroupChatBubble(
           message: item.message!,
+          seenMembers: seenByMessageId[item.message!.id] ?? const [],
           currentUserId: currentUserId,
         );
       },
     );
+  }
+
+  Map<String, List<MessageGroupMember>> _buildSeenByMessageId() {
+    final messageIndexById = <String, int>{};
+    for (var i = 0; i < messages.length; i++) {
+      messageIndexById[messages[i].id] = i;
+    }
+
+    final seenByMessageId = <String, List<MessageGroupMember>>{};
+    for (final member in members) {
+      if (member.userId == currentUserId) {
+        continue;
+      }
+      final seenId = member.lastSeenMessageId;
+      if (seenId == null || seenId.isEmpty) {
+        continue;
+      }
+      final seenIndex = messageIndexById[seenId];
+      if (seenIndex == null) {
+        continue;
+      }
+      final seenMessageId = messages[seenIndex].id;
+      seenByMessageId.putIfAbsent(seenMessageId, () => []).add(member);
+    }
+    return seenByMessageId;
   }
 }
 

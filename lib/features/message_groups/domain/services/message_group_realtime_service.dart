@@ -20,6 +20,14 @@ abstract class MessageGroupRealtimeService {
 
   void Function() unsubscribeMessageGroupSeen();
 
+  Future<void> subscribeMessageSeenStatus({
+    required String groupId,
+    required void Function(String? seenByUserId, String lastSeenMessageId)
+    onSeenStatus,
+  });
+
+  void Function(String groupId) unsubscribeMessageSeenStatus();
+
   Future<void> subscribeTypingStatus({
     required String groupId,
     required void Function(String typingUserId, bool isTyping) onTypingStatus,

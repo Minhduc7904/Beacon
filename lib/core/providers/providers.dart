@@ -63,6 +63,7 @@ import '../../features/message_groups/domain/usecase/leave_message_group_realtim
 import '../../features/message_groups/domain/usecase/mark_message_group_seen_usecase.dart';
 import '../../features/message_groups/domain/usecase/subscribe_new_messages_realtime_usecase.dart';
 import '../../features/message_groups/domain/usecase/subscribe_message_group_seen_realtime_usecase.dart';
+import '../../features/message_groups/domain/usecase/subscribe_message_seen_status_realtime_usecase.dart';
 import '../../features/message_groups/domain/usecase/subscribe_typing_status_realtime_usecase.dart';
 import '../../features/message_groups/domain/usecase/subscribe_unread_message_count_realtime_usecase.dart';
 import '../../features/message_groups/domain/usecase/get_message_group_detail_usecase.dart';
@@ -503,6 +504,13 @@ final subscribeUnreadMessageCountRealtimeUseCaseProvider =
 final subscribeMessageGroupSeenRealtimeUseCaseProvider =
     Provider<SubscribeMessageGroupSeenRealtimeUseCase>((ref) {
       return SubscribeMessageGroupSeenRealtimeUseCase(
+        ref.watch(messageGroupRealtimeServiceProvider),
+      );
+    });
+
+final subscribeMessageSeenStatusRealtimeUseCaseProvider =
+    Provider<SubscribeMessageSeenStatusRealtimeUseCase>((ref) {
+      return SubscribeMessageSeenStatusRealtimeUseCase(
         ref.watch(messageGroupRealtimeServiceProvider),
       );
     });
