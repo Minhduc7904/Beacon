@@ -14,7 +14,7 @@ class LoginFormHeading extends StatelessWidget {
         fontWeight: FontWeight.w700,
         height: 0.82,
       ),
-      fontFamily: AppFonts.inter,
+      fontFamily: AppFonts.defaultFamily,
     );
 
     return Align(

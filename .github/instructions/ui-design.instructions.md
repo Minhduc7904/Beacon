@@ -29,6 +29,18 @@ Giữ giao diện nhất quán theo design system hiện tại của Beacon, tr�
 6. Đường dẫn asset phải dùng constants, không hardcode path.
 7. UI mới phải kiểm tra light/dark mode nếu màn hình có nguy cơ contrast thấp.
 
+## Quy tắc màu chữ
+
+1. Heading/page title dùng `AppColors.ink600` hoặc `colorScheme.onSurface`.
+2. Section title, item title, body chính dùng `AppColors.ink500` hoặc `colorScheme.onSurface`.
+3. Subtitle, mô tả, helper text, timestamp dùng `AppColors.ink100` hoặc `colorScheme.onSurface.withValues(alpha: 0.55-0.72)`.
+4. Disabled/placeholder-like text dùng `AppColors.sky600` hoặc disabled token của component.
+5. Text trên nền tối/primary/accent dùng `AppColors.sky100`, `colorScheme.onPrimary`, hoặc `colorScheme.onSecondary`.
+6. Link/action text dùng `AppColors.teal500` hoặc `colorScheme.primary`.
+7. Accent/fun highlight dùng `AppColors.coral500` hoặc `colorScheme.secondary`, dùng tiết chế.
+8. Error text dùng `AppColors.red500` hoặc `colorScheme.error`; success text dùng `AppColors.success`.
+9. Tránh dùng `AppColors.ink300/ink400` cho text mới nếu không có lý do thiết kế rõ, vì dễ tạo cấp bậc lửng giữa body và muted.
+
 ## Quy trình nhanh cho task UI
 
 1. Xác định token cần dùng (màu, text, spacing, border radius).

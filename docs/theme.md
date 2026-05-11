@@ -92,7 +92,7 @@ Nếu muốn đổi font toàn app:
 
 ```dart
 MaterialApp.router(
-  theme: AppTheme.lightTheme(fontFamily: AppFonts.inter),
+  theme: AppTheme.lightTheme(fontFamily: AppFonts.chironGoRoundTc),
 )
 ```
 

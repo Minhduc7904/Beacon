@@ -214,7 +214,6 @@ class Button extends m.StatelessWidget {
             fontWeight: m.FontWeight.w500,
             style: const m.TextStyle(
               fontSize: 16,
-              fontFamily: 'Inter',
               height: 1,
             ),
           ),
@@ -227,7 +226,7 @@ class Button extends m.StatelessWidget {
       textAlign: m.TextAlign.center,
       color: textColor,
       fontWeight: m.FontWeight.w500,
-      style: const m.TextStyle(fontSize: 16, fontFamily: 'Inter', height: 1),
+      style: const m.TextStyle(fontSize: 16, height: 1),
     );
 
     if (!hasIcon) {

@@ -52,7 +52,6 @@ dependencies:
 
   # Navigation
   go_router: ^14.6.3
-  google_fonts: ^6.2.1
   flutter_svg: ^2.2.1
   phosphor_flutter: ^2.1.0
   flutter_dotenv: ^5.1.0
@@ -106,23 +105,28 @@ flutter:
     - assets/animations/
 
   fonts:
-    - family: Inter
+    - family: Chiron GoRound TC
       fonts:
-        - asset: assets/fonts/Inter-Variable.ttf
+        - asset: assets/fonts/ChironGoRoundTC-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/ChironGoRoundTC-Light.ttf
+          weight: 300
+        - asset: assets/fonts/ChironGoRoundTC-Regular.ttf
           weight: 400
-        - asset: assets/fonts/Inter-Variable.ttf
+        - asset: assets/fonts/ChironGoRoundTC-Medium.ttf
           weight: 500
-        - asset: assets/fonts/Inter-Variable.ttf
+        - asset: assets/fonts/ChironGoRoundTC-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/ChironGoRoundTC-Bold.ttf
           weight: 700
-        - asset: assets/fonts/Inter-Italic-Variable.ttf
-          style: italic
+        - asset: assets/fonts/ChironGoRoundTC-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/ChironGoRoundTC-Black.ttf
+          weight: 900
+    - family: Kavoon
+      fonts:
+        - asset: assets/fonts/Kavoon-Regular.ttf
           weight: 400
-        - asset: assets/fonts/Inter-Italic-Variable.ttf
-          style: italic
-          weight: 500
-        - asset: assets/fonts/Inter-Italic-Variable.ttf
-          style: italic
-          weight: 700
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

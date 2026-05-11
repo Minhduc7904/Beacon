@@ -64,9 +64,10 @@ class AppSettingsTile extends StatelessWidget {
     final effectiveEnabled = enabled && onTap != null;
     final resolvedBackground = backgroundColor ?? colorScheme.surface;
     final resolvedBorder = borderColor ?? colorScheme.outline;
-    final resolvedTextColor = textColor ?? AppColors.ink500;
-    final resolvedLeadingIconColor = leadingIconColor ?? AppColors.ink500;
-    final resolvedTrailingIconColor = trailingIconColor ?? AppColors.ink500;
+    final resolvedTextColor = textColor ?? colorScheme.onSurface;
+    final resolvedLeadingIconColor = leadingIconColor ?? colorScheme.onSurface;
+    final resolvedTrailingIconColor =
+        trailingIconColor ?? colorScheme.onSurface;
     final resolvedTextStyle =
         textStyle ??
         Theme.of(context).textTheme.ui(
