@@ -20,6 +20,9 @@ class AppImages {
   static const String onboarding2 = '$_base/onboarding/onboarding_2.png';
   static const String onboarding3 = '$_base/onboarding/onboarding_3.png';
 
+  // ─── Home ─────────────────────────────────────────────────
+  static const String homeBackground = '$_base/home/home_background.png';
+
   // ─── Icons (SVG/PNG) ──────────────────────────────────────
   static const String icGoogle = '$_icons/ic_google.svg';
   static const String icApple = '$_icons/ic_apple.svg';
