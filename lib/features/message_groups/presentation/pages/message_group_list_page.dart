@@ -9,6 +9,7 @@ import '../../../../core/providers/providers.dart';
 import '../../../../core/theme/text/app_text_theme.dart';
 import '../../../../core/widgets/layout/screen_layout.dart';
 import '../../../../core/widgets/text/text.dart';
+import '../../../friends/presentation/controllers/friends_presence_state.dart';
 import '../../domain/entities/group_message.dart';
 import '../../domain/entities/message_group.dart';
 import '../controllers/message_group_list_notifier.dart';
@@ -23,7 +24,9 @@ final messageGroupListProvider =
     >((ref) {
       return MessageGroupListNotifier(
         ref.watch(getMessageGroupsUseCaseProvider),
+        ref.watch(getMessageGroupDetailUseCaseProvider),
         ref.watch(appMessageProvider.notifier),
+        ref.watch(meProfileProvider).valueOrNull?.id,
       );
     });
 
@@ -47,6 +50,7 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(messageGroupListProvider.notifier).load();
+      ref.read(friendsPresenceNotifierProvider.notifier).load();
       unawaited(_subscribeRealtimeMessages());
       unawaited(_subscribeMessageGroupSeen());
     });
@@ -119,6 +123,7 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final state = ref.watch(messageGroupListProvider);
+    final presenceState = ref.watch(friendsPresenceNotifierProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -136,12 +141,18 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: AppScreenLayout(child: _buildBody(state, colorScheme)),
+        child: AppScreenLayout(
+          child: _buildBody(state, presenceState, colorScheme),
+        ),
       ),
     );
   }
 
-  Widget _buildBody(MessageGroupListState state, ColorScheme colorScheme) {
+  Widget _buildBody(
+    MessageGroupListState state,
+    FriendsPresenceState presenceState,
+    ColorScheme colorScheme,
+  ) {
     switch (state.status) {
       case MessageGroupListStatus.initial:
       case MessageGroupListStatus.loading:
@@ -176,8 +187,11 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
             }
 
             final group = state.groups[index - 1];
+            final peerUserId = state.peerUserIdByGroupId[group.groupId];
+            final presence = presenceState.friendByUserId(peerUserId);
             return MessageGroupTile(
               group: group,
+              isOnline: group.isPrivate ? presence?.isOnline ?? false : null,
               onTap: () => _openDetail(group),
             );
           },

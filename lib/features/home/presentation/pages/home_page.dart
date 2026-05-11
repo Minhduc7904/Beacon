@@ -29,6 +29,7 @@ class _HomePageState extends ConsumerState<HomePage>
   AppLifecycleState? _lastLifecycleState;
   final Map<String, int> _unreadByGroupId = <String, int>{};
   void Function()? _unsubscribeUnreadMessageCount;
+  void Function()? _unsubscribeFriendPresence;
 
   @override
   void initState() {
@@ -48,8 +49,10 @@ class _HomePageState extends ConsumerState<HomePage>
 
       ref.read(homeCheckinNotifierProvider.notifier).load();
       ref.read(feedProvider.notifier).load();
+      ref.read(friendsPresenceNotifierProvider.notifier).load();
       unawaited(_seedUnreadMessageCount());
       unawaited(_subscribeUnreadMessageCount());
+      unawaited(_subscribeFriendPresence());
     });
   }
 
@@ -57,6 +60,8 @@ class _HomePageState extends ConsumerState<HomePage>
   void dispose() {
     _unsubscribeUnreadMessageCount?.call();
     _unsubscribeUnreadMessageCount = null;
+    _unsubscribeFriendPresence?.call();
+    _unsubscribeFriendPresence = null;
     WidgetsBinding.instance.removeObserver(this);
     _horizontalController.dispose();
     super.dispose();
@@ -68,6 +73,9 @@ class _HomePageState extends ConsumerState<HomePage>
         state == AppLifecycleState.resumed &&
         mounted) {
       ref.read(homeCheckinNotifierProvider.notifier).load(forceRefresh: true);
+      ref
+          .read(friendsPresenceNotifierProvider.notifier)
+          .load(forceRefresh: true);
       unawaited(_seedUnreadMessageCount());
     }
     _lastLifecycleState = state;
@@ -126,6 +134,24 @@ class _HomePageState extends ConsumerState<HomePage>
         );
     _unsubscribeUnreadMessageCount = ref
         .read(subscribeUnreadMessageCountRealtimeUseCaseProvider)
+        .unsubscribe();
+  }
+
+  Future<void> _subscribeFriendPresence() async {
+    await ref
+        .read(subscribeFriendPresenceRealtimeUseCaseProvider)
+        .call(
+          onPresence: (event) {
+            if (!mounted) {
+              return;
+            }
+            ref
+                .read(friendsPresenceNotifierProvider.notifier)
+                .applyPresenceEvent(event);
+          },
+        );
+    _unsubscribeFriendPresence = ref
+        .read(subscribeFriendPresenceRealtimeUseCaseProvider)
         .unsubscribe();
   }
 

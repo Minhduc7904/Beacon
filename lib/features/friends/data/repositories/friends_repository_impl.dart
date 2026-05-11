@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/friend_page.dart';
+import '../../domain/entities/friend_presence_page.dart';
 import '../../domain/entities/friend_profile.dart';
 import '../../domain/entities/friend_type.dart';
 import '../../domain/repositories/friends_repository.dart';
@@ -29,6 +30,26 @@ class FriendsRepositoryImpl implements FriendsRepository {
 
     try {
       final result = await _remoteDatasource.getFriends(
+        cursor: cursor,
+        limit: limit,
+      );
+      return Right(result);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, FriendPresencePage>> getFriendsPresence({
+    String? cursor,
+    int? limit,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      final result = await _remoteDatasource.getFriendsPresence(
         cursor: cursor,
         limit: limit,
       );

@@ -140,8 +140,14 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final state = ref.watch(groupChatDetailProvider(widget.group.groupId));
     final currentUserId = ref.watch(meProfileProvider).valueOrNull?.id;
+    final presenceState = ref.watch(friendsPresenceNotifierProvider);
     final resolvedAvatarUrl =
         state.groupDetail?.displayAvatarUrl ?? widget.group.displayAvatarUrl;
+    final peerUserId = _peerUserId(state, currentUserId);
+    final peerPresence = presenceState.friendByUserId(peerUserId);
+    final isPeerOnline = widget.group.isPrivate
+        ? peerPresence?.isOnline ?? false
+        : null;
 
     ref.listen(groupChatDetailProvider(widget.group.groupId), (prev, next) {
       if ((prev?.messages.length ?? 0) < next.messages.length) {
@@ -179,11 +185,15 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   AppText(
-                    'Đang hoạt động',
+                    _presenceLabel(state, isPeerOnline),
                     size: AppTextSize.veryTiny,
                     spacing: AppTextSpacing.tight,
                     weight: AppTextWeight.regular,
-                    color: colorScheme.onSurface.withValues(alpha: 0.6),
+                    color: isPeerOnline == true
+                        ? colorScheme.primary
+                        : colorScheme.onSurface.withValues(alpha: 0.6),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -249,6 +259,29 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
           currentUserId: currentUserId,
         );
     }
+  }
+
+  String? _peerUserId(GroupChatDetailState state, String? currentUserId) {
+    if (!widget.group.isPrivate) {
+      return null;
+    }
+
+    final members = state.groupDetail?.members ?? const <MessageGroupMember>[];
+    for (final member in members) {
+      if (member.userId != currentUserId) {
+        return member.userId;
+      }
+    }
+    return null;
+  }
+
+  String _presenceLabel(GroupChatDetailState state, bool? isPeerOnline) {
+    if (!widget.group.isPrivate) {
+      final count = state.groupDetail?.members.length;
+      return count == null || count == 0 ? 'Nhóm chat' : '$count thành viên';
+    }
+
+    return isPeerOnline == true ? 'Đang hoạt động' : 'Không hoạt động';
   }
 }
 

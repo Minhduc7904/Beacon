@@ -1,16 +1,26 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/messages/app_message_notifier.dart';
 import '../../domain/entities/group_message.dart';
 import '../../domain/entities/message_group.dart';
+import '../../domain/usecase/get_message_group_detail_usecase.dart';
 import '../../domain/usecase/get_message_groups_usecase.dart';
 import 'message_group_list_state.dart';
 
 class MessageGroupListNotifier extends StateNotifier<MessageGroupListState> {
   final GetMessageGroupsUseCase _getMessageGroupsUseCase;
+  final GetMessageGroupDetailUseCase _getMessageGroupDetailUseCase;
   final AppMessageNotifier _messageNotifier;
+  final String? _currentUserId;
 
-  MessageGroupListNotifier(this._getMessageGroupsUseCase, this._messageNotifier)
+  MessageGroupListNotifier(
+    this._getMessageGroupsUseCase,
+    this._getMessageGroupDetailUseCase,
+    this._messageNotifier,
+    this._currentUserId,
+  )
     : super(const MessageGroupListState());
 
   Future<void> load() async {
@@ -120,7 +130,38 @@ class MessageGroupListNotifier extends StateNotifier<MessageGroupListState> {
           groups: sorted,
           errorMessage: null,
         );
+        unawaited(_loadPrivatePeerIds(sorted));
       },
     );
+  }
+
+  Future<void> _loadPrivatePeerIds(List<MessageGroup> groups) async {
+    final currentUserId = _currentUserId;
+    if (currentUserId == null || currentUserId.isEmpty) {
+      return;
+    }
+
+    final next = Map<String, String>.from(state.peerUserIdByGroupId);
+    for (final group in groups.where((group) => group.isPrivate)) {
+      if (next.containsKey(group.groupId)) {
+        continue;
+      }
+
+      final result = await _getMessageGroupDetailUseCase.call(
+        groupId: group.groupId,
+      );
+      result.fold((_) {}, (detail) {
+        for (final member in detail.members) {
+          if (member.userId != currentUserId) {
+            next[group.groupId] = member.userId;
+            break;
+          }
+        }
+      });
+    }
+
+    if (next.length != state.peerUserIdByGroupId.length) {
+      state = state.copyWith(peerUserIdByGroupId: next);
+    }
   }
 }

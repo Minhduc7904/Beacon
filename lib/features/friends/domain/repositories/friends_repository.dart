@@ -2,11 +2,17 @@ import 'package:dartz/dartz.dart';
 
 import '../../../../core/errors/failures.dart';
 import '../entities/friend_page.dart';
+import '../entities/friend_presence_page.dart';
 import '../entities/friend_profile.dart';
 import '../entities/friend_type.dart';
 
 abstract class FriendsRepository {
   Future<Either<Failure, FriendPage>> getFriends({
+    String? cursor,
+    int? limit,
+  });
+
+  Future<Either<Failure, FriendPresencePage>> getFriendsPresence({
     String? cursor,
     int? limit,
   });
