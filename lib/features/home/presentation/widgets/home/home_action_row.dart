@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/color/app_colors.dart';
+import '../../../../../core/theme/icons/app_icon.dart';
+import '../../../../../core/theme/icons/app_icons.dart';
 import '../../../../../core/widgets/button/icon_circle_button.dart';
 
 class HomeActionRow extends StatelessWidget {
@@ -26,7 +28,7 @@ class HomeActionRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         IconCircleButton(
-          icon: Icons.emoji_emotions_rounded,
+          icon: AppIcons.moodHappyPhosphor,
           size: 60,
           iconSize: 32,
           backgroundColor: AppColors.sky100,
@@ -41,7 +43,7 @@ class HomeActionRow extends StatelessWidget {
           onPressed: onCheckin,
         ),
         IconCircleButton(
-          icon: Icons.camera_alt_rounded,
+          icon: AppIcons.camera,
           size: 60,
           iconSize: 32,
           backgroundColor: AppColors.sky100,
@@ -111,7 +113,11 @@ class _HomeCheckinActionButton extends StatelessWidget {
                             valueColor: AlwaysStoppedAnimation(iconColor),
                           ),
                         )
-                      : Icon(Icons.shield_rounded, size: 60, color: iconColor),
+                      : AppIcon(
+                          AppIcons.shieldPhosphor,
+                          size: 60,
+                          color: iconColor,
+                        ),
                 ),
               ),
             ],

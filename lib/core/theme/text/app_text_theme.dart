@@ -13,19 +13,19 @@ class AppTextTheme {
   static const TextStyle _title1 = TextStyle(
     fontSize: 48,
     fontWeight: FontWeight.w700,
-    height: 1.17,
+    height: 56 / 48,
   );
 
   static const TextStyle _title2 = TextStyle(
     fontSize: 32,
     fontWeight: FontWeight.w700,
-    height: 1.13,
+    height: 36 / 32,
   );
 
   static const TextStyle _title3 = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.w700,
-    height: 1.33,
+    height: 32 / 24,
   );
 
   static const double _sizeLarge = 18;

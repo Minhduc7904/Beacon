@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/config/app_routes.dart';
 import '../../../../../core/providers/providers.dart';
 import '../../../../../core/theme/color/app_colors.dart';
-import '../../../../../core/theme/text/app_text_theme.dart';
+import '../../../../../core/theme/icons/app_icons.dart';
+import '../../../../../core/widgets/app_settings_section.dart';
+import '../../../../../core/widgets/app_settings_tile.dart';
 import '../../../../../core/widgets/image/user_avatar.dart';
 import '../../../../../core/widgets/layout/screen_layout.dart';
 import '../../../../../core/widgets/text/text.dart';
@@ -105,58 +107,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     ),
                     const SizedBox(height: 24),
                     Expanded(
-                      child: ListView(
-                        children: [
-                          _ProfileMenuItem(
-                            icon: Icons.person_outline_rounded,
-                            title: 'Chỉnh sửa hồ sơ',
-                            onTap: () => context.pushNamed(
-                              AppRoutes.editProfileName,
-                              extra: profile,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          _ProfileMenuItem(
-                            icon: Icons.security_rounded,
-                            title: 'Cài đặt an toàn',
-                            onTap: () =>
-                                context.pushNamed(AppRoutes.safetySettingsName),
-                          ),
-                          const SizedBox(height: 10),
-                          _ProfileMenuItem(
-                            icon: Icons.person_add_alt_1_rounded,
-                            title: 'Thêm bạn bè',
-                            onTap: () =>
-                                context.pushNamed(AppRoutes.addFriendsName),
-                          ),
-                          const SizedBox(height: 10),
-                          const _ProfileMenuItem(
-                            icon: Icons.language_rounded,
-                            title: 'Ngôn ngữ',
-                          ),
-                          const SizedBox(height: 10),
-                          const _ProfileMenuItem(
-                            icon: Icons.history_rounded,
-                            title: 'Lịch sử đơn hàng',
-                          ),
-                          const SizedBox(height: 10),
-                          const _ProfileMenuItem(
-                            icon: Icons.group_add_rounded,
-                            title: 'Mời bạn bè',
-                          ),
-                          const SizedBox(height: 10),
-                          const _ProfileMenuItem(
-                            icon: Icons.help_outline_rounded,
-                            title: 'Trung tâm trợ giúp',
-                          ),
-                          const SizedBox(height: 10),
-                          _ProfileMenuItem(
-                            icon: Icons.logout_rounded,
-                            title: 'Đăng xuất',
-                            isDestructive: true,
-                            onTap: () => context.goNamed(AppRoutes.logoutName),
-                          ),
-                        ],
+                      child: _ProfileSettingsList(
+                        onEditProfile: () => context.pushNamed(
+                          AppRoutes.editProfileName,
+                          extra: profile,
+                        ),
+                        onOpenSafetySettings: () =>
+                            context.pushNamed(AppRoutes.safetySettingsName),
+                        onOpenAddFriends: () =>
+                            context.pushNamed(AppRoutes.addFriendsName),
+                        onLogout: () => context.goNamed(AppRoutes.logoutName),
                       ),
                     ),
                   ],
@@ -197,7 +157,7 @@ class _ProfileHeader extends StatelessWidget {
               avatarUrl: avatarUrl,
               givenName: givenName,
               size: 110,
-              initialStyle: Theme.of(context).textTheme.title2,
+              initialStyle: Theme.of(context).textTheme.headlineLarge,
             ),
             Positioned(
               right: 0,
@@ -252,60 +212,88 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-class _ProfileMenuItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback? onTap;
-  final bool isDestructive;
-
-  const _ProfileMenuItem({
-    required this.icon,
-    required this.title,
-    this.onTap,
-    this.isDestructive = false,
+class _ProfileSettingsList extends StatelessWidget {
+  const _ProfileSettingsList({
+    required this.onEditProfile,
+    required this.onOpenSafetySettings,
+    required this.onOpenAddFriends,
+    required this.onLogout,
   });
+
+  final VoidCallback onEditProfile;
+  final VoidCallback onOpenSafetySettings;
+  final VoidCallback onOpenAddFriends;
+  final VoidCallback onLogout;
+
+  static const double _sectionSpacing = 26;
+  static const double _bottomPadding = 32;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final titleColor = isDestructive
-        ? colorScheme.error
-        : colorScheme.onSurface;
+    final destructiveColor = colorScheme.error;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Ink(
-          height: 56,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: colorScheme.outline.withValues(alpha: 0.6),
+    return ListView(
+      padding: const EdgeInsets.only(bottom: _bottomPadding),
+      children: [
+        AppSettingsSection(
+          title: 'Cá nhân',
+          children: [
+            AppSettingsTile(
+              title: 'Thông tin cá nhân',
+              leadingIcon: AppIcons.user,
+              onTap: onEditProfile,
             ),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, color: titleColor, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: AppText(
-                  title,
-                  preset: AppTextPreset.bodyMedium,
-                  color: titleColor,
-                ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-            ],
-          ),
+            AppSettingsTile(
+              title: 'Thêm bạn bè',
+              leadingIcon: AppIcons.users,
+              onTap: onOpenAddFriends,
+            ),
+          ],
         ),
-      ),
+        const SizedBox(height: _sectionSpacing),
+        AppSettingsSection(
+          title: 'Thiết lập an toàn',
+          children: [
+            const AppSettingsTile(
+              title: 'Người liên hệ khẩn cấp',
+              leadingIcon: AppIcons.phoneCall,
+              enabled: false,
+            ),
+            AppSettingsTile(
+              title: 'Cài đặt Deadline',
+              leadingIcon: AppIcons.clockCountdown,
+              onTap: onOpenSafetySettings,
+            ),
+            AppSettingsTile(
+              title: 'Thông báo & Cảnh báo',
+              leadingIcon: AppIcons.notification,
+              onTap: onOpenSafetySettings,
+            ),
+          ],
+        ),
+        const SizedBox(height: _sectionSpacing),
+        const AppSettingsSection(
+          title: 'Tài khoản & Hệ thống',
+          children: [
+            AppSettingsTile(
+              title: 'Điều khoản dịch vụ',
+              leadingIcon: AppIcons.fileText,
+              enabled: false,
+            ),
+          ],
+        ),
+        const SizedBox(height: _sectionSpacing),
+        AppSettingsTile(
+          title: 'Đăng xuất',
+          leadingIcon: AppIcons.signOut,
+          textColor: destructiveColor,
+          leadingIconColor: destructiveColor,
+          trailingIconColor: destructiveColor,
+          borderColor: destructiveColor.withValues(alpha: 0.42),
+          onTap: onLogout,
+        ),
+      ],
     );
   }
 }

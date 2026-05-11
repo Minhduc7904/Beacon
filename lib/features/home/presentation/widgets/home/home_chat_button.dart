@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/color/app_colors.dart';
+import '../../../../../core/theme/icons/app_icons.dart';
 import '../../../../../core/widgets/button/icon_circle_button.dart';
 import 'unread_badge.dart';
 
@@ -36,7 +37,7 @@ class HomeChatButton extends StatelessWidget {
           Align(
             alignment: Alignment.center,
             child: IconCircleButton(
-              icon: Icons.chat_bubble_outline_rounded,
+              icon: AppIcons.chat,
               size: size,
               iconSize: iconSize,
               backgroundColor: effectiveBackground,

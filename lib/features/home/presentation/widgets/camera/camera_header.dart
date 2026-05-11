@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/theme/icons/app_icon.dart';
+import '../../../../../core/theme/icons/app_icons.dart';
+
 class CameraHeader extends StatelessWidget {
   const CameraHeader({super.key});
 
@@ -10,7 +13,7 @@ class CameraHeader extends StatelessWidget {
       children: [
         IconButton(
           onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          icon: const AppIcon(AppIcons.back),
         ),
       ],
     );

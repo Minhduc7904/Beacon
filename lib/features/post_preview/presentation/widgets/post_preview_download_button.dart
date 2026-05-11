@@ -6,6 +6,8 @@ import 'package:gal/gal.dart';
 
 import '../../../../core/providers/providers.dart';
 import '../../../../core/theme/color/app_colors.dart';
+import '../../../../core/theme/icons/app_icon.dart';
+import '../../../../core/theme/icons/app_icons.dart';
 import '../controllers/post_preview_image_path_provider.dart';
 
 class PostPreviewDownloadButton extends ConsumerStatefulWidget {
@@ -43,14 +45,14 @@ class _PostPreviewDownloadButtonState
               return ScaleTransition(scale: animation, child: child);
             },
             child: _showSuccessIcon
-                ? const Icon(
-                    Icons.check_rounded,
+                ? const AppIcon(
+                    AppIcons.check,
                     key: ValueKey('download_success'),
                     size: 24,
                     color: AppColors.ink600,
                   )
-                : const Icon(
-                    Icons.download_rounded,
+                : const AppIcon(
+                    AppIcons.download,
                     key: ValueKey('download_default'),
                     size: 24,
                     color: AppColors.ink600,

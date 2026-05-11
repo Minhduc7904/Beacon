@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/providers.dart';
 import '../../../../core/theme/color/app_colors.dart';
+import '../../../../core/theme/icons/app_icon.dart';
+import '../../../../core/theme/icons/app_icons.dart';
 
 class PostPreviewCloseButton extends ConsumerWidget {
   const PostPreviewCloseButton({super.key});
@@ -29,8 +31,8 @@ class PostPreviewCloseButton extends ConsumerWidget {
               width: 1.4,
             ),
           ),
-          child: Icon(
-            Icons.close_rounded,
+          child: AppIcon(
+            AppIcons.close,
             color: isUploading ? AppColors.sky600 : AppColors.ink500,
             size: 22,
           ),

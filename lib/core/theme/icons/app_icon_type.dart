@@ -1,0 +1,4 @@
+enum AppIconType {
+  phosphor,
+  svg,
+}

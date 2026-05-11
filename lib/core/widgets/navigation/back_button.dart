@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/color/app_colors.dart';
+import '../../theme/icons/app_icon.dart';
+import '../../theme/icons/app_icons.dart';
 
 class AppBackButton extends StatelessWidget {
   const AppBackButton({super.key, this.onPressed, this.size = 28});
@@ -33,7 +35,7 @@ class AppBackButton extends StatelessWidget {
                 width: size,
                 height: size,
                 child: const Center(
-                  child: Icon(Icons.chevron_left, color: AppColors.ink500),
+                  child: AppIcon(AppIcons.back, color: AppColors.ink500),
                 ),
               ),
             ],

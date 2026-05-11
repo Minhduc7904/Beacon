@@ -6,6 +6,8 @@ import '../../../features/auth/presentation/controllers/auth_state.dart';
 import '../../config/app_router.dart';
 import '../../config/app_routes.dart';
 import '../../providers/providers.dart';
+import '../../theme/icons/app_icon.dart';
+import '../../theme/icons/app_icons.dart';
 import 'dev_api_menu_sheet.dart';
 import 'dev_layout_menu_sheet.dart';
 import 'dev_main_menu_sheet.dart';
@@ -461,7 +463,7 @@ class _DevSettingsBubbleState extends ConsumerState<DevSettingsBubble> {
                 child: FloatingActionButton.small(
                   heroTag: 'dev_settings_bubble',
                   onPressed: _isMenuOpen ? null : _openMainMenu,
-                  child: const Icon(Icons.settings_rounded),
+                  child: const AppIcon(AppIcons.settings),
                 ),
               ),
             ),
