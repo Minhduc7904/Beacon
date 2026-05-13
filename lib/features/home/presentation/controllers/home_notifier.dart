@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
@@ -11,12 +12,18 @@ import 'home_state.dart';
 
 class HomeNotifier extends StateNotifier<HomeState> {
   static const Duration _cameraInitTimeout = Duration(seconds: 10);
+  static const ResolutionPreset _cameraResolutionPreset =
+      ResolutionPreset.veryHigh;
 
   CameraController? _cameraController;
   List<CameraDescription> _cameras = const [];
   int _cameraIndex = 0;
   FlashMode _flashMode = FlashMode.off;
   bool _isInitializingCamera = false;
+  double _minZoomLevel = 1;
+  double _maxZoomLevel = 1;
+  double _zoomLevel = 1;
+  double? _scaleStartZoomLevel;
 
   HomeNotifier() : super(const HomeState.initial());
 
@@ -96,15 +103,18 @@ class HomeNotifier extends StateNotifier<HomeState> {
       return;
     }
 
+    final previousIndex = _cameraIndex;
+    final nextIndex = (_cameraIndex + 1) % _cameras.length;
+
     _isInitializingCamera = true;
     state = state.copyWith(isCameraInitializing: true, clearCameraError: true);
 
     try {
-      _cameraIndex = (_cameraIndex + 1) % _cameras.length;
-      await _initializeCameraAtIndex(_cameraIndex);
+      await _initializeCameraAtIndex(nextIndex);
       if (!mounted) {
         return;
       }
+      _cameraIndex = nextIndex;
       state = state.copyWith(
         isCameraInitializing: false,
         clearCameraError: true,
@@ -113,9 +123,15 @@ class HomeNotifier extends StateNotifier<HomeState> {
       if (!mounted) {
         return;
       }
+
+      _cameraIndex = previousIndex;
+      final didRestoreCamera = await _restoreCameraAtIndex(previousIndex);
       state = state.copyWith(
         isCameraInitializing: false,
-        cameraError: 'Khong the doi camera. Vui long thu lai.',
+        cameraError: didRestoreCamera
+            ? null
+            : 'Khong the doi camera. Vui long thu lai.',
+        clearCameraError: didRestoreCamera,
       );
     } finally {
       _isInitializingCamera = false;
@@ -129,14 +145,49 @@ class HomeNotifier extends StateNotifier<HomeState> {
     }
 
     try {
-      _flashMode = _flashMode == FlashMode.off
+      final nextFlashMode = _flashMode == FlashMode.off
           ? FlashMode.torch
           : FlashMode.off;
-      await controller.setFlashMode(_flashMode);
+      await controller.setFlashMode(nextFlashMode);
+      _flashMode = nextFlashMode;
     } catch (_) {
       _flashMode = FlashMode.off;
-      await controller.setFlashMode(FlashMode.off);
+      await _setFlashModeSafely(controller, FlashMode.off);
     }
+  }
+
+  Future<void> setZoomLevel(double zoomLevel) async {
+    final controller = _cameraController;
+    if (controller == null ||
+        !controller.value.isInitialized ||
+        _maxZoomLevel <= _minZoomLevel) {
+      return;
+    }
+
+    final clampedZoomLevel = zoomLevel
+        .clamp(_minZoomLevel, _maxZoomLevel)
+        .toDouble();
+
+    try {
+      await controller.setZoomLevel(clampedZoomLevel);
+      _zoomLevel = clampedZoomLevel;
+    } catch (_) {
+      // Some devices report a zoom range that rejects edge values. Keep the
+      // current working zoom instead of surfacing a transient camera error.
+    }
+  }
+
+  void startZoomGesture() {
+    _scaleStartZoomLevel = _zoomLevel;
+  }
+
+  Future<void> updateZoomGesture(double scale) async {
+    final startZoomLevel = _scaleStartZoomLevel;
+    if (startZoomLevel == null || scale <= 0) {
+      return;
+    }
+
+    await setZoomLevel(startZoomLevel * scale);
   }
 
   Future<void> onLifecycleChanged(AppLifecycleState appState) async {
@@ -176,7 +227,10 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
     try {
       final imageFile = await controller.takePicture();
-      final croppedPath = await _cropSquareImage(imageFile.path);
+      final croppedPath = await _cropSquareImage(
+        imageFile.path,
+        flipHorizontal: _isUsingFrontCamera,
+      );
 
       final elapsed = DateTime.now().difference(startedAt);
       final remainingDelay = minimumPublishDelay - elapsed;
@@ -222,7 +276,16 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
   void reset() => state = const HomeState.initial();
 
-  Future<String> _cropSquareImage(String sourcePath) async {
+  bool get _isUsingFrontCamera =>
+      _cameras.isNotEmpty &&
+      _cameraIndex >= 0 &&
+      _cameraIndex < _cameras.length &&
+      _cameras[_cameraIndex].lensDirection == CameraLensDirection.front;
+
+  Future<String> _cropSquareImage(
+    String sourcePath, {
+    required bool flipHorizontal,
+  }) async {
     final bytes = await File(sourcePath).readAsBytes();
     final decoded = img.decodeImage(bytes);
     if (decoded == null) {
@@ -241,6 +304,10 @@ class HomeNotifier extends StateNotifier<HomeState> {
       height: squareSize,
     );
 
+    if (flipHorizontal) {
+      img.flipHorizontal(squareImage);
+    }
+
     final lastDot = sourcePath.lastIndexOf('.');
     final pathPrefix = lastDot == -1
         ? sourcePath
@@ -256,16 +323,82 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
   Future<void> _initializeCameraAtIndex(int index) async {
     final selectedCamera = _cameras[index];
+    final previousController = _cameraController;
+    _cameraController = null;
+    await previousController?.dispose();
+
     final controller = CameraController(
       selectedCamera,
-      ResolutionPreset.medium,
+      _cameraResolutionPreset,
       enableAudio: false,
     );
 
-    await controller.initialize().timeout(_cameraInitTimeout);
-    await controller.setFlashMode(_flashMode);
+    try {
+      await controller.initialize().timeout(_cameraInitTimeout);
+      await _setFlashModeForCamera(controller, selectedCamera);
+      _minZoomLevel = await controller.getMinZoomLevel();
+      _maxZoomLevel = await controller.getMaxZoomLevel();
+      _zoomLevel = _minZoomLevel;
+      _debugLogCameraMetrics(controller);
+      _cameraController = controller;
+    } catch (_) {
+      await controller.dispose();
+      rethrow;
+    }
+  }
 
-    await _cameraController?.dispose();
-    _cameraController = controller;
+  Future<bool> _restoreCameraAtIndex(int index) async {
+    try {
+      await _initializeCameraAtIndex(index);
+      return true;
+    } catch (_) {
+      _cameraController = null;
+      return false;
+    }
+  }
+
+  Future<void> _setFlashModeForCamera(
+    CameraController controller,
+    CameraDescription camera,
+  ) async {
+    if (camera.lensDirection == CameraLensDirection.front) {
+      _flashMode = FlashMode.off;
+      await _setFlashModeSafely(controller, FlashMode.off);
+      return;
+    }
+
+    final applied = await _setFlashModeSafely(controller, _flashMode);
+    if (!applied) {
+      _flashMode = FlashMode.off;
+      await _setFlashModeSafely(controller, FlashMode.off);
+    }
+  }
+
+  Future<bool> _setFlashModeSafely(
+    CameraController controller,
+    FlashMode mode,
+  ) async {
+    try {
+      await controller.setFlashMode(mode);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _debugLogCameraMetrics(CameraController controller) {
+    if (!kDebugMode) {
+      return;
+    }
+
+    debugPrint(
+      'HomeNotifier camera '
+      'preset=$_cameraResolutionPreset, '
+      'previewSize=${controller.value.previewSize}, '
+      'controllerAspectRatio=${controller.value.aspectRatio}, '
+      'zoomLevel=$_zoomLevel, '
+      'minZoomLevel=$_minZoomLevel, '
+      'maxZoomLevel=$_maxZoomLevel',
+    );
   }
 }

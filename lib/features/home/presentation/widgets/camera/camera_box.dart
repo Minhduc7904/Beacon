@@ -1,4 +1,5 @@
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -83,25 +84,113 @@ class _HomeCameraPreview extends ConsumerWidget {
       return _HomeCameraPlaceholder(cameraBoxSize: cameraBoxSize);
     }
 
-    final previewSize = controller.value.previewSize;
-    if (previewSize == null) {
-      return _HomeCameraPlaceholder(cameraBoxSize: cameraBoxSize);
+    return GestureDetector(
+      onScaleStart: (_) =>
+          ref.read(homeNotifierProvider.notifier).startZoomGesture(),
+      onScaleUpdate: (details) {
+        if (details.pointerCount < 2) {
+          return;
+        }
+
+        ref.read(homeNotifierProvider.notifier).updateZoomGesture(
+              details.scale,
+            );
+      },
+      child: SquareCameraPreview(controller: controller),
+    );
+  }
+}
+
+class SquareCameraPreview extends StatelessWidget {
+  const SquareCameraPreview({super.key, required this.controller});
+
+  final CameraController controller;
+  static String? _lastDebugSignature;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final previewSize = controller.value.previewSize;
+        final previewAspectRatio = _displayPreviewAspectRatio(context);
+        final previewHeight = constraints.maxHeight;
+        final previewWidth = previewHeight * previewAspectRatio;
+
+        _debugLogPreviewMetrics(
+          frameWidth: constraints.maxWidth,
+          frameHeight: constraints.maxHeight,
+          previewAspectRatio: previewAspectRatio,
+          previewSize: previewSize,
+        );
+
+        return ClipRect(
+          child: OverflowBox(
+            alignment: Alignment.center,
+            maxWidth: double.infinity,
+            maxHeight: double.infinity,
+            child: FittedBox(
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: previewWidth,
+                height: previewHeight,
+                child: CameraPreview(controller),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  double _displayPreviewAspectRatio(BuildContext context) {
+    final cameraAspectRatio = controller.value.aspectRatio;
+    if (cameraAspectRatio <= 0) {
+      return 1;
     }
 
-    return ClipRect(
-      child: OverflowBox(
-        alignment: Alignment.center,
-        maxWidth: double.infinity,
-        maxHeight: double.infinity,
-        child: FittedBox(
-          fit: BoxFit.cover,
-          child: SizedBox(
-            width: previewSize.height,
-            height: previewSize.width,
-            child: CameraPreview(controller),
-          ),
-        ),
-      ),
+    final isPortrait = MediaQuery.orientationOf(context) == Orientation.portrait;
+    if (isPortrait && cameraAspectRatio > 1) {
+      return 1 / cameraAspectRatio;
+    }
+
+    if (!isPortrait && cameraAspectRatio < 1) {
+      return 1 / cameraAspectRatio;
+    }
+
+    return cameraAspectRatio;
+  }
+
+  void _debugLogPreviewMetrics({
+    required double frameWidth,
+    required double frameHeight,
+    required double previewAspectRatio,
+    required Size? previewSize,
+  }) {
+    if (!kDebugMode) {
+      return;
+    }
+
+    final signature = Object.hash(
+      previewSize?.width,
+      previewSize?.height,
+      controller.value.aspectRatio,
+      frameWidth,
+      frameHeight,
+      previewAspectRatio,
+    ).toString();
+
+    if (_lastDebugSignature == signature) {
+      return;
+    }
+
+    _lastDebugSignature = signature;
+    debugPrint(
+      'SquareCameraPreview '
+      'previewSize=$previewSize, '
+      'controllerAspectRatio=${controller.value.aspectRatio}, '
+      'computedPreviewAspectRatio=$previewAspectRatio, '
+      'frame=${frameWidth}x$frameHeight',
     );
   }
 }
