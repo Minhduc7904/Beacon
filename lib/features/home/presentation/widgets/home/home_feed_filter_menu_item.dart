@@ -15,8 +15,17 @@ class HomeFeedFilterAllFriendsItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return const _HomeFeedFilterMenuRow(
       leading: _AllFriendsIcon(),
-      label: 'Tat ca ban be',
+      label: 'Tất cả bạn bè',
     );
+  }
+}
+
+class HomeFeedFilterMyPostsItem extends StatelessWidget {
+  const HomeFeedFilterMyPostsItem({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const _HomeFeedFilterMenuRow(leading: _MyPostsIcon(), label: 'Tôi');
   }
 }
 
@@ -28,7 +37,7 @@ class HomeFeedFilterFriendItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = friend.fullName.trim().isEmpty
-        ? 'Ban be'
+        ? 'Bạn bè'
         : friend.fullName.trim();
 
     return _HomeFeedFilterMenuRow(
@@ -116,6 +125,25 @@ class _AllFriendsIcon extends StatelessWidget {
       ),
       child: const Center(
         child: AppIcon(AppIcons.users, size: 18, color: AppColors.ink500),
+      ),
+    );
+  }
+}
+
+class _MyPostsIcon extends StatelessWidget {
+  const _MyPostsIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: const BoxDecoration(
+        color: AppColors.sky100,
+        shape: BoxShape.circle,
+      ),
+      child: const Center(
+        child: AppIcon(AppIcons.user, size: 18, color: AppColors.ink500),
       ),
     );
   }

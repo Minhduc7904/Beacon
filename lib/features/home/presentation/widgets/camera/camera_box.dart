@@ -92,9 +92,9 @@ class _HomeCameraPreview extends ConsumerWidget {
           return;
         }
 
-        ref.read(homeNotifierProvider.notifier).updateZoomGesture(
-              details.scale,
-            );
+        ref
+            .read(homeNotifierProvider.notifier)
+            .updateZoomGesture(details.scale);
       },
       child: SquareCameraPreview(controller: controller),
     );
@@ -149,7 +149,8 @@ class SquareCameraPreview extends StatelessWidget {
       return 1;
     }
 
-    final isPortrait = MediaQuery.orientationOf(context) == Orientation.portrait;
+    final isPortrait =
+        MediaQuery.orientationOf(context) == Orientation.portrait;
     if (isPortrait && cameraAspectRatio > 1) {
       return 1 / cameraAspectRatio;
     }
