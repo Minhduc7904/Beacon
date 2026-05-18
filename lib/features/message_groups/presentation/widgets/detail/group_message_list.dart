@@ -8,7 +8,7 @@ import '../../../../../core/utils/time_utils.dart';
 import '../../../../../core/widgets/image/user_avatar.dart';
 import '../../../../../core/widgets/text/text.dart';
 import '../../../../posts/domain/entities/post.dart';
-import '../../../../posts/presentation/widgets/post_location_map_dialog.dart';
+import '../../../../posts/presentation/widgets/post_location_map_button.dart';
 import '../../../domain/entities/group_message.dart';
 import '../../../domain/entities/message_group_member.dart';
 import 'group_chat_bubble.dart';
@@ -516,29 +516,11 @@ class _MessagePostPreview extends StatelessWidget {
               Positioned(
                 right: 12,
                 top: post.dailySafetyRecord != null ? 62 : 12,
-                child: Material(
-                  color: Colors.black.withValues(alpha: 0.42),
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    onTap: () => _showLocationDialog(context),
-                    customBorder: const CircleBorder(),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.24),
-                          width: 1,
-                        ),
-                      ),
-                      child: const AppIcon(
-                        AppIcons.mapPin,
-                        size: 20,
-                        color: AppColors.sky100,
-                        semanticLabel: 'Xem vị trí',
-                      ),
-                    ),
-                  ),
+                child: PostLocationMapButton(
+                  latitude: post.latitude!,
+                  longitude: post.longitude!,
+                  displayName: _displayName,
+                  avatarUrl: post.owner?.avatarUrl,
                 ),
               ),
             if (caption.isNotEmpty)
@@ -573,18 +555,6 @@ class _MessagePostPreview extends StatelessWidget {
               ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showLocationDialog(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => PostLocationMapDialog(
-        latitude: post.latitude!,
-        longitude: post.longitude!,
-        displayName: _displayName,
-        avatarUrl: post.owner?.avatarUrl,
       ),
     );
   }

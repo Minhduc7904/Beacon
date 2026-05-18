@@ -6,6 +6,7 @@ import '../../../../core/theme/color/app_colors.dart';
 import '../../../../core/theme/text/app_text_theme.dart';
 import '../../../../core/widgets/image/user_avatar.dart';
 import '../../../../core/widgets/text/text.dart';
+import 'google_maps_button.dart';
 
 class PostLocationMapDialog extends StatelessWidget {
   const PostLocationMapDialog({
@@ -93,6 +94,11 @@ class PostLocationMapDialog extends StatelessWidget {
                 onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(Icons.close_rounded),
               ),
+            ),
+            Positioned(
+              right: 14,
+              bottom: 14,
+              child: GoogleMapsButton(latitude: latitude, longitude: longitude),
             ),
           ],
         ),
