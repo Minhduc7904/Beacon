@@ -73,6 +73,17 @@ class _SplashPageState extends ConsumerState<SplashPage> {
         return;
       }
 
+      final targetPostId = ref
+          .read(pushNotificationServiceProvider)
+          .consumePendingPostReactionPostId();
+      if (targetPostId != null && targetPostId.trim().isNotEmpty) {
+        context.go(
+          AppRoutes.home,
+          extra: <String, dynamic>{'targetPostId': targetPostId.trim()},
+        );
+        return;
+      }
+
       context.go(AppRoutes.home);
       return;
     }

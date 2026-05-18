@@ -31,6 +31,8 @@ class PushNotificationService {
        _deleteFcmTokenUseCase = deleteFcmTokenUseCase;
 
   static const String messageNewType = 'MESSAGE_NEW';
+  static const String notificationType = 'NOTIFICATION';
+  static const String postReactionNotificationType = 'PostReaction';
   static const String _androidChannelId = 'beacon_messages';
   static const String _androidChannelName = 'Messages';
   static const String _androidChannelDescription =
@@ -44,6 +46,7 @@ class PushNotificationService {
   StreamSubscription<String>? _tokenRefreshSubscription;
   StreamSubscription<RemoteMessage>? _foregroundSubscription;
   StreamSubscription<RemoteMessage>? _openedAppSubscription;
+  String? _pendingPostReactionPostId;
   bool _initialized = false;
 
   bool get _isSupported {
@@ -188,15 +191,15 @@ class PushNotificationService {
   }
 
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    if (message.data['type'] != messageNewType) {
+    if (!_canShowForegroundNotification(message.data)) {
       return;
     }
 
     final notification = message.notification;
     final title = notification?.title?.trim().isNotEmpty == true
         ? notification!.title!
-        : 'Tin nhan moi';
-    final body = notification?.body ?? '';
+        : _fallbackNotificationTitle(message.data);
+    final body = _localNotificationBody(message);
     final payload = jsonEncode(message.data);
 
     await _localNotifications.show(
@@ -247,6 +250,18 @@ class PushNotificationService {
   }
 
   void _navigateFromData(Map<String, dynamic> data) {
+    if (_isPostReactionNotification(data)) {
+      final payload = _parsePostReactionPayload(data);
+      final postId = payload?.postId.trim();
+      if (postId == null || postId.isEmpty) {
+        return;
+      }
+
+      _pendingPostReactionPostId = postId;
+      _openHomeForPostReaction(postId);
+      return;
+    }
+
     if (data['type'] != messageNewType) {
       return;
     }
@@ -280,6 +295,73 @@ class PushNotificationService {
     }
   }
 
+  String? consumePendingPostReactionPostId() {
+    final postId = _pendingPostReactionPostId;
+    _pendingPostReactionPostId = null;
+    return postId;
+  }
+
+  bool _canShowForegroundNotification(Map<String, dynamic> data) {
+    return data['type'] == messageNewType || _isPostReactionNotification(data);
+  }
+
+  bool _isPostReactionNotification(Map<String, dynamic> data) {
+    return data['type'] == notificationType &&
+        data['notificationType'] == postReactionNotificationType;
+  }
+
+  _PostReactionNotificationPayload? _parsePostReactionPayload(
+    Map<String, dynamic> data,
+  ) {
+    final rawPayload = data['data'];
+    if (rawPayload is! String || rawPayload.trim().isEmpty) {
+      return null;
+    }
+
+    try {
+      final decoded = jsonDecode(rawPayload);
+      if (decoded is! Map<String, dynamic>) {
+        return null;
+      }
+
+      return _PostReactionNotificationPayload.fromJson(decoded);
+    } on FormatException {
+      return null;
+    }
+  }
+
+  String _fallbackNotificationTitle(Map<String, dynamic> data) {
+    if (_isPostReactionNotification(data)) {
+      return 'Co nguoi vua react bai dang';
+    }
+
+    return 'Tin nhan moi';
+  }
+
+  String _localNotificationBody(RemoteMessage message) {
+    final body = message.notification?.body ?? '';
+    final payload = _parsePostReactionPayload(message.data);
+    final reactionIcon = payload?.reactionIcon.trim();
+    if (reactionIcon == null || reactionIcon.isEmpty) {
+      return body;
+    }
+
+    if (body.trim().isEmpty) {
+      return reactionIcon;
+    }
+
+    return '$reactionIcon $body';
+  }
+
+  void _openHomeForPostReaction(String postId) {
+    final extra = <String, dynamic>{'targetPostId': postId};
+    try {
+      appRouter.goNamed(AppRoutes.homeName, extra: extra);
+    } on GoException {
+      appRouter.go(AppRoutes.home, extra: extra);
+    }
+  }
+
   Future<void> _sendTokenToBackend(String token) async {
     final trimmedToken = token.trim();
     if (trimmedToken.isEmpty) {
@@ -304,5 +386,33 @@ class PushNotificationService {
       case TargetPlatform.windows:
         return defaultTargetPlatform.name;
     }
+  }
+}
+
+class _PostReactionNotificationPayload {
+  const _PostReactionNotificationPayload({
+    required this.postId,
+    required this.reactionIcon,
+    required this.reactorUserId,
+    required this.reactorDisplayName,
+    required this.reactorAvatarUrl,
+  });
+
+  final String postId;
+  final String reactionIcon;
+  final String reactorUserId;
+  final String reactorDisplayName;
+  final String reactorAvatarUrl;
+
+  factory _PostReactionNotificationPayload.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return _PostReactionNotificationPayload(
+      postId: json['postId']?.toString() ?? '',
+      reactionIcon: json['reactionIcon']?.toString() ?? '',
+      reactorUserId: json['reactorUserId']?.toString() ?? '',
+      reactorDisplayName: json['reactorDisplayName']?.toString() ?? '',
+      reactorAvatarUrl: json['reactorAvatarUrl']?.toString() ?? '',
+    );
   }
 }

@@ -217,13 +217,23 @@ final appRouter = GoRouter(
       name: AppRoutes.homeName,
       builder: (context, state) {
         var autoCaptureOnOpen = false;
+        String? targetPostId;
         final extra = state.extra;
 
         if (extra is Map<String, dynamic>) {
           autoCaptureOnOpen = extra['autoCaptureOnOpen'] == true;
+          final postId = extra['targetPostId'];
+          if (postId is String && postId.trim().isNotEmpty) {
+            targetPostId = postId.trim();
+          }
         }
 
-        return AuthGuard(child: HomePage(autoCaptureOnOpen: autoCaptureOnOpen));
+        return AuthGuard(
+          child: HomePage(
+            autoCaptureOnOpen: autoCaptureOnOpen,
+            targetPostId: targetPostId,
+          ),
+        );
       },
     ),
     GoRoute(

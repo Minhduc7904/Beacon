@@ -32,9 +32,14 @@ import 'home_action_row.dart';
 import 'home_feed_indicator.dart';
 
 class HomeBody extends ConsumerStatefulWidget {
-  const HomeBody({super.key, required this.onFeedVisibilityChanged});
+  const HomeBody({
+    super.key,
+    required this.onFeedVisibilityChanged,
+    this.targetPostId,
+  });
 
   final ValueChanged<bool> onFeedVisibilityChanged;
+  final String? targetPostId;
 
   @override
   ConsumerState<HomeBody> createState() => _HomeBodyState();
@@ -42,11 +47,22 @@ class HomeBody extends ConsumerStatefulWidget {
 
 class _HomeBodyState extends ConsumerState<HomeBody> {
   late final PageController _pageController;
+  String? _handledTargetPostId;
+  bool _isHandlingTargetPost = false;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    _scheduleTargetPostScroll();
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.targetPostId != widget.targetPostId) {
+      _scheduleTargetPostScroll();
+    }
   }
 
   @override
@@ -61,6 +77,103 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
       duration: const Duration(milliseconds: 450),
       curve: Curves.easeOutCubic,
     );
+  }
+
+  void _scheduleTargetPostScroll() {
+    final postId = widget.targetPostId?.trim();
+    if (postId == null ||
+        postId.isEmpty ||
+        postId == _handledTargetPostId ||
+        _isHandlingTargetPost) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      unawaited(_openTargetPost(postId));
+    });
+  }
+
+  Future<void> _openTargetPost(String postId) async {
+    if (_isHandlingTargetPost) {
+      return;
+    }
+
+    _isHandlingTargetPost = true;
+    try {
+      await _ensureFeedContainsPost(postId);
+      if (!mounted) {
+        return;
+      }
+
+      final feedState = ref.read(feedProvider);
+      final postIndex = feedState.posts.indexWhere((post) => post.id == postId);
+      if (postIndex == -1) {
+        ref
+            .read(appMessageProvider.notifier)
+            .addWarning('Khong tim thay bai dang vua co tuong tac');
+        return;
+      }
+
+      if (feedState.viewMode == FeedViewMode.grid) {
+        ref.read(feedProvider.notifier).updateViewMode(FeedViewMode.single);
+        await Future<void>.delayed(const Duration(milliseconds: 16));
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      _handledTargetPostId = postId;
+      widget.onFeedVisibilityChanged(true);
+      final targetPage = postIndex + 1;
+      if (_pageController.hasClients) {
+        await _pageController.animateToPage(
+          targetPage,
+          duration: const Duration(milliseconds: 450),
+          curve: Curves.easeOutCubic,
+        );
+      } else {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _pageController.hasClients) {
+            _pageController.jumpToPage(targetPage);
+          }
+        });
+      }
+
+      final post = ref.read(feedProvider).posts[postIndex];
+      _handleVisibleFeedPost(post);
+    } finally {
+      _isHandlingTargetPost = false;
+    }
+  }
+
+  Future<void> _ensureFeedContainsPost(String postId) async {
+    var feedState = ref.read(feedProvider);
+    if (feedState.posts.any((post) => post.id == postId)) {
+      return;
+    }
+
+    await ref.read(feedProvider.notifier).load(forceRefresh: true);
+    if (!mounted) {
+      return;
+    }
+
+    feedState = ref.read(feedProvider);
+    var attempts = 0;
+    while (!feedState.posts.any((post) => post.id == postId) &&
+        feedState.hasMore &&
+        attempts < 10) {
+      await ref.read(feedProvider.notifier).loadMore();
+      if (!mounted) {
+        return;
+      }
+      feedState = ref.read(feedProvider);
+      attempts += 1;
+    }
   }
 
   void _handlePageChanged(int index) {

@@ -10,9 +10,10 @@ import '../widgets/home/home_center_scaffold.dart';
 import '../widgets/home/home_keep_alive_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
-  const HomePage({super.key, this.autoCaptureOnOpen = false});
+  const HomePage({super.key, this.autoCaptureOnOpen = false, this.targetPostId});
 
   final bool autoCaptureOnOpen;
+  final String? targetPostId;
 
   @override
   ConsumerState<HomePage> createState() => _HomePageState();
@@ -166,6 +167,7 @@ class _HomePageState extends ConsumerState<HomePage>
             onOpenMessages: () => _animateToPage(_messagePageIndex),
             streakDays: streakDays,
             unreadMessages: unreadMessageCount,
+            targetPostId: widget.targetPostId,
           ),
         ),
         HomeKeepAlivePage(

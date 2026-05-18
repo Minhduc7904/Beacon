@@ -13,12 +13,14 @@ class HomeCenterScaffold extends ConsumerStatefulWidget {
     required this.onOpenMessages,
     required this.streakDays,
     required this.unreadMessages,
+    this.targetPostId,
   });
 
   final VoidCallback onOpenProfile;
   final VoidCallback onOpenMessages;
   final int streakDays;
   final int unreadMessages;
+  final String? targetPostId;
 
   @override
   ConsumerState<HomeCenterScaffold> createState() => _HomeCenterScaffoldState();
@@ -69,6 +71,7 @@ class _HomeCenterScaffoldState extends ConsumerState<HomeCenterScaffold> {
           SafeArea(
             child: HomeBody(
               onFeedVisibilityChanged: _handleFeedVisibilityChanged,
+              targetPostId: widget.targetPostId,
             ),
           ),
         ],
