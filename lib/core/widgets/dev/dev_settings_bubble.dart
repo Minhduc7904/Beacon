@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,8 +31,13 @@ class DevSettingsBubble extends ConsumerStatefulWidget {
 }
 
 class _DevSettingsBubbleState extends ConsumerState<DevSettingsBubble> {
+  static const double _bubbleSize = 40;
+  static const double _initialEndOffset = 16;
+  static const double _initialBottomOffset = 12;
+
   DevNavigationMode _mode = DevNavigationMode.push;
   bool _isMenuOpen = false;
+  Offset? _bubbleOffset;
   final TestPostMediaRunnerController _runnerController =
       TestPostMediaRunnerController();
 
@@ -404,6 +411,61 @@ class _DevSettingsBubbleState extends ConsumerState<DevSettingsBubble> {
     }
   }
 
+  Offset _initialBubbleOffset(Size viewportSize, EdgeInsets safePadding) {
+    return _clampBubbleOffset(
+      Offset(
+        viewportSize.width -
+            safePadding.right -
+            _bubbleSize -
+            _initialEndOffset,
+        viewportSize.height -
+            safePadding.bottom -
+            _bubbleSize -
+            _initialBottomOffset,
+      ),
+      viewportSize,
+      safePadding,
+    );
+  }
+
+  Offset _clampBubbleOffset(
+    Offset offset,
+    Size viewportSize,
+    EdgeInsets safePadding,
+  ) {
+    final minX = safePadding.left;
+    final minY = safePadding.top;
+    final maxX = math.max(
+      minX,
+      viewportSize.width - safePadding.right - _bubbleSize,
+    );
+    final maxY = math.max(
+      minY,
+      viewportSize.height - safePadding.bottom - _bubbleSize,
+    );
+
+    return Offset(
+      offset.dx.clamp(minX, maxX).toDouble(),
+      offset.dy.clamp(minY, maxY).toDouble(),
+    );
+  }
+
+  void _updateBubbleOffset(
+    DragUpdateDetails details,
+    Size viewportSize,
+    EdgeInsets safePadding,
+  ) {
+    setState(() {
+      final currentOffset =
+          _bubbleOffset ?? _initialBubbleOffset(viewportSize, safePadding);
+      _bubbleOffset = _clampBubbleOffset(
+        currentOffset + details.delta,
+        viewportSize,
+        safePadding,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen<AuthState>(authNotifierProvider, (_, state) {
@@ -451,37 +513,56 @@ class _DevSettingsBubbleState extends ConsumerState<DevSettingsBubble> {
     final isRunnerBubbleVisible = flowState.isRunning;
 
     return SizedBox.expand(
-      child: Stack(
-        children: [
-          Positioned(
-            right: 16,
-            bottom: 0,
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: FloatingActionButton.small(
-                  heroTag: 'dev_settings_bubble',
-                  onPressed: _isMenuOpen ? null : _openMainMenu,
-                  child: const AppIcon(AppIcons.settings),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final viewportSize = Size(
+            constraints.maxWidth,
+            constraints.maxHeight,
+          );
+          final safePadding = MediaQuery.of(context).padding;
+          final resolvedBubbleOffset = _clampBubbleOffset(
+            _bubbleOffset ?? _initialBubbleOffset(viewportSize, safePadding),
+            viewportSize,
+            safePadding,
+          );
+
+          return Stack(
+            children: [
+              Positioned(
+                left: resolvedBubbleOffset.dx,
+                top: resolvedBubbleOffset.dy,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onPanUpdate: (details) {
+                    _updateBubbleOffset(details, viewportSize, safePadding);
+                  },
+                  child: SizedBox.square(
+                    dimension: _bubbleSize,
+                    child: FloatingActionButton.small(
+                      heroTag: 'dev_settings_bubble',
+                      onPressed: _isMenuOpen ? null : _openMainMenu,
+                      child: const AppIcon(AppIcons.settings),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          if (isRunnerBubbleVisible && _runnerController.isRunnerSheetVisible)
-            Positioned.fill(
-              child: DevTestRunnerSheet(
-                stepLogs: flowState.stepLogs,
-                isContinueBlocked: flowState.hasBlockingError,
-                isFlowCompleted: flowState.isCompleted,
-                isRunAllRunning: _runnerController.isRunAllRunning,
-                onContinue: _continueRunnerStep,
-                onRunAll: _runAllSteps,
-                onRestart: _restartRunner,
-                onStop: _stopRunner,
-              ),
-            ),
-        ],
+              if (isRunnerBubbleVisible &&
+                  _runnerController.isRunnerSheetVisible)
+                Positioned.fill(
+                  child: DevTestRunnerSheet(
+                    stepLogs: flowState.stepLogs,
+                    isContinueBlocked: flowState.hasBlockingError,
+                    isFlowCompleted: flowState.isCompleted,
+                    isRunAllRunning: _runnerController.isRunAllRunning,
+                    onContinue: _continueRunnerStep,
+                    onRunAll: _runAllSteps,
+                    onRestart: _restartRunner,
+                    onStop: _stopRunner,
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

@@ -17,9 +17,9 @@ Giúp agent luôn đọc đúng file nguồn sự thật trước khi sinh code.
 
 ## Context bắt buộc cho Beacon
 
-1. `.github/copilot-instructions.md`
-2. `.github/instructions/project-context.md`
-3. `.github/instructions/architecture-rules.md`
+1. `.agents/copilot-instructions.md`
+2. `.agents/instructions/project-context.md`
+3. `.agents/instructions/architecture-rules.md`
 4. `lib/core/providers/providers.dart`
 5. `lib/core/config/app_routes.dart` + `lib/core/config/app_router.dart`
 6. Các docs trong `docs/` liên quan task

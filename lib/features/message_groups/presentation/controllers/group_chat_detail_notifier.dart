@@ -183,7 +183,11 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
     );
   }
 
-  void _onSeenStatus(String? seenByUserId, String lastSeenMessageId) {
+  void _onSeenStatus(
+    String? seenByUserId,
+    String lastSeenMessageId,
+    DateTime? seenAtUtc,
+  ) {
     final detail = state.groupDetail;
     if (detail == null) {
       return;
@@ -216,6 +220,7 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
       avatarUrl: target.avatarUrl,
       role: target.role,
       lastSeenMessageId: lastSeenMessageId,
+      lastSeenAtUtc: seenAtUtc ?? DateTime.now().toUtc(),
     );
 
     state = state.copyWith(

@@ -119,4 +119,4 @@ Mỗi feature bám Clean Architecture: `data -> domain -> presentation`.
 
 1. Không hardcode route/endpoint/storage key ngoài source-of-truth.
 2. Không khởi tạo dependency trực tiếp trong page/widget nếu đã có provider.
-3. Với thay đổi lớn về kiến trúc, cập nhật lại tài liệu trong `docs/` và `.github/` cùng lúc.
+3. Với thay đổi lớn về kiến trúc, cập nhật lại tài liệu trong `docs/` và `.agents/` cùng lúc.

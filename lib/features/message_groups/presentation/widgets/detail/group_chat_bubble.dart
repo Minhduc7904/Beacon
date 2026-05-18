@@ -4,20 +4,17 @@ import '../../../../../core/utils/time_utils.dart';
 import '../../../../../core/theme/text/app_text_theme.dart';
 import '../../../../../core/widgets/text/text.dart';
 import '../../../domain/entities/group_message.dart';
-import '../../../domain/entities/message_group_member.dart';
 
 class GroupChatBubble extends StatelessWidget {
   const GroupChatBubble({
     super.key,
     required this.message,
-    required this.seenMembers,
     required this.currentUserId,
     required this.timeRevealProgress,
     required this.contentShift,
   });
 
   final GroupMessage message;
-  final List<MessageGroupMember> seenMembers;
   final String? currentUserId;
   final double timeRevealProgress;
   final double contentShift;
@@ -109,74 +106,12 @@ class GroupChatBubble extends StatelessWidget {
                     weight: AppTextWeight.regular,
                     color: isMe ? colorScheme.onPrimary : colorScheme.onSurface,
                   ),
-                  if (isMe && seenMembers.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        for (var i = 0; i < seenMembers.length && i < 3; i++)
-                          Transform.translate(
-                            offset: Offset(i == 0 ? 0 : -6.0 * i, 0),
-                            child: _SeenAvatar(member: seenMembers[i]),
-                          ),
-                        if (seenMembers.length > 3)
-                          AppText(
-                            '+${seenMembers.length - 3}',
-                            size: AppTextSize.veryTiny,
-                            spacing: AppTextSpacing.tight,
-                            weight: AppTextWeight.medium,
-                            color: colorScheme.onPrimary.withValues(alpha: 0.7),
-                          ),
-                      ],
-                    ),
-                  ],
                 ],
               ),
             ),
           ),
         ),
       ],
-    );
-  }
-}
-
-class _SeenAvatar extends StatelessWidget {
-  const _SeenAvatar({required this.member});
-
-  final MessageGroupMember member;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final text = (member.givenName?.trim().isNotEmpty ?? false)
-        ? member.givenName!.trim()
-        : (member.familyName?.trim() ?? 'U');
-    final initial = text.isEmpty ? 'U' : text[0].toUpperCase();
-
-    final hasAvatarUrl =
-        member.avatarUrl != null && member.avatarUrl!.trim().isNotEmpty;
-
-    return Container(
-      margin: const EdgeInsets.only(right: 2),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: colorScheme.surface, width: 1.5),
-      ),
-      child: CircleAvatar(
-        radius: 8,
-        backgroundColor: colorScheme.surfaceContainerHighest,
-        backgroundImage: hasAvatarUrl ? NetworkImage(member.avatarUrl!) : null,
-        child: hasAvatarUrl
-            ? null
-            : Text(
-                initial,
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-      ),
     );
   }
 }

@@ -11,7 +11,7 @@ Thư mục này là bộ hướng dẫn vận hành GitHub Copilot Agent theo ch
 ## Cấu trúc
 
 ```
-.github/
+.agents/
 ├── README.md
 ├── instructions/
 │   ├── project-context.md

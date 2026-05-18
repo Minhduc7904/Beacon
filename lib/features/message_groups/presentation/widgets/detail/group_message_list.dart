@@ -6,6 +6,7 @@ import '../../../../../core/widgets/text/text.dart';
 import '../../../domain/entities/group_message.dart';
 import '../../../domain/entities/message_group_member.dart';
 import 'group_chat_bubble.dart';
+import 'group_message_seen_indicator.dart';
 
 class GroupMessageList extends StatefulWidget {
   const GroupMessageList({
@@ -14,12 +15,14 @@ class GroupMessageList extends StatefulWidget {
     required this.members,
     required this.scrollController,
     required this.currentUserId,
+    required this.isPrivateChat,
   });
 
   final List<GroupMessage> messages;
   final List<MessageGroupMember> members;
   final ScrollController scrollController;
   final String? currentUserId;
+  final bool isPrivateChat;
 
   @override
   State<GroupMessageList> createState() => _GroupMessageListState();
@@ -166,12 +169,16 @@ class _GroupMessageListState extends State<GroupMessageList>
                 );
               }
 
-              return GroupChatBubble(
-                message: item.message!,
-                seenMembers: seenByMessageId[item.message!.id] ?? const [],
+              final message = item.message!;
+              final contentShift =
+                  _timeRevealShift * _timeRevealController.value;
+              return _MessageWithSeenIndicator(
+                message: message,
+                seenMembers: seenByMessageId[message.id] ?? const [],
                 currentUserId: widget.currentUserId,
+                isPrivateChat: widget.isPrivateChat,
                 timeRevealProgress: _timeRevealController.value,
-                contentShift: _timeRevealShift * _timeRevealController.value,
+                contentShift: contentShift,
               );
             },
           ),
@@ -203,6 +210,47 @@ class _GroupMessageListState extends State<GroupMessageList>
       seenByMessageId.putIfAbsent(seenMessageId, () => []).add(member);
     }
     return seenByMessageId;
+  }
+}
+
+class _MessageWithSeenIndicator extends StatelessWidget {
+  const _MessageWithSeenIndicator({
+    required this.message,
+    required this.seenMembers,
+    required this.currentUserId,
+    required this.isPrivateChat,
+    required this.timeRevealProgress,
+    required this.contentShift,
+  });
+
+  final GroupMessage message;
+  final List<MessageGroupMember> seenMembers;
+  final String? currentUserId;
+  final bool isPrivateChat;
+  final double timeRevealProgress;
+  final double contentShift;
+
+  bool get _isMine => currentUserId != null && currentUserId == message.senderId;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GroupChatBubble(
+          message: message,
+          currentUserId: currentUserId,
+          timeRevealProgress: timeRevealProgress,
+          contentShift: contentShift,
+        ),
+        if (_isMine && seenMembers.isNotEmpty)
+          GroupMessageSeenIndicator(
+            seenMembers: seenMembers,
+            isPrivateChat: isPrivateChat,
+            contentShift: contentShift,
+          ),
+      ],
+    );
   }
 }
 
