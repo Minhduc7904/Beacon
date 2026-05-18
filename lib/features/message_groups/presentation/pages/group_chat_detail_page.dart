@@ -257,6 +257,7 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
           members: state.groupDetail?.members ?? const [],
           scrollController: _scrollController,
           currentUserId: currentUserId,
+          isPrivateChat: state.groupDetail?.isPrivate ?? widget.group.isPrivate,
         );
     }
   }

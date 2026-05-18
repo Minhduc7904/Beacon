@@ -4,23 +4,23 @@ Tài liệu này mô tả toàn bộ hệ thống agent persona và skills nội
 
 ## 1) Vị trí thư mục
 
-- Bộ rules tổng: `.github/copilot-instructions.md`
-- Bộ agent/skills cục bộ: `.github/`
+- Bộ rules tổng: `.agents/copilot-instructions.md`
+- Bộ agent/skills cục bộ: `.agents/`
 
 ## 2) Danh sách Agents
 
 ### 1. `code-reviewer`
-- File: `.github/agents/code-reviewer.md`
+- File: `.agents/agents/code-reviewer.md`
 - Công dụng: review code trước merge theo các trục correctness, kiến trúc, maintainability, security, verification.
 - Dùng khi: trước khi merge PR hoặc khi cần đánh giá chất lượng tổng thể thay đổi.
 
 ### 2. `test-engineer`
-- File: `.github/agents/test-engineer.md`
+- File: `.agents/agents/test-engineer.md`
 - Công dụng: đề xuất chiến lược test, coverage và kịch bản verify theo mức rủi ro.
 - Dùng khi: thêm logic mới, sửa bug quan trọng, chạm auth/routing/network.
 
 ### 3. `security-auditor`
-- File: `.github/agents/security-auditor.md`
+- File: `.agents/agents/security-auditor.md`
 - Công dụng: audit bảo mật tập trung auth/token/storage/network.
 - Dùng khi: thay đổi liên quan đăng nhập, token, interceptor, lưu dữ liệu cục bộ.
 
@@ -29,86 +29,86 @@ Tài liệu này mô tả toàn bộ hệ thống agent persona và skills nội
 ### Nhóm Define / Plan
 
 1. `spec-skill`
-- File: `.github/skills/spec-skill/SKILL.md`
+- File: `.agents/skills/spec-skill/SKILL.md`
 - Dùng để chốt phạm vi, acceptance criteria, ràng buộc kỹ thuật trước khi code.
 
 2. `planning-task-skill`
-- File: `.github/skills/planning-task-skill/SKILL.md`
+- File: `.agents/skills/planning-task-skill/SKILL.md`
 - Dùng để tách task lớn thành lát cắt nhỏ, dễ verify, dễ review.
 
 ### Nhóm Build
 
 3. `context-engineering-skill`
-- File: `.github/skills/context-engineering-skill/SKILL.md`
+- File: `.agents/skills/context-engineering-skill/SKILL.md`
 - Dùng để nạp đúng context và source-of-truth trước khi agent sửa code.
 
 4. `flutter-feature-skill`
-- File: `.github/skills/flutter-feature-skill/SKILL.md`
+- File: `.agents/skills/flutter-feature-skill/SKILL.md`
 - Dùng khi thêm/mở rộng feature Flutter theo clean architecture.
 
 5. `ui-design-skill`
-- File: `.github/skills/ui-design-skill/SKILL.md`
+- File: `.agents/skills/ui-design-skill/SKILL.md`
 - Dùng khi tạo/chỉnh UI và cần bám chặt typography, color theme, shared widgets.
 - Checklist verify trước merge: `docs/ui_design_checklist.md`
 
 6. `api-integration-skill`
-- File: `.github/skills/api-integration-skill/SKILL.md`
+- File: `.agents/skills/api-integration-skill/SKILL.md`
 - Dùng khi thêm/chỉnh endpoint, model mapping, failure handling.
 
 ### Nhóm Verify
 
 7. `test-strategy-skill`
-- File: `.github/skills/test-strategy-skill/SKILL.md`
+- File: `.agents/skills/test-strategy-skill/SKILL.md`
 - Dùng để xác định test level và checklist verify cho từng thay đổi.
 
 8. `bugfix-skill`
-- File: `.github/skills/bugfix-skill/SKILL.md`
+- File: `.agents/skills/bugfix-skill/SKILL.md`
 - Dùng để sửa bug theo 5 bước reproduce -> localize -> reduce -> fix -> guard.
 
 9. `performance-skill`
-- File: `.github/skills/performance-skill/SKILL.md`
+- File: `.agents/skills/performance-skill/SKILL.md`
 - Dùng khi có dấu hiệu chậm, rebuild dư thừa, network inefficiency.
 
 ### Nhóm Review
 
 10. `code-review-skill`
-- File: `.github/skills/code-review-skill/SKILL.md`
+- File: `.agents/skills/code-review-skill/SKILL.md`
 - Dùng như quality gate trước merge.
 
 11. `security-hardening-skill`
-- File: `.github/skills/security-hardening-skill/SKILL.md`
+- File: `.agents/skills/security-hardening-skill/SKILL.md`
 - Dùng để rà soát bảo mật cho thay đổi nhạy cảm.
 
 ### Nhóm Ship
 
 12. `git-versioning-skill`
-- File: `.github/skills/git-versioning-skill/SKILL.md`
+- File: `.agents/skills/git-versioning-skill/SKILL.md`
 - Dùng để chuẩn hóa branch, commit, PR theo `docs/git_workflow.md`.
 
 13. `ci-cd-skill`
-- File: `.github/skills/ci-cd-skill/SKILL.md`
+- File: `.agents/skills/ci-cd-skill/SKILL.md`
 - Dùng để thiết lập quality gates và tự động hóa pipeline.
 
 14. `release-launch-skill`
-- File: `.github/skills/release-launch-skill/SKILL.md`
+- File: `.agents/skills/release-launch-skill/SKILL.md`
 - Dùng cho checklist trước/sau release và phương án rollback.
 
 15. `documentation-adr-skill`
-- File: `.github/skills/documentation-adr-skill/SKILL.md`
+- File: `.agents/skills/documentation-adr-skill/SKILL.md`
 - Dùng để ghi nhận quyết định kỹ thuật và cập nhật tài liệu vận hành.
 
 16. `workflow-map-skill`
-- File: `.github/skills/workflow-map-skill/SKILL.md`
+- File: `.agents/skills/workflow-map-skill/SKILL.md`
 - Dùng như bản đồ chọn skill nhanh theo vòng đời task.
 
 ## 4) Cách sử dụng đề xuất
 
 ## Luồng chuẩn cho một task
 
-1. Đọc `.github/copilot-instructions.md`
-2. Đọc `.github/instructions/project-context.md`
-3. Đọc `.github/instructions/architecture-rules.md`
-4. Nếu task liên quan UI, đọc `.github/instructions/ui-design.instructions.md`
+1. Đọc `.agents/copilot-instructions.md`
+2. Đọc `.agents/instructions/project-context.md`
+3. Đọc `.agents/instructions/architecture-rules.md`
+4. Nếu task liên quan UI, đọc `.agents/instructions/ui-design.instructions.md`
 5. Chọn skill theo vòng đời:
    - Define/Plan: `spec-skill`, `planning-task-skill`
    - Build: `context-engineering-skill`, `flutter-feature-skill`, `ui-design-skill` hoặc `api-integration-skill`
@@ -125,4 +125,4 @@ Tài liệu này mô tả toàn bộ hệ thống agent persona và skills nội
 1. Không áp dụng máy móc: chọn skill theo đúng loại task.
 2. Task nhỏ chỉ cần 1 skill chính + 1 skill verify.
 3. Luôn ưu tiên code thực tế hơn tài liệu cũ nếu có lệch.
-4. Sau thay đổi quan trọng, cập nhật lại tài liệu trong `docs/` và `.github/` để giữ đồng bộ.
+4. Sau thay đổi quan trọng, cập nhật lại tài liệu trong `docs/` và `.agents/` để giữ đồng bộ.

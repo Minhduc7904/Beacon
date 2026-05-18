@@ -1,5 +1,12 @@
 import '../entities/group_message.dart';
 
+typedef MessageSeenStatusHandler =
+    void Function(
+      String? seenByUserId,
+      String lastSeenMessageId,
+      DateTime? seenAtUtc,
+    );
+
 abstract class MessageGroupRealtimeService {
   Future<void> subscribeNewMessages({
     required void Function(GroupMessage message) onMessage,
@@ -22,8 +29,7 @@ abstract class MessageGroupRealtimeService {
 
   Future<void> subscribeMessageSeenStatus({
     required String groupId,
-    required void Function(String? seenByUserId, String lastSeenMessageId)
-    onSeenStatus,
+    required MessageSeenStatusHandler onSeenStatus,
   });
 
   void Function(String groupId) unsubscribeMessageSeenStatus();
