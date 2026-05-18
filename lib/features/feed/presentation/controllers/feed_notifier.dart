@@ -325,6 +325,9 @@ class FeedNotifier extends StateNotifier<FeedState> {
       caption: post.caption,
       visibility: post.visibility,
       createdAt: post.createdAtUtc.toLocal(),
+      latitude: post.latitude,
+      longitude: post.longitude,
+      hasDailySafetyRecord: post.dailySafetyRecord != null,
       reactionCounts: _mapReactionSummary(post.reactionSummary),
       myReaction: _mapReactionIcon(post.myReaction?.icon),
     );

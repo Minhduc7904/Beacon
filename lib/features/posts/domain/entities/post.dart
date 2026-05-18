@@ -1,3 +1,4 @@
+import 'daily_safety_record.dart';
 import 'my_reaction.dart';
 import 'post_media.dart';
 import 'post_owner.dart';
@@ -14,6 +15,10 @@ class Post {
   final String status;
   final DateTime createdAtUtc;
   final DateTime? updatedAtUtc;
+  final double? latitude;
+  final double? longitude;
+  final String? dailySafetyRecordId;
+  final DailySafetyRecord? dailySafetyRecord;
   final ReactionSummary reactionSummary;
   final MyReaction? myReaction;
 
@@ -27,6 +32,10 @@ class Post {
     required this.status,
     required this.createdAtUtc,
     required this.updatedAtUtc,
+    required this.latitude,
+    required this.longitude,
+    required this.dailySafetyRecordId,
+    required this.dailySafetyRecord,
     required this.reactionSummary,
     required this.myReaction,
   });
@@ -44,6 +53,14 @@ class Post {
     DateTime? createdAtUtc,
     DateTime? updatedAtUtc,
     bool clearUpdatedAtUtc = false,
+    double? latitude,
+    bool clearLatitude = false,
+    double? longitude,
+    bool clearLongitude = false,
+    String? dailySafetyRecordId,
+    bool clearDailySafetyRecordId = false,
+    DailySafetyRecord? dailySafetyRecord,
+    bool clearDailySafetyRecord = false,
     ReactionSummary? reactionSummary,
     MyReaction? myReaction,
     bool clearMyReaction = false,
@@ -60,6 +77,14 @@ class Post {
       updatedAtUtc: clearUpdatedAtUtc
           ? null
           : (updatedAtUtc ?? this.updatedAtUtc),
+      latitude: clearLatitude ? null : (latitude ?? this.latitude),
+      longitude: clearLongitude ? null : (longitude ?? this.longitude),
+      dailySafetyRecordId: clearDailySafetyRecordId
+          ? null
+          : (dailySafetyRecordId ?? this.dailySafetyRecordId),
+      dailySafetyRecord: clearDailySafetyRecord
+          ? null
+          : (dailySafetyRecord ?? this.dailySafetyRecord),
       reactionSummary: reactionSummary ?? this.reactionSummary,
       myReaction: clearMyReaction ? null : (myReaction ?? this.myReaction),
     );

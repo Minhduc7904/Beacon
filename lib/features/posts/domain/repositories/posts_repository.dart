@@ -13,6 +13,8 @@ abstract class PostsRepository {
     required String mediaId,
     String? caption,
     required PostVisibility visibility,
+    double? latitude,
+    double? longitude,
   });
 
   Future<Either<Failure, PostPage>> getFeedPosts({String? cursor, int? limit});

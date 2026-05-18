@@ -11,9 +11,16 @@ import '../../../feed/presentation/pages/feed_page.dart';
 import '../controllers/post_preview_image_path_provider.dart';
 
 class PostPreviewSendButton extends ConsumerStatefulWidget {
-  const PostPreviewSendButton({super.key, required this.captionController});
+  const PostPreviewSendButton({
+    super.key,
+    required this.captionController,
+    this.latitude,
+    this.longitude,
+  });
 
   final TextEditingController captionController;
+  final double? latitude;
+  final double? longitude;
 
   @override
   ConsumerState<PostPreviewSendButton> createState() =>
@@ -46,7 +53,12 @@ class _PostPreviewSendButtonState extends ConsumerState<PostPreviewSendButton> {
 
         ref
             .read(postPreviewNotifierProvider.notifier)
-            .postMedia(filePath, caption: widget.captionController.text);
+            .postMedia(
+              filePath,
+              caption: widget.captionController.text,
+              latitude: widget.latitude,
+              longitude: widget.longitude,
+            );
       });
     }
 
@@ -69,6 +81,8 @@ class _PostPreviewSendButtonState extends ConsumerState<PostPreviewSendButton> {
           ? () => notifier.postMedia(
               filePath,
               caption: widget.captionController.text,
+              latitude: widget.latitude,
+              longitude: widget.longitude,
             )
           : null,
       customBorder: const CircleBorder(),

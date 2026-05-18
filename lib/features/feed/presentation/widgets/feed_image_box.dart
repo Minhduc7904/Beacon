@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/color/app_colors.dart';
+import '../../../../core/theme/icons/app_icon.dart';
+import '../../../../core/theme/icons/app_icons.dart';
 import '../../../../core/theme/text/app_text_theme.dart';
 import '../../../../core/widgets/text/text.dart';
+import '../../../posts/presentation/widgets/post_location_map_dialog.dart';
 import '../../domain/entities/feed_post.dart';
 import 'feed_media_radius.dart';
 
@@ -22,6 +26,7 @@ class FeedImageBox extends StatelessWidget {
       imageBoxSize,
     );
     final caption = post.caption?.trim() ?? '';
+    final hasLocation = post.latitude != null && post.longitude != null;
 
     return Container(
       width: imageBoxSize,
@@ -70,6 +75,16 @@ class FeedImageBox extends StatelessWidget {
               );
             },
           ),
+          if (post.hasDailySafetyRecord)
+            Positioned(top: 14, left: 14, child: _CheckedInBadge()),
+          if (hasLocation)
+            Positioned(
+              top: 14,
+              right: 14,
+              child: _PostMapButton(
+                onPressed: () => _showLocationDialog(context),
+              ),
+            ),
           if (caption.isNotEmpty)
             Positioned(
               left: 16,
@@ -103,11 +118,84 @@ class FeedImageBox extends StatelessWidget {
     );
   }
 
+  void _showLocationDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => PostLocationMapDialog(
+        latitude: post.latitude!,
+        longitude: post.longitude!,
+        displayName: post.authorName,
+        avatarUrl: post.authorAvatarUrl,
+      ),
+    );
+  }
+
   double _imageBoxSize(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     return (width - _feedImageHorizontalInset).clamp(
       _feedImageMinSize,
       _feedImageMaxSize,
+    );
+  }
+}
+
+class _PostMapButton extends StatelessWidget {
+  const _PostMapButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.42),
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.24),
+              width: 1,
+            ),
+          ),
+          child: const AppIcon(
+            AppIcons.mapPin,
+            size: 20,
+            color: AppColors.sky100,
+            semanticLabel: 'Xem vị trí',
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CheckedInBadge extends StatelessWidget {
+  const _CheckedInBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.42),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.24),
+          width: 1,
+        ),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.all(8),
+        child: AppIcon(
+          AppIcons.shieldPhosphor,
+          size: 20,
+          color: AppColors.success,
+          semanticLabel: 'Đã check-in',
+        ),
+      ),
     );
   }
 }

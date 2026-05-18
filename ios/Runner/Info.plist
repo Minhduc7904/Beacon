@@ -28,6 +28,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Ứng dụng cần truy cập camera để chụp ảnh đăng bài.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Ứng dụng cần vị trí của bạn khi bạn chọn chia sẻ vị trí trong bài đăng.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Ứng dụng cần truy cập thư viện ảnh để chọn ảnh khi camera không khả dụng.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

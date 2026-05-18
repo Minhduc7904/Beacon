@@ -22,6 +22,8 @@ class PostPreviewNotifier extends StateNotifier<PostPreviewState> {
     String filePath, {
     String? caption,
     PostVisibility visibility = PostVisibility.friends,
+    double? latitude,
+    double? longitude,
   }) async {
     final trimmedPath = filePath.trim();
     if (state.isUploading || trimmedPath.isEmpty) {
@@ -80,6 +82,8 @@ class PostPreviewNotifier extends StateNotifier<PostPreviewState> {
         mediaId: media!.id,
         caption: normalizedCaption,
         visibility: visibility,
+        latitude: latitude,
+        longitude: longitude,
       ),
     );
 

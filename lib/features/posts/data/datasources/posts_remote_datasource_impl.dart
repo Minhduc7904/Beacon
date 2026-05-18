@@ -20,6 +20,8 @@ class PostsRemoteDatasourceImpl implements PostsRemoteDatasource {
     required String mediaId,
     String? caption,
     required String visibility,
+    double? latitude,
+    double? longitude,
   }) async {
     final body = <String, dynamic>{
       'mediaId': mediaId,
@@ -28,6 +30,12 @@ class PostsRemoteDatasourceImpl implements PostsRemoteDatasource {
 
     if (caption != null) {
       body['caption'] = caption;
+    }
+    if (latitude != null) {
+      body['latitude'] = latitude;
+    }
+    if (longitude != null) {
+      body['longitude'] = longitude;
     }
 
     try {

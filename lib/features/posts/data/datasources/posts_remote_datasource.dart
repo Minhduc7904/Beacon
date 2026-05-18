@@ -8,6 +8,8 @@ abstract class PostsRemoteDatasource {
     required String mediaId,
     String? caption,
     required String visibility,
+    double? latitude,
+    double? longitude,
   });
 
   Future<PostPageModel> getFeedPosts({String? cursor, int? limit});

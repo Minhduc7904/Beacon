@@ -10,6 +10,9 @@ class FeedPost {
   final String? caption;
   final PostVisibility visibility;
   final DateTime createdAt;
+  final double? latitude;
+  final double? longitude;
+  final bool hasDailySafetyRecord;
   final List<FeedReaction> reactions;
   final Map<ReactionType, int> reactionCounts;
   final ReactionType? myReaction;
@@ -23,6 +26,9 @@ class FeedPost {
     this.caption,
     this.visibility = PostVisibility.friends,
     required this.createdAt,
+    this.latitude,
+    this.longitude,
+    this.hasDailySafetyRecord = false,
     this.reactions = const [],
     this.reactionCounts = const {},
     this.myReaction,
@@ -37,6 +43,11 @@ class FeedPost {
     String? caption,
     PostVisibility? visibility,
     DateTime? createdAt,
+    double? latitude,
+    bool clearLatitude = false,
+    double? longitude,
+    bool clearLongitude = false,
+    bool? hasDailySafetyRecord,
     List<FeedReaction>? reactions,
     Map<ReactionType, int>? reactionCounts,
     ReactionType? myReaction,
@@ -51,6 +62,9 @@ class FeedPost {
       caption: caption ?? this.caption,
       visibility: visibility ?? this.visibility,
       createdAt: createdAt ?? this.createdAt,
+      latitude: clearLatitude ? null : (latitude ?? this.latitude),
+      longitude: clearLongitude ? null : (longitude ?? this.longitude),
+      hasDailySafetyRecord: hasDailySafetyRecord ?? this.hasDailySafetyRecord,
       reactions: reactions ?? this.reactions,
       reactionCounts: reactionCounts ?? this.reactionCounts,
       myReaction: clearMyReaction ? null : (myReaction ?? this.myReaction),

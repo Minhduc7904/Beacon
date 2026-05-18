@@ -45,6 +45,7 @@ class _HomeCenterScaffoldState extends ConsumerState<HomeCenterScaffold> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         automaticallyImplyLeading: false,

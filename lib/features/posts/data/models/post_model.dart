@@ -1,6 +1,7 @@
 import '../../domain/entities/post.dart';
 import '../../domain/entities/post_visibility.dart';
 import '../../domain/entities/reaction_summary.dart';
+import 'daily_safety_record_model.dart';
 import 'my_reaction_model.dart';
 import 'post_media_model.dart';
 import 'post_owner_model.dart';
@@ -17,6 +18,10 @@ class PostModel extends Post {
     required super.status,
     required super.createdAtUtc,
     required super.updatedAtUtc,
+    required super.latitude,
+    required super.longitude,
+    required super.dailySafetyRecordId,
+    required super.dailySafetyRecord,
     required super.reactionSummary,
     required super.myReaction,
   });
@@ -26,6 +31,7 @@ class PostModel extends Post {
     final mediaJson = json['media'];
     final reactionSummaryJson = json['reactionSummary'];
     final myReactionJson = json['myReaction'];
+    final dailySafetyRecordJson = json['dailySafetyRecord'];
 
     return PostModel(
       id: json['id']?.toString() ?? '',
@@ -51,6 +57,12 @@ class PostModel extends Post {
           _toDate(json['createdAtUtc']) ??
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
       updatedAtUtc: _toDate(json['updatedAtUtc']),
+      latitude: _toDouble(json['latitude']),
+      longitude: _toDouble(json['longitude']),
+      dailySafetyRecordId: json['dailySafetyRecordId']?.toString(),
+      dailySafetyRecord: dailySafetyRecordJson is Map<String, dynamic>
+          ? DailySafetyRecordModel.fromJson(dailySafetyRecordJson)
+          : null,
       reactionSummary: reactionSummaryJson is Map<String, dynamic>
           ? ReactionSummaryModel.fromJson(reactionSummaryJson)
           : const ReactionSummary.empty(),
@@ -66,5 +78,15 @@ class PostModel extends Post {
       return null;
     }
     return DateTime.tryParse(raw);
+  }
+
+  static double? _toDouble(dynamic value) {
+    if (value is double) {
+      return value;
+    }
+    if (value is num) {
+      return value.toDouble();
+    }
+    return double.tryParse(value?.toString() ?? '');
   }
 }

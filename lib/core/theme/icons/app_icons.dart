@@ -60,6 +60,9 @@ class AppIcons {
   static const AppIconData camera = AppIconData.phosphor(
     PhosphorIconsRegular.camera,
   );
+  static const AppIconData mapPin = AppIconData.phosphor(
+    PhosphorIconsRegular.mapPin,
+  );
   static const AppIconData clock = AppIconData.phosphor(
     PhosphorIconsRegular.clock,
   );

@@ -26,6 +26,8 @@ class PostsRepositoryImpl implements PostsRepository {
     required String mediaId,
     String? caption,
     required PostVisibility visibility,
+    double? latitude,
+    double? longitude,
   }) async {
     if (!await _networkInfo.isConnected) {
       return const Left(NetworkFailure());
@@ -36,6 +38,8 @@ class PostsRepositoryImpl implements PostsRepository {
         mediaId: mediaId,
         caption: caption,
         visibility: visibility.value,
+        latitude: latitude,
+        longitude: longitude,
       );
       return Right(post);
     } on Exception catch (e) {
