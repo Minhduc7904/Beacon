@@ -10,7 +10,11 @@ import '../widgets/home/home_center_scaffold.dart';
 import '../widgets/home/home_keep_alive_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
-  const HomePage({super.key, this.autoCaptureOnOpen = false, this.targetPostId});
+  const HomePage({
+    super.key,
+    this.autoCaptureOnOpen = false,
+    this.targetPostId,
+  });
 
   final bool autoCaptureOnOpen;
   final String? targetPostId;

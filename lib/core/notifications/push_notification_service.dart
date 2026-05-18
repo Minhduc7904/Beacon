@@ -404,9 +404,7 @@ class _PostReactionNotificationPayload {
   final String reactorDisplayName;
   final String reactorAvatarUrl;
 
-  factory _PostReactionNotificationPayload.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory _PostReactionNotificationPayload.fromJson(Map<String, dynamic> json) {
     return _PostReactionNotificationPayload(
       postId: json['postId']?.toString() ?? '',
       reactionIcon: json['reactionIcon']?.toString() ?? '',
