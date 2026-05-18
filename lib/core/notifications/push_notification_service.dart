@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -13,6 +14,7 @@ import '../../features/auth/domain/usecase/update_fcm_token_usecase.dart';
 import '../../features/message_groups/domain/entities/message_group.dart';
 import '../config/app_router.dart';
 import '../config/app_routes.dart';
+import '../observers/app_route_stack_observer.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -206,15 +208,9 @@ class PushNotificationService {
       id: message.hashCode,
       title: title,
       body: body,
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          _androidChannelId,
-          _androidChannelName,
-          channelDescription: _androidChannelDescription,
-          importance: Importance.high,
-          priority: Priority.high,
-        ),
-        iOS: DarwinNotificationDetails(
+      notificationDetails: NotificationDetails(
+        android: await _androidNotificationDetails(message.data),
+        iOS: const DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
@@ -353,7 +349,67 @@ class PushNotificationService {
     return '$reactionIcon $body';
   }
 
+  Future<AndroidNotificationDetails> _androidNotificationDetails(
+    Map<String, dynamic> data,
+  ) async {
+    final payload = _parsePostReactionPayload(data);
+    return AndroidNotificationDetails(
+      _androidChannelId,
+      _androidChannelName,
+      channelDescription: _androidChannelDescription,
+      importance: Importance.high,
+      priority: Priority.high,
+      largeIcon: await _downloadAndroidLargeIcon(payload?.reactorAvatarUrl),
+    );
+  }
+
+  Future<ByteArrayAndroidBitmap?> _downloadAndroidLargeIcon(
+    String? avatarUrl,
+  ) async {
+    if (defaultTargetPlatform != TargetPlatform.android) {
+      return null;
+    }
+
+    final trimmedUrl = avatarUrl?.trim();
+    if (trimmedUrl == null || trimmedUrl.isEmpty) {
+      return null;
+    }
+
+    final uri = Uri.tryParse(trimmedUrl);
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
+      return null;
+    }
+
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 3);
+    try {
+      final request = await client.getUrl(uri);
+      final response = await request.close();
+      if (response.statusCode != HttpStatus.ok) {
+        return null;
+      }
+
+      final bytes = await consolidateHttpClientResponseBytes(response);
+      if (bytes.isEmpty) {
+        return null;
+      }
+
+      return ByteArrayAndroidBitmap(bytes);
+    } on Object {
+      return null;
+    } finally {
+      client.close(force: true);
+    }
+  }
+
   void _openHomeForPostReaction(String postId) {
+    final routeStack = appRouteStackObserver.stack.value;
+    final currentRouteName = routeStack.isEmpty ? null : routeStack.last.name;
+    if (currentRouteName == null ||
+        currentRouteName == AppRoutes.splashName ||
+        currentRouteName == AppRoutes.splash) {
+      return;
+    }
+
     final extra = <String, dynamic>{'targetPostId': postId};
     try {
       appRouter.goNamed(AppRoutes.homeName, extra: extra);

@@ -144,8 +144,11 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
         });
       }
 
-      final post = ref.read(feedProvider).posts[postIndex];
-      _handleVisibleFeedPost(post);
+      final posts = ref.read(feedProvider).posts;
+      final visiblePostIndex = posts.indexWhere((post) => post.id == postId);
+      if (visiblePostIndex != -1) {
+        _handleVisibleFeedPost(posts[visiblePostIndex]);
+      }
     } finally {
       _isHandlingTargetPost = false;
     }
