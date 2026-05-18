@@ -7,8 +7,7 @@ class SubscribeMessageSeenStatusRealtimeUseCase {
 
   Future<void> call({
     required String groupId,
-    required void Function(String? seenByUserId, String lastSeenMessageId)
-    onSeenStatus,
+    required MessageSeenStatusHandler onSeenStatus,
   }) {
     return _realtimeService.subscribeMessageSeenStatus(
       groupId: groupId,

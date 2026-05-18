@@ -5,6 +5,7 @@ class MessageGroupMember {
   final String? avatarUrl;
   final int role;
   final String? lastSeenMessageId;
+  final DateTime? lastSeenAtUtc;
 
   const MessageGroupMember({
     required this.userId,
@@ -13,6 +14,7 @@ class MessageGroupMember {
     required this.avatarUrl,
     required this.role,
     required this.lastSeenMessageId,
+    required this.lastSeenAtUtc,
   });
 
   String get fullName {

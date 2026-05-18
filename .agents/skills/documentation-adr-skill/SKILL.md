@@ -25,7 +25,7 @@ Ghi lại quyết định kiến trúc và thay đổi quan trọng để ngư�
 ## Vị trí ưu tiên cập nhật
 
 - `docs/` cho hướng dẫn vận hành.
-- `.github/instructions/*` nếu thay đổi quy tắc cho agent.
+- `.agents/instructions/*` nếu thay đổi quy tắc cho agent.
 
 ## Done khi
 

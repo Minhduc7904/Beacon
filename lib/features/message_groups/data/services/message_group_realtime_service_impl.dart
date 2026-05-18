@@ -106,8 +106,7 @@ class MessageGroupRealtimeServiceImpl implements MessageGroupRealtimeService {
   @override
   Future<void> subscribeMessageSeenStatus({
     required String groupId,
-    required void Function(String? seenByUserId, String lastSeenMessageId)
-    onSeenStatus,
+    required MessageSeenStatusHandler onSeenStatus,
   }) async {
     final trimmedGroupId = groupId.trim();
     if (trimmedGroupId.isEmpty) {
@@ -126,10 +125,11 @@ class MessageGroupRealtimeServiceImpl implements MessageGroupRealtimeService {
         final incomingGroupId = args[0]?.toString() ?? '';
         final seenByUserId = args[1]?.toString();
         final lastSeenMessageId = args[2]?.toString() ?? '';
+        final seenAtUtc = args.length > 3 ? _toUtcDate(args[3]) : null;
         if (incomingGroupId != trimmedGroupId || lastSeenMessageId.isEmpty) {
           return;
         }
-        onSeenStatus(seenByUserId, lastSeenMessageId);
+        onSeenStatus(seenByUserId, lastSeenMessageId, seenAtUtc);
       },
     );
 
@@ -142,10 +142,11 @@ class MessageGroupRealtimeServiceImpl implements MessageGroupRealtimeService {
         }
         final incomingGroupId = args[0]?.toString() ?? '';
         final lastSeenMessageId = args[1]?.toString() ?? '';
+        final seenAtUtc = args.length > 2 ? _toUtcDate(args[2]) : null;
         if (incomingGroupId != trimmedGroupId || lastSeenMessageId.isEmpty) {
           return;
         }
-        onSeenStatus(null, lastSeenMessageId);
+        onSeenStatus(null, lastSeenMessageId, seenAtUtc);
       },
     );
 
@@ -358,7 +359,12 @@ class MessageGroupRealtimeServiceImpl implements MessageGroupRealtimeService {
     return raw == 'true' || raw == '1';
   }
 
-  DateTime? _toUtcDate(String raw) {
+  DateTime? _toUtcDate(dynamic value) {
+    final raw = value?.toString();
+    if (raw == null || raw.trim().isEmpty) {
+      return null;
+    }
+
     final parsed = DateTime.tryParse(raw);
     if (parsed == null) {
       return null;
@@ -367,7 +373,7 @@ class MessageGroupRealtimeServiceImpl implements MessageGroupRealtimeService {
     final hasTimezoneSuffix =
         raw.endsWith('Z') ||
         raw.contains('+') ||
-        raw.substring(10).contains('-');
+        (raw.length > 10 && raw.substring(10).contains('-'));
     if (hasTimezoneSuffix) {
       return parsed.toUtc();
     }

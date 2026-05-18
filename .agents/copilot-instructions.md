@@ -60,7 +60,7 @@ Mục tiêu của tài liệu này là giúp AI Agent tạo thay đổi **đúng
 - Ưu tiên tái sử dụng shared widgets trong `lib/core/widgets/`.
 - Không thêm màu/spacing tùy tiện nếu đã có theme primitive.
 - Nếu cần thông báo toàn cục, dùng `appMessageProvider.notifier.addSuccess/addError/...`.
-- Với task UI mới hoặc đổi design, ưu tiên đọc `.github/instructions/ui-design.instructions.md` và dùng `ui-design-skill`.
+- Với task UI mới hoặc đổi design, ưu tiên đọc `.agents/instructions/ui-design.instructions.md` và dùng `ui-design-skill`.
 
 ## 9) Kiểm tra trước khi kết thúc task
 Sau khi sửa code, ưu tiên chạy:
