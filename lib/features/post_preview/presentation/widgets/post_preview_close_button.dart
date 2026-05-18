@@ -17,7 +17,7 @@ class PostPreviewCloseButton extends ConsumerWidget {
     );
 
     return InkWell(
-      onTap: isUploading ? null : () => context.pop(),
+      onTap: isUploading ? null : () => context.pop(false),
       customBorder: const CircleBorder(),
       child: SizedBox(
         width: 48,

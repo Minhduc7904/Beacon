@@ -14,7 +14,7 @@ class PostPreviewHeader extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
-          onPressed: () => context.pop(),
+          onPressed: () => context.pop(false),
           icon: const AppIcon(AppIcons.back),
         ),
         const PostPreviewDownloadButton(),

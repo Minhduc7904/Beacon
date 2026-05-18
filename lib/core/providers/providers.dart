@@ -614,7 +614,7 @@ final onboardingNotifierProvider =
 final homeNotifierProvider = StateNotifierProvider<HomeNotifier, HomeState>((
   ref,
 ) {
-  return HomeNotifier();
+  return HomeNotifier(ref.watch(appMessageProvider.notifier));
 });
 
 final homeCheckinNotifierProvider =
