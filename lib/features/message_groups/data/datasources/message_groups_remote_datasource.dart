@@ -11,6 +11,12 @@ abstract class MessageGroupsRemoteDatasource {
     required String content,
   });
 
+  Future<GroupMessageModel> sendPostMessage({
+    required String postId,
+    required String clientMessageId,
+    String? content,
+  });
+
   Future<GroupMessagePageModel> getMessages({
     required String groupId,
     String? cursor,

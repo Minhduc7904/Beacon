@@ -81,6 +81,40 @@ class MessageGroupsRemoteDatasourceImpl
   }
 
   @override
+  Future<GroupMessageModel> sendPostMessage({
+    required String postId,
+    required String clientMessageId,
+    String? content,
+  }) async {
+    try {
+      final response = await _dioClient.post(
+        ApiEndpoints.messageGroupMessages,
+        data: {
+          'content': content?.trim().isEmpty == true ? null : content?.trim(),
+          'clientMessageId': clientMessageId.trim(),
+          'postId': postId.trim(),
+        },
+      );
+
+      final result = ApiHandler.handle<GroupMessageModel>(
+        response,
+        fromJsonT: (json) =>
+            GroupMessageModel.fromJson(json as Map<String, dynamic>),
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+
+      return result.data!;
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+      // ignore: dead_code
+      rethrow;
+    }
+  }
+
+  @override
   Future<GroupMessagePageModel> getMessages({
     required String groupId,
     String? cursor,

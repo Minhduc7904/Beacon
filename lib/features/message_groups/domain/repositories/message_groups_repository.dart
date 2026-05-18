@@ -17,6 +17,12 @@ abstract class MessageGroupsRepository {
     required String content,
   });
 
+  Future<Either<Failure, GroupMessage>> sendPostMessage({
+    required String postId,
+    required String clientMessageId,
+    String? content,
+  });
+
   Future<Either<Failure, GroupMessagePage>> getMessages({
     required String groupId,
     String? cursor,

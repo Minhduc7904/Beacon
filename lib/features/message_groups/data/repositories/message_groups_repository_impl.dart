@@ -60,6 +60,28 @@ class MessageGroupsRepositoryImpl implements MessageGroupsRepository {
   }
 
   @override
+  Future<Either<Failure, GroupMessage>> sendPostMessage({
+    required String postId,
+    required String clientMessageId,
+    String? content,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      final result = await _remoteDatasource.sendPostMessage(
+        postId: postId,
+        clientMessageId: clientMessageId,
+        content: content,
+      );
+      return Right(result);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, GroupMessagePage>> getMessages({
     required String groupId,
     String? cursor,

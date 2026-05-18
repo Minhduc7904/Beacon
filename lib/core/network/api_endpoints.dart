@@ -64,6 +64,7 @@ class ApiEndpoints {
 
   // Message groups
   static const String messageGroups = '/message-groups';
+  static const String messageGroupMessages = '/message-groups/messages';
   static const String messageGroupMessageTemplate =
       '/message-groups/{groupId}/messages';
   static const String messageGroupDetailTemplate =

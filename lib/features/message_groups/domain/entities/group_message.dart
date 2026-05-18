@@ -1,3 +1,5 @@
+import '../../../posts/domain/entities/post.dart';
+
 class GroupMessage {
   final String id;
   final String groupId;
@@ -6,6 +8,8 @@ class GroupMessage {
   final String senderGivenName;
   final String content;
   final DateTime? createdAtUtc;
+  final String? postId;
+  final Post? post;
 
   const GroupMessage({
     required this.id,
@@ -15,6 +19,8 @@ class GroupMessage {
     required this.senderGivenName,
     required this.content,
     required this.createdAtUtc,
+    required this.postId,
+    required this.post,
   });
 
   String get senderFullName {

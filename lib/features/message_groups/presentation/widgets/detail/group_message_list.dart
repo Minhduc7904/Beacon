@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/text/app_text_theme.dart';
 import '../../../../../core/utils/time_utils.dart';
+import '../../../../../core/widgets/image/user_avatar.dart';
 import '../../../../../core/widgets/text/text.dart';
+import '../../../../posts/domain/entities/post.dart';
 import '../../../domain/entities/group_message.dart';
 import '../../../domain/entities/message_group_member.dart';
 import 'group_chat_bubble.dart';
@@ -38,14 +40,15 @@ class _GroupMessageListState extends State<GroupMessageList>
   @override
   void initState() {
     super.initState();
-    _timeRevealController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 140),
-    )..addListener(() {
-        if (mounted) {
-          setState(() {});
-        }
-      });
+    _timeRevealController =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 140),
+        )..addListener(() {
+          if (mounted) {
+            setState(() {});
+          }
+        });
   }
 
   @override
@@ -117,9 +120,7 @@ class _GroupMessageListState extends State<GroupMessageList>
     final items = <_GroupListItem>[];
     for (final entry in entries) {
       items.add(_GroupListItem.header(entry.key));
-      for (final msg in entry.value) {
-        items.add(_GroupListItem.message(msg));
-      }
+      items.addAll(_buildMessageItems(entry.value));
     }
 
     return GestureDetector(
@@ -169,12 +170,22 @@ class _GroupMessageListState extends State<GroupMessageList>
                 );
               }
 
-              final message = item.message!;
               final contentShift =
                   _timeRevealShift * _timeRevealController.value;
+              if (item.thread != null) {
+                return _PostMessageThread(
+                  thread: item.thread!,
+                  seenByMessageId: seenByMessageId,
+                  currentUserId: widget.currentUserId,
+                  isPrivateChat: widget.isPrivateChat,
+                  timeRevealProgress: _timeRevealController.value,
+                  contentShift: contentShift,
+                );
+              }
+
               return _MessageWithSeenIndicator(
-                message: message,
-                seenMembers: seenByMessageId[message.id] ?? const [],
+                message: item.message!,
+                seenMembers: seenByMessageId[item.message!.id] ?? const [],
                 currentUserId: widget.currentUserId,
                 isPrivateChat: widget.isPrivateChat,
                 timeRevealProgress: _timeRevealController.value,
@@ -211,6 +222,41 @@ class _GroupMessageListState extends State<GroupMessageList>
     }
     return seenByMessageId;
   }
+
+  List<_GroupListItem> _buildMessageItems(List<GroupMessage> messages) {
+    final items = <_GroupListItem>[];
+    var index = 0;
+
+    while (index < messages.length) {
+      final message = messages[index];
+      final postId = message.postId?.trim();
+      final post = message.post;
+      if (postId == null || postId.isEmpty || post == null) {
+        items.add(_GroupListItem.message(message));
+        index += 1;
+        continue;
+      }
+
+      final threadMessages = <GroupMessage>[message];
+      index += 1;
+      while (index < messages.length) {
+        final next = messages[index];
+        if (next.postId?.trim() != postId) {
+          break;
+        }
+        threadMessages.add(next);
+        index += 1;
+      }
+
+      items.add(
+        _GroupListItem.thread(
+          _PostMessageThreadData(post: post, messages: threadMessages),
+        ),
+      );
+    }
+
+    return items;
+  }
 }
 
 class _MessageWithSeenIndicator extends StatelessWidget {
@@ -230,7 +276,8 @@ class _MessageWithSeenIndicator extends StatelessWidget {
   final double timeRevealProgress;
   final double contentShift;
 
-  bool get _isMine => currentUserId != null && currentUserId == message.senderId;
+  bool get _isMine =>
+      currentUserId != null && currentUserId == message.senderId;
 
   @override
   Widget build(BuildContext context) {
@@ -254,15 +301,251 @@ class _MessageWithSeenIndicator extends StatelessWidget {
   }
 }
 
+class _PostMessageThread extends StatelessWidget {
+  const _PostMessageThread({
+    required this.thread,
+    required this.seenByMessageId,
+    required this.currentUserId,
+    required this.isPrivateChat,
+    required this.timeRevealProgress,
+    required this.contentShift,
+  });
+
+  final _PostMessageThreadData thread;
+  final Map<String, List<MessageGroupMember>> seenByMessageId;
+  final String? currentUserId;
+  final bool isPrivateChat;
+  final double timeRevealProgress;
+  final double contentShift;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _MessagePostPreview(post: thread.post, currentUserId: currentUserId),
+          const SizedBox(height: 8),
+          for (final message in thread.messages)
+            if (message.content.trim().isNotEmpty)
+              _MessageWithSeenIndicator(
+                message: message,
+                seenMembers: seenByMessageId[message.id] ?? const [],
+                currentUserId: currentUserId,
+                isPrivateChat: isPrivateChat,
+                timeRevealProgress: timeRevealProgress,
+                contentShift: contentShift,
+              ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MessagePostPreview extends StatelessWidget {
+  const _MessagePostPreview({required this.post, required this.currentUserId});
+
+  final Post post;
+  final String? currentUserId;
+
+  String get _authorName {
+    final name = post.owner?.displayName.trim();
+    if (name == null || name.isEmpty) {
+      return 'Người dùng';
+    }
+    return name;
+  }
+
+  String get _imageUrl {
+    final thumbnail = post.media.thumbnailUrl?.trim();
+    if (thumbnail != null && thumbnail.isNotEmpty) {
+      return thumbnail;
+    }
+    return post.media.url.trim();
+  }
+
+  String get _displayName {
+    if (currentUserId != null && currentUserId == post.ownerUserId) {
+      return 'Tôi';
+    }
+
+    return _authorName;
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final diff = DateTime.now().difference(dateTime.toLocal());
+    if (diff.inMinutes < 1) return 'Vừa xong';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} phút trước';
+    if (diff.inHours < 24) return '${diff.inHours} giờ trước';
+    return '${diff.inDays} ngày trước';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final caption = post.caption?.trim() ?? '';
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.18),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.16),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: AspectRatio(
+        aspectRatio: 1,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              _imageUrl,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) {
+                  return child;
+                }
+                return Center(
+                  child: CircularProgressIndicator(
+                    value: progress.expectedTotalBytes != null
+                        ? progress.cumulativeBytesLoaded /
+                              progress.expectedTotalBytes!
+                        : null,
+                    strokeWidth: 2,
+                    color: Colors.white70,
+                  ),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return const Center(
+                  child: AppText(
+                    'Không thể tải ảnh',
+                    size: AppTextSize.tiny,
+                    spacing: AppTextSpacing.tight,
+                    weight: AppTextWeight.regular,
+                    color: Colors.white70,
+                  ),
+                );
+              },
+            ),
+            Positioned(
+              left: 12,
+              top: 12,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.42),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(6, 5, 12, 5),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      UserAvatar(
+                        avatarUrl: post.owner?.avatarUrl,
+                        givenName: _displayName,
+                        size: 30,
+                      ),
+                      const SizedBox(width: 8),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 180),
+                        child: AppText(
+                          _displayName,
+                          size: AppTextSize.tiny,
+                          spacing: AppTextSpacing.tight,
+                          weight: AppTextWeight.bold,
+                          color: Colors.white,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      AppText(
+                        _formatTime(post.createdAtUtc),
+                        size: AppTextSize.veryTiny,
+                        spacing: AppTextSpacing.tight,
+                        weight: AppTextWeight.regular,
+                        color: Colors.white.withValues(alpha: 0.74),
+                        maxLines: 1,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (caption.isNotEmpty)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 16,
+                child: Center(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.48),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: AppText(
+                        caption,
+                        size: AppTextSize.small,
+                        spacing: AppTextSpacing.normal,
+                        weight: AppTextWeight.medium,
+                        color: Colors.white,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _GroupListItem {
   final GroupMessage? message;
+  final _PostMessageThreadData? thread;
   final String? headerText;
 
   bool get isHeader => headerText != null;
 
   _GroupListItem.message(GroupMessage value)
     : message = value,
+      thread = null,
       headerText = null;
 
-  _GroupListItem.header(String value) : message = null, headerText = value;
+  _GroupListItem.thread(_PostMessageThreadData value)
+    : message = null,
+      thread = value,
+      headerText = null;
+
+  _GroupListItem.header(String value)
+    : message = null,
+      thread = null,
+      headerText = value;
+}
+
+class _PostMessageThreadData {
+  const _PostMessageThreadData({required this.post, required this.messages});
+
+  final Post post;
+  final List<GroupMessage> messages;
 }

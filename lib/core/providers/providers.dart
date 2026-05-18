@@ -582,6 +582,10 @@ final sendGroupMessageUseCaseProvider = Provider<SendGroupMessageUseCase>((
   return SendGroupMessageUseCase(ref.watch(messageGroupsRepositoryProvider));
 });
 
+final sendPostMessageUseCaseProvider = Provider<SendPostMessageUseCase>((ref) {
+  return SendPostMessageUseCase(ref.watch(messageGroupsRepositoryProvider));
+});
+
 final getGroupMessagesUseCaseProvider = Provider<GetGroupMessagesUseCase>((
   ref,
 ) {

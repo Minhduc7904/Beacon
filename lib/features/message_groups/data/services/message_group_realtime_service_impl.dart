@@ -2,6 +2,7 @@ import '../../../../core/realtime/realtime_config.dart';
 import '../../../../core/realtime/realtime_logger.dart';
 import '../../../../core/realtime/signalr_service.dart';
 import '../constants/message_group_realtime_constants.dart';
+import '../../../posts/data/models/post_model.dart';
 import '../../domain/entities/group_message.dart';
 import '../../domain/services/message_group_realtime_service.dart';
 
@@ -318,6 +319,8 @@ class MessageGroupRealtimeServiceImpl implements MessageGroupRealtimeService {
     final senderFamilyName = json['senderFamilyName']?.toString() ?? '';
     final senderGivenName = json['senderGivenName']?.toString() ?? '';
     final createdAtRaw = json['createdAtUtc']?.toString();
+    final postId = json['postId']?.toString();
+    final postJson = json['post'];
 
     if (id.isEmpty || incomingGroupId.isEmpty || senderId.isEmpty) {
       return null;
@@ -335,6 +338,10 @@ class MessageGroupRealtimeServiceImpl implements MessageGroupRealtimeService {
       senderGivenName: senderGivenName,
       content: content,
       createdAtUtc: createdAtUtc,
+      postId: postId,
+      post: postJson is Map<String, dynamic>
+          ? PostModel.fromJson(postJson)
+          : null,
     );
   }
 

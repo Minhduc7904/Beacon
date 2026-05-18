@@ -26,9 +26,11 @@ class Input extends m.StatelessWidget {
   final m.Widget? leftIcon;
   final m.Widget? rightIcon;
   final m.TextEditingController? controller;
+  final m.FocusNode? focusNode;
   final m.ValueChanged<String>? onChanged;
   final m.TextInputType keyboardType;
   final bool obscureText;
+  final bool autofocus;
   final bool enabled;
   final int maxLines;
   final String? errorText;
@@ -49,9 +51,11 @@ class Input extends m.StatelessWidget {
     this.leftIcon,
     this.rightIcon,
     this.controller,
+    this.focusNode,
     this.onChanged,
     this.keyboardType = m.TextInputType.text,
     this.obscureText = false,
+    this.autofocus = false,
     this.enabled = true,
     this.maxLines = 1,
     this.errorText,
@@ -171,10 +175,12 @@ class Input extends m.StatelessWidget {
 
     final inputField = m.TextField(
       controller: controller,
+      focusNode: focusNode,
       onChanged: onChanged,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       obscureText: obscureText,
+      autofocus: autofocus,
       enabled: !isDisabled,
       textAlignVertical: m.TextAlignVertical.center,
       style: m.TextStyle(color: stateColors.text),

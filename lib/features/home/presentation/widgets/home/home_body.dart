@@ -25,6 +25,7 @@ import '../../../../feed/presentation/pages/feed_page.dart';
 import '../../../../feed/presentation/widgets/feed_media_radius.dart';
 import '../../../../feed/presentation/widgets/feed_post_card.dart';
 import '../../../../feed/presentation/widgets/reaction_fly_overlay.dart';
+import '../../../../message_groups/presentation/pages/message_group_list_page.dart';
 import '../../../../posts/domain/entities/post_reaction_detail.dart';
 import '../../../../posts/domain/entities/post_reaction_icon.dart';
 import '../../../../posts/domain/entities/post_reaction_page.dart';
@@ -54,6 +55,8 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
   bool _isHandlingTargetPost = false;
   int _currentPageIndex = 0;
   String? _activeReactionEffectPostId;
+  String? _activeMessageEffectPostId;
+  String? _sendingPostMessagePostId;
   final Set<String> _playedReactionEffectPostIds = <String>{};
   final Set<String> _pendingReactionEffectPostIds = <String>{};
 
@@ -293,6 +296,16 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     });
   }
 
+  void _handleMessageEffectCompleted(String postId) {
+    if (!mounted || _activeMessageEffectPostId != postId) {
+      return;
+    }
+
+    setState(() {
+      _activeMessageEffectPostId = null;
+    });
+  }
+
   void _switchToGrid() {
     if (_pageController.hasClients) {
       _pageController.jumpToPage(1);
@@ -394,6 +407,71 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     );
   }
 
+  Future<void> _showPostMessageInput(FeedPost post) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return _PostMessageInputSheet(
+          clientMessageId: ref
+              .read(sendPostMessageUseCaseProvider)
+              .createClientMessageId(),
+          onSend: (content, clientMessageId) =>
+              _sendPostMessage(post.id, content, clientMessageId),
+        );
+      },
+    );
+  }
+
+  Future<bool> _sendPostMessage(
+    String postId,
+    String content,
+    String clientMessageId,
+  ) async {
+    if (_sendingPostMessagePostId != null) {
+      return false;
+    }
+
+    setState(() {
+      _sendingPostMessagePostId = postId;
+    });
+
+    final result = await ref
+        .read(sendPostMessageUseCaseProvider)
+        .call(
+          postId: postId,
+          content: content,
+          clientMessageId: clientMessageId,
+        );
+
+    if (!mounted) {
+      return false;
+    }
+
+    var didSend = false;
+    result.fold(
+      (failure) {
+        ref.read(appMessageProvider.notifier).addError(failure.message);
+      },
+      (sentMessage) {
+        didSend = true;
+        ref
+            .read(messageGroupListProvider.notifier)
+            .applyIncomingMessage(sentMessage, isFromCurrentUser: true);
+        setState(() {
+          _activeMessageEffectPostId = postId;
+        });
+      },
+    );
+
+    setState(() {
+      _sendingPostMessagePostId = null;
+    });
+
+    return didSend;
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(feedProvider.select((state) => state.filter), (previous, next) {
@@ -475,6 +553,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
       );
     }
     final activeReactionEffectPostId = _activeReactionEffectPostId;
+    final activeMessageEffectPostId = _activeMessageEffectPostId;
 
     return Stack(
       fit: StackFit.expand,
@@ -520,6 +599,17 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
                   _handleReactionEffectCompleted(activeReactionEffectPostId),
             ),
           ),
+        if (activeMessageEffectPostId != null)
+          Positioned.fill(
+            child: ReactionFlyOverlay(
+              key: ValueKey<String>('message-$activeMessageEffectPostId'),
+              reactions: const ['\u{1F4AC}'],
+              minCopiesPerReaction: 4,
+              maxCopiesPerReaction: 5,
+              onCompleted: () =>
+                  _handleMessageEffectCompleted(activeMessageEffectPostId),
+            ),
+          ),
         if (footerPost != null && footerReactionPage != null)
           Positioned(
             left: 0,
@@ -539,6 +629,9 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
                       context.pushNamed(AppRoutes.cameraScreenName),
                   onActivityPressed: () =>
                       _showPostReactionsSheet(footerReactionPage),
+                  onMessagePressed: canManage
+                      ? null
+                      : () => unawaited(_showPostMessageInput(footerPost)),
                   onReactIcon: (icon) => unawaited(
                     ref
                         .read(feedProvider.notifier)
@@ -879,6 +972,7 @@ class _FeedPostFooter extends StatelessWidget {
     required this.onGridPressed,
     required this.onCameraPressed,
     required this.onActivityPressed,
+    required this.onMessagePressed,
     required this.onReactIcon,
     required this.onMenuPressed,
   });
@@ -888,6 +982,7 @@ class _FeedPostFooter extends StatelessWidget {
   final VoidCallback onGridPressed;
   final VoidCallback onCameraPressed;
   final VoidCallback onActivityPressed;
+  final VoidCallback? onMessagePressed;
   final ValueChanged<String> onReactIcon;
   final VoidCallback? onMenuPressed;
 
@@ -906,7 +1001,10 @@ class _FeedPostFooter extends StatelessWidget {
                     page: reactionPage,
                     onPressed: onActivityPressed,
                   )
-                : _FeedMessageReactionBar(onReactIcon: onReactIcon),
+                : _FeedMessageReactionBar(
+                    onMessagePressed: onMessagePressed,
+                    onReactIcon: onReactIcon,
+                  ),
             const SizedBox(height: 10),
             SizedBox(
               height: 84,
@@ -1012,8 +1110,12 @@ class _FeedActivityBar extends StatelessWidget {
 }
 
 class _FeedMessageReactionBar extends StatelessWidget {
-  const _FeedMessageReactionBar({required this.onReactIcon});
+  const _FeedMessageReactionBar({
+    required this.onMessagePressed,
+    required this.onReactIcon,
+  });
 
+  final VoidCallback? onMessagePressed;
   final ValueChanged<String> onReactIcon;
 
   static const List<String> _icons = ['❤️', '🔥', '🥰'];
@@ -1029,15 +1131,22 @@ class _FeedMessageReactionBar extends StatelessWidget {
           padding: const EdgeInsets.only(left: 16, right: 8),
           child: Row(
             children: [
-              const Expanded(
-                child: AppText(
-                  'Gửi tin nhắn...',
-                  size: AppTextSize.small,
-                  spacing: AppTextSpacing.tight,
-                  weight: AppTextWeight.regular,
-                  color: AppColors.sky100,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              Expanded(
+                child: InkWell(
+                  onTap: onMessagePressed,
+                  borderRadius: BorderRadius.circular(999),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    child: AppText(
+                      'Gửi tin nhắn...',
+                      size: AppTextSize.small,
+                      spacing: AppTextSpacing.tight,
+                      weight: AppTextWeight.regular,
+                      color: AppColors.sky100,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ),
               ),
               for (final icon in _icons)
@@ -1046,6 +1155,170 @@ class _FeedMessageReactionBar extends StatelessWidget {
                   onPressed: () => onReactIcon(icon),
                 ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PostMessageInputSheet extends StatefulWidget {
+  const _PostMessageInputSheet({
+    required this.clientMessageId,
+    required this.onSend,
+  });
+
+  final String clientMessageId;
+  final Future<bool> Function(String content, String clientMessageId) onSend;
+
+  @override
+  State<_PostMessageInputSheet> createState() => _PostMessageInputSheetState();
+}
+
+class _PostMessageInputSheetState extends State<_PostMessageInputSheet> {
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+  bool _hasText = false;
+  bool _isSending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_handleTextChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _focusNode.requestFocus();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_handleTextChanged);
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _handleTextChanged() {
+    final hasText = _controller.text.trim().isNotEmpty;
+    if (hasText == _hasText) {
+      return;
+    }
+
+    setState(() {
+      _hasText = hasText;
+    });
+  }
+
+  Future<void> _handleSend() async {
+    final content = _controller.text.trim();
+    if (content.isEmpty || _isSending) {
+      return;
+    }
+
+    setState(() {
+      _isSending = true;
+    });
+
+    final didSend = await widget.onSend(content, widget.clientMessageId);
+    if (!mounted) {
+      return;
+    }
+
+    if (didSend) {
+      Navigator.of(context).pop();
+      return;
+    }
+
+    setState(() {
+      _isSending = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: SafeArea(
+        top: false,
+        child: Material(
+          color: colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Input(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    autofocus: true,
+                    hintText: 'Nhắn tin...',
+                    height: 44,
+                    maxLines: 1,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                _PostMessageSendButton(
+                  isEnabled: _hasText && !_isSending,
+                  isSending: _isSending,
+                  onPressed: _handleSend,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PostMessageSendButton extends StatelessWidget {
+  const _PostMessageSendButton({
+    required this.isEnabled,
+    required this.isSending,
+    required this.onPressed,
+  });
+
+  final bool isEnabled;
+  final bool isSending;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final backgroundColor = isEnabled ? colorScheme.primary : AppColors.ink100;
+
+    return SizedBox(
+      width: 44,
+      height: 44,
+      child: Material(
+        color: backgroundColor,
+        shape: const CircleBorder(),
+        child: InkWell(
+          onTap: isEnabled ? onPressed : null,
+          customBorder: const CircleBorder(),
+          child: Center(
+            child: isSending
+                ? SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(colorScheme.onPrimary),
+                    ),
+                  )
+                : AppIcon(
+                    AppIcons.send,
+                    size: 20,
+                    color: colorScheme.onPrimary,
+                  ),
           ),
         ),
       ),
@@ -1387,9 +1660,9 @@ class _PostReactionUserTile extends StatelessWidget {
 }
 
 List<String> _reactionEffectIconsFromPage(PostReactionPage page) {
-  return page.items.expand(_reactionDisplayIconsFromDetail).toList(
-    growable: false,
-  );
+  return page.items
+      .expand(_reactionDisplayIconsFromDetail)
+      .toList(growable: false);
 }
 
 List<String> _reactionDisplayIconsFromDetail(PostReactionDetail item) {

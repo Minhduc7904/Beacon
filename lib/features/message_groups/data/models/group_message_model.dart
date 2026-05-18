@@ -1,4 +1,5 @@
 import '../../domain/entities/group_message.dart';
+import '../../../posts/data/models/post_model.dart';
 
 class GroupMessageModel extends GroupMessage {
   const GroupMessageModel({
@@ -9,9 +10,13 @@ class GroupMessageModel extends GroupMessage {
     required super.senderGivenName,
     required super.content,
     required super.createdAtUtc,
+    required super.postId,
+    required super.post,
   });
 
   factory GroupMessageModel.fromJson(Map<String, dynamic> json) {
+    final postJson = json['post'];
+
     return GroupMessageModel(
       id: json['id']?.toString() ?? '',
       groupId: json['groupId']?.toString() ?? '',
@@ -23,6 +28,10 @@ class GroupMessageModel extends GroupMessage {
           '',
       content: json['content']?.toString() ?? '',
       createdAtUtc: _toDate(json['createdAtUtc']),
+      postId: json['postId']?.toString(),
+      post: postJson is Map<String, dynamic>
+          ? PostModel.fromJson(postJson)
+          : null,
     );
   }
 
