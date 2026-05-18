@@ -22,8 +22,11 @@ import '../../../../../core/widgets/text/text.dart';
 import '../../../../feed/domain/entities/feed_post.dart';
 import '../../../../feed/presentation/controllers/feed_state.dart';
 import '../../../../feed/presentation/pages/feed_page.dart';
+import '../../../../feed/presentation/widgets/feed_media_radius.dart';
 import '../../../../feed/presentation/widgets/feed_post_card.dart';
+import '../../../../feed/presentation/widgets/reaction_fly_overlay.dart';
 import '../../../../posts/domain/entities/post_reaction_detail.dart';
+import '../../../../posts/domain/entities/post_reaction_icon.dart';
 import '../../../../posts/domain/entities/post_reaction_page.dart';
 import '../../../../posts/domain/entities/post_visibility.dart';
 import '../../controllers/home_checkin_state.dart';
@@ -49,6 +52,10 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
   late final PageController _pageController;
   String? _handledTargetPostId;
   bool _isHandlingTargetPost = false;
+  int _currentPageIndex = 0;
+  String? _activeReactionEffectPostId;
+  final Set<String> _playedReactionEffectPostIds = <String>{};
+  final Set<String> _pendingReactionEffectPostIds = <String>{};
 
   @override
   void initState() {
@@ -97,6 +104,16 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     });
   }
 
+  void _setCurrentPageIndex(int index) {
+    if (_currentPageIndex == index) {
+      return;
+    }
+
+    setState(() {
+      _currentPageIndex = index;
+    });
+  }
+
   Future<void> _openTargetPost(String postId) async {
     if (_isHandlingTargetPost) {
       return;
@@ -114,7 +131,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
       if (postIndex == -1) {
         ref
             .read(appMessageProvider.notifier)
-            .addWarning('Khong tim thay bai dang vua co tuong tac');
+            .addWarning('Không tìm thấy bài đăng vừa có tương tác');
         return;
       }
 
@@ -136,10 +153,14 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
           duration: const Duration(milliseconds: 450),
           curve: Curves.easeOutCubic,
         );
+        if (mounted) {
+          _setCurrentPageIndex(targetPage);
+        }
       } else {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && _pageController.hasClients) {
             _pageController.jumpToPage(targetPage);
+            _setCurrentPageIndex(targetPage);
           }
         });
       }
@@ -180,6 +201,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
   }
 
   void _handlePageChanged(int index) {
+    _setCurrentPageIndex(index);
     widget.onFeedVisibilityChanged(index > 0);
 
     if (index == 0) {
@@ -214,10 +236,68 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     unawaited(ref.read(feedProvider.notifier).loadPostReactions(post.id));
   }
 
+  void _scheduleReactionEffectIfReady({
+    required FeedPost post,
+    required PostReactionPage page,
+    required String? currentUserId,
+  }) {
+    if (currentUserId == null ||
+        post.ownerUserId != currentUserId ||
+        page.items.isEmpty ||
+        _playedReactionEffectPostIds.contains(post.id) ||
+        _pendingReactionEffectPostIds.contains(post.id) ||
+        _activeReactionEffectPostId == post.id) {
+      return;
+    }
+
+    _pendingReactionEffectPostIds.add(post.id);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _pendingReactionEffectPostIds.remove(post.id);
+      if (!mounted) {
+        return;
+      }
+
+      final feedState = ref.read(feedProvider);
+      final feedIndex = _currentPageIndex - 1;
+      if (feedState.viewMode != FeedViewMode.single ||
+          feedIndex < 0 ||
+          feedIndex >= feedState.posts.length) {
+        return;
+      }
+
+      final visiblePost = feedState.posts[feedIndex];
+      final latestCurrentUserId = ref.read(meProfileProvider).valueOrNull?.id;
+      final latestReactionPage = feedState.postReactionPages[post.id];
+      if (visiblePost.id != post.id ||
+          latestCurrentUserId == null ||
+          visiblePost.ownerUserId != latestCurrentUserId ||
+          latestReactionPage == null ||
+          latestReactionPage.items.isEmpty) {
+        return;
+      }
+
+      setState(() {
+        _playedReactionEffectPostIds.add(post.id);
+        _activeReactionEffectPostId = post.id;
+      });
+    });
+  }
+
+  void _handleReactionEffectCompleted(String postId) {
+    if (!mounted || _activeReactionEffectPostId != postId) {
+      return;
+    }
+
+    setState(() {
+      _activeReactionEffectPostId = null;
+    });
+  }
+
   void _switchToGrid() {
     if (_pageController.hasClients) {
       _pageController.jumpToPage(1);
     }
+    _setCurrentPageIndex(1);
     ref.read(feedProvider.notifier).updateViewMode(FeedViewMode.grid);
   }
 
@@ -228,7 +308,14 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
         return;
       }
 
-      _pageController.jumpToPage(postIndex + 1);
+      final targetPage = postIndex + 1;
+      _pageController.jumpToPage(targetPage);
+      _setCurrentPageIndex(targetPage);
+
+      final posts = ref.read(feedProvider).posts;
+      if (postIndex >= 0 && postIndex < posts.length) {
+        _handleVisibleFeedPost(posts[postIndex]);
+      }
     });
   }
 
@@ -320,6 +407,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
         }
 
         _pageController.jumpToPage(1);
+        _setCurrentPageIndex(1);
       });
     });
 
@@ -368,66 +456,102 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
         ? 1
         : feedPosts.length;
     final pageCount = 1 + feedPageCount;
+    final footerPostIndex = _currentPageIndex - 1;
+    final footerPost =
+        !isGridMode &&
+            footerPostIndex >= 0 &&
+            footerPostIndex < feedPosts.length
+        ? feedPosts[footerPostIndex]
+        : null;
+    final footerReactionPage = footerPost == null
+        ? null
+        : feedState.postReactionPages[footerPost.id] ??
+              const PostReactionPage.empty();
+    if (footerPost != null && footerReactionPage != null) {
+      _scheduleReactionEffectIfReady(
+        post: footerPost,
+        page: footerReactionPage,
+        currentUserId: currentUserId,
+      );
+    }
+    final activeReactionEffectPostId = _activeReactionEffectPostId;
 
-    return PageView.builder(
-      controller: _pageController,
-      scrollDirection: Axis.vertical,
-      onPageChanged: _handlePageChanged,
-      itemCount: pageCount,
-      itemBuilder: (context, index) {
-        if (index == 0) return homeContent;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        PageView.builder(
+          controller: _pageController,
+          scrollDirection: Axis.vertical,
+          onPageChanged: _handlePageChanged,
+          itemCount: pageCount,
+          itemBuilder: (context, index) {
+            if (index == 0) return homeContent;
 
-        if (feedPosts.isEmpty) {
-          return _FeedStatusPage(
-            state: feedState,
-            onRetry: () =>
-                ref.read(feedProvider.notifier).load(forceRefresh: true),
-          );
-        }
+            if (feedPosts.isEmpty) {
+              return _FeedStatusPage(
+                state: feedState,
+                onRetry: () =>
+                    ref.read(feedProvider.notifier).load(forceRefresh: true),
+              );
+            }
 
-        if (isGridMode) {
-          return _FeedGridPage(
-            posts: feedPosts,
-            isLoadingMore: feedState.isLoadingMore,
-            onPostTap: _switchToSingleAt,
-            onLoadMore: () => ref.read(feedProvider.notifier).loadMore(),
-          );
-        }
+            if (isGridMode) {
+              return _FeedGridPage(
+                posts: feedPosts,
+                isLoadingMore: feedState.isLoadingMore,
+                onPostTap: _switchToSingleAt,
+                onLoadMore: () => ref.read(feedProvider.notifier).loadMore(),
+              );
+            }
 
-        final post = feedPosts[index - 1];
-        final canManage =
-            currentUserId != null && post.ownerUserId == currentUserId;
-        final reactionPage =
-            feedState.postReactionPages[post.id] ??
-            const PostReactionPage.empty();
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            FeedPostCard(post: post),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 14,
-              child: _FeedPostFooter(
-                canManage: canManage,
-                reactionPage: reactionPage,
-                onGridPressed: _switchToGrid,
-                onCameraPressed: () =>
-                    context.pushNamed(AppRoutes.cameraScreenName),
-                onActivityPressed: () => _showPostReactionsSheet(reactionPage),
-                onReactIcon: (icon) => unawaited(
-                  ref
-                      .read(feedProvider.notifier)
-                      .setReactionIcon(post.id, icon),
-                ),
-                onMenuPressed: canManage
-                    ? () => _showOwnerActionSheet(post)
-                    : null,
+            final post = feedPosts[index - 1];
+            return FeedPostCard(post: post);
+          },
+        ),
+        if (activeReactionEffectPostId != null)
+          Positioned.fill(
+            child: ReactionFlyOverlay(
+              key: ValueKey<String>(activeReactionEffectPostId),
+              reactions: _reactionEffectIconsFromPage(
+                feedState.postReactionPages[activeReactionEffectPostId] ??
+                    const PostReactionPage.empty(),
               ),
+              onCompleted: () =>
+                  _handleReactionEffectCompleted(activeReactionEffectPostId),
             ),
-          ],
-        );
-      },
+          ),
+        if (footerPost != null && footerReactionPage != null)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 14,
+            child: Builder(
+              builder: (context) {
+                final canManage =
+                    currentUserId != null &&
+                    footerPost.ownerUserId == currentUserId;
+
+                return _FeedPostFooter(
+                  canManage: canManage,
+                  reactionPage: footerReactionPage,
+                  onGridPressed: _switchToGrid,
+                  onCameraPressed: () =>
+                      context.pushNamed(AppRoutes.cameraScreenName),
+                  onActivityPressed: () =>
+                      _showPostReactionsSheet(footerReactionPage),
+                  onReactIcon: (icon) => unawaited(
+                    ref
+                        .read(feedProvider.notifier)
+                        .setReactionIcon(footerPost.id, icon),
+                  ),
+                  onMenuPressed: canManage
+                      ? () => _showOwnerActionSheet(footerPost)
+                      : null,
+                );
+              },
+            ),
+          ),
+      ],
     );
   }
 
@@ -672,39 +796,49 @@ class _FeedGridTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.black,
-      borderRadius: BorderRadius.circular(8),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Image.network(
-          post.imageUrl,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, progress) {
-            if (progress == null) {
-              return child;
-            }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tileSize = constraints.biggest.shortestSide;
+        final tileBorderRadius = feedMediaBorderRadiusForSize(
+          context,
+          tileSize,
+        );
 
-            return Center(
-              child: AppLoadingIndicator(
-                color: AppColors.sky100.withValues(alpha: 0.8),
-                size: 18,
-                strokeWidth: 2,
-              ),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) {
-            return Center(
-              child: AppIcon(
-                AppIcons.warning,
-                color: AppColors.sky100.withValues(alpha: 0.72),
-                size: 24,
-              ),
-            );
-          },
-        ),
-      ),
+        return Material(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(tileBorderRadius),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Image.network(
+              post.imageUrl,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) {
+                  return child;
+                }
+
+                return Center(
+                  child: AppLoadingIndicator(
+                    color: AppColors.sky100.withValues(alpha: 0.8),
+                    size: 18,
+                    strokeWidth: 2,
+                  ),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return Center(
+                  child: AppIcon(
+                    AppIcons.warning,
+                    color: AppColors.sky100.withValues(alpha: 0.72),
+                    size: 24,
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -783,7 +917,7 @@ class _FeedPostFooter extends StatelessWidget {
                     alignment: Alignment.centerLeft,
                     child: _FeedFooterIconButton(
                       icon: AppIcons.grid,
-                      tooltip: 'Xem dang luoi',
+                      tooltip: 'Xem dạng lưới',
                       onPressed: onGridPressed,
                     ),
                   ),
@@ -793,7 +927,7 @@ class _FeedPostFooter extends StatelessWidget {
                     child: canManage
                         ? _FeedFooterIconButton(
                             icon: AppIcons.moreVertical,
-                            tooltip: 'Quan ly bai dang',
+                            tooltip: 'Quản lý bài đăng',
                             onPressed: onMenuPressed,
                           )
                         : const SizedBox(width: 48, height: 48),
@@ -834,7 +968,7 @@ class _FeedActivityBar extends StatelessWidget {
                 const Text('⭐', style: TextStyle(fontSize: 16)),
                 const SizedBox(width: 8),
                 const AppText(
-                  'Hoat dong',
+                  'Hoạt động',
                   size: AppTextSize.small,
                   spacing: AppTextSpacing.tight,
                   weight: AppTextWeight.bold,
@@ -843,7 +977,7 @@ class _FeedActivityBar extends StatelessWidget {
                 const Spacer(),
                 if (items.isEmpty)
                   AppText(
-                    'Chua co react',
+                    'Chưa có react',
                     size: AppTextSize.veryTiny,
                     spacing: AppTextSpacing.tight,
                     weight: AppTextWeight.regular,
@@ -851,9 +985,10 @@ class _FeedActivityBar extends StatelessWidget {
                   )
                 else
                   SizedBox(
-                    width: 24.0 + ((items.length - 1) * 18),
+                    width: 28.0 + ((items.length - 1) * 18),
                     height: 28,
                     child: Stack(
+                      clipBehavior: Clip.none,
                       children: [
                         for (var index = 0; index < items.length; index++)
                           Positioned(
@@ -896,7 +1031,7 @@ class _FeedMessageReactionBar extends StatelessWidget {
             children: [
               const Expanded(
                 child: AppText(
-                  'Gui tin nhan...',
+                  'Gửi tin nhắn...',
                   size: AppTextSize.small,
                   spacing: AppTextSpacing.tight,
                   weight: AppTextWeight.regular,
@@ -986,7 +1121,7 @@ class _FeedCameraLaunchButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'Mo camera',
+      message: 'Mở camera',
       child: GestureDetector(
         onTap: onPressed,
         child: SizedBox(
@@ -1058,20 +1193,20 @@ class _OwnerPostActionSheet extends StatelessWidget {
                 const SizedBox(height: 12),
                 _OwnerPostActionTile(
                   icon: AppIcons.users,
-                  label: 'Nguoi da react',
+                  label: 'Người đã react',
                   color: colorScheme.onSurface,
                   onTap: () =>
                       Navigator.of(context).pop(_OwnerPostAction.reactions),
                 ),
                 _OwnerPostActionTile(
                   icon: AppIcons.pencil,
-                  label: 'Sua',
+                  label: 'Sửa',
                   color: colorScheme.onSurface,
                   onTap: () => Navigator.of(context).pop(_OwnerPostAction.edit),
                 ),
                 _OwnerPostActionTile(
                   icon: AppIcons.trash,
-                  label: 'Xoa',
+                  label: 'Xóa',
                   color: colorScheme.error,
                   onTap: () =>
                       Navigator.of(context).pop(_OwnerPostAction.delete),
@@ -1157,7 +1292,7 @@ class _PostReactionListSheet extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   AppText(
-                    'Hoat dong',
+                    'Hoạt động',
                     size: AppTextSize.regular,
                     spacing: AppTextSpacing.tight,
                     weight: AppTextWeight.bold,
@@ -1168,7 +1303,7 @@ class _PostReactionListSheet extends StatelessWidget {
                     child: page.items.isEmpty
                         ? Center(
                             child: AppText(
-                              'Chua co hoat dong',
+                              'Chưa có hoạt động',
                               size: AppTextSize.small,
                               spacing: AppTextSpacing.tight,
                               weight: AppTextWeight.regular,
@@ -1211,9 +1346,9 @@ class _PostReactionUserTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final icons = item.icons.join(' - ');
+    final icons = _reactionDisplayIconsFromDetail(item).join(' ');
     final displayName = item.user.displayName.trim().isEmpty
-        ? 'Nguoi dung'
+        ? 'Người dùng'
         : item.user.displayName.trim();
 
     return Padding(
@@ -1249,6 +1384,25 @@ class _PostReactionUserTile extends StatelessWidget {
       ),
     );
   }
+}
+
+List<String> _reactionEffectIconsFromPage(PostReactionPage page) {
+  return page.items.expand(_reactionDisplayIconsFromDetail).toList(
+    growable: false,
+  );
+}
+
+List<String> _reactionDisplayIconsFromDetail(PostReactionDetail item) {
+  return item.icons
+      .expand((icon) => icon.split(RegExp(r'\s*-\s*')))
+      .map(_displayReactionIcon)
+      .where((icon) => icon.trim().isNotEmpty && icon.trim() != '-')
+      .toList(growable: false);
+}
+
+String _displayReactionIcon(String icon) {
+  final knownIcon = postReactionIconFromValue(icon);
+  return knownIcon?.emoji ?? icon;
 }
 
 class _FeedStatusPage extends StatelessWidget {

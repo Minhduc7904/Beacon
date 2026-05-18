@@ -49,17 +49,13 @@ class HomeAppBarContent extends StatelessWidget {
                 duration: const Duration(milliseconds: 180),
                 switchInCurve: Curves.easeOutCubic,
                 switchOutCurve: Curves.easeInCubic,
-                child: SizedBox(
+                child: KeyedSubtree(
                   key: ValueKey<String>(
                     showFeedFilter ? 'feed-filter' : 'streak-chip',
                   ),
-                  width: double.infinity,
                   child: showFeedFilter
                       ? const HomeFeedFilterDropdown()
-                      : Align(
-                          alignment: Alignment.center,
-                          child: HomeStreakChip(days: streakDays),
-                        ),
+                      : HomeStreakChip(days: streakDays),
                 ),
               ),
             ),

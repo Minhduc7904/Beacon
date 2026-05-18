@@ -3,6 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/text/app_text_theme.dart';
 import '../../../../core/widgets/text/text.dart';
 import '../../domain/entities/feed_post.dart';
+import 'feed_media_radius.dart';
+
+const _feedImageHorizontalInset = 48.0;
+const _feedImageMinSize = 240.0;
+const _feedImageMaxSize = 360.0;
 
 class FeedImageBox extends StatelessWidget {
   const FeedImageBox({super.key, required this.post});
@@ -12,6 +17,10 @@ class FeedImageBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imageBoxSize = _imageBoxSize(context);
+    final imageBorderRadius = feedMediaBorderRadiusForSize(
+      context,
+      imageBoxSize,
+    );
     final caption = post.caption?.trim() ?? '';
 
     return Container(
@@ -19,7 +28,7 @@ class FeedImageBox extends StatelessWidget {
       height: imageBoxSize,
       decoration: BoxDecoration(
         color: Colors.black,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(imageBorderRadius),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.2),
           width: 1.2,
@@ -55,7 +64,7 @@ class FeedImageBox extends StatelessWidget {
             errorBuilder: (context, error, stackTrace) {
               return const Center(
                 child: Text(
-                  'Khong the tai anh',
+                  'Không thể tải ảnh',
                   style: TextStyle(color: Colors.white70),
                 ),
               );
@@ -96,6 +105,9 @@ class FeedImageBox extends StatelessWidget {
 
   double _imageBoxSize(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    return (width - 48).clamp(240.0, 360.0);
+    return (width - _feedImageHorizontalInset).clamp(
+      _feedImageMinSize,
+      _feedImageMaxSize,
+    );
   }
 }

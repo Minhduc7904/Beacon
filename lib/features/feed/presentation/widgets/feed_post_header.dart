@@ -13,10 +13,10 @@ class FeedPostHeader extends StatelessWidget {
 
   String _formatTime(DateTime dateTime) {
     final diff = DateTime.now().difference(dateTime);
-    if (diff.inMinutes < 1) return 'Vua xong';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} phut truoc';
-    if (diff.inHours < 24) return '${diff.inHours} gio truoc';
-    return '${diff.inDays} ngay truoc';
+    if (diff.inMinutes < 1) return 'Vừa xong';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} phút trước';
+    if (diff.inHours < 24) return '${diff.inHours} giờ trước';
+    return '${diff.inDays} ngày trước';
   }
 
   String _givenNameOnly(String authorName) {

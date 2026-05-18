@@ -18,7 +18,6 @@ class HomeStreakChip extends StatelessWidget {
         color: AppColors.coral400,
         borderRadius: BorderRadius.circular(999),
       ),
-      alignment: Alignment.center,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,

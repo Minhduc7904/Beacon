@@ -98,7 +98,7 @@ class _HomePageState extends ConsumerState<HomePage>
         ref
             .read(appMessageProvider.notifier)
             .addWarning(
-              'Khong the tai so tin nhan chua doc: ${failure.message}',
+              'Không thể tải số tin nhắn chưa đọc: ${failure.message}',
             );
       },
       (page) {

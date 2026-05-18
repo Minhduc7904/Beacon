@@ -37,6 +37,10 @@ class HomeFeedFilterDropdown extends ConsumerWidget {
                 onTap: () => _select(ref, items, 'all', closePopup),
                 child: const HomeFeedFilterAllFriendsItem(),
               ),
+              _PopupAction(
+                onTap: () => _select(ref, items, 'me', closePopup),
+                child: const HomeFeedFilterMyPostsItem(),
+              ),
               ...items
                   .where((item) => item.friend != null)
                   .map(
@@ -46,9 +50,11 @@ class HomeFeedFilterDropdown extends ConsumerWidget {
                     ),
                   ),
               if (friends.isLoading)
-                const HomeFeedFilterStatusItem(label: 'Dang tai ban be'),
+                const HomeFeedFilterStatusItem(label: 'Đang tải bạn bè'),
               if (friends.hasError)
-                const HomeFeedFilterStatusItem(label: 'Khong tai duoc ban be'),
+                const HomeFeedFilterStatusItem(
+                  label: 'Không tải được bạn bè',
+                ),
             ],
           ),
         );
@@ -58,7 +64,6 @@ class HomeFeedFilterDropdown extends ConsumerWidget {
           onTap: toggle,
           child: Container(
             height: 48,
-            width: double.infinity,
             padding: const EdgeInsetsDirectional.only(start: 16, end: 12),
             decoration: BoxDecoration(
               color: AppColors.sky100,
@@ -66,6 +71,7 @@ class HomeFeedFilterDropdown extends ConsumerWidget {
               border: Border.all(color: AppColors.sky400, width: 1.2),
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Flexible(
@@ -128,12 +134,17 @@ class HomeFeedFilterDropdown extends ConsumerWidget {
     final items = <_FeedFilterItem>[
       const _FeedFilterItem(
         key: 'all',
-        label: 'Tat ca',
+        label: 'Tất cả',
         filter: FeedFilter.all(),
+      ),
+      const _FeedFilterItem(
+        key: 'me',
+        label: 'Bài đăng của tôi',
+        filter: FeedFilter.me(),
       ),
       ...friends.map((friend) {
         final name = friend.fullName.trim().isEmpty
-            ? 'Ban be'
+            ? 'Bạn bè'
             : friend.fullName.trim();
         final filter = FeedFilter.friend(
           friendId: friend.userId,

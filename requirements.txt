@@ -1,7 +1,0 @@
-Sửa lại giao diện 1 số thứ sau:
-- HomeActionRow:
-    + Button check-in bằng mood (icon mặt cười) và button mở trang camera đều có kích cỡ 60x60, nền màu sky100, viền màu teal100, icon size 32x32, màu teal400
-    + Button check-in ở giữa: là 2 vòng tròn lồng nhau, vòng tròn ngoài có kích cỡ 128x128, màu teal200, chỉ có viền không có nền, hình tròn bên trong kích cỡ 110x110, màu teal400, icon ở chính giữa bên trong vòng tròn nhỏ hình chiếc khiên, màu sky100, kích cỡ 60x60
-    + Button mood bên trái, button camera bên phải, button checkin ở giữa, tất cả căn giữa theo chiều dọc của button checkin
-- Feed indicator: để icon arrow down bên phải chữ Bảng tin, cách 4px, tất cả có màu ink400, chữ bảng tin typo là Large/Normal/Medium
-- Tất cả font, color sử dụng theo theme đã định nghĩa của hệ thống
