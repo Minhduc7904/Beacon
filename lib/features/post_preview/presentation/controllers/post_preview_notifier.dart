@@ -46,7 +46,9 @@ class PostPreviewNotifier extends StateNotifier<PostPreviewState> {
       clearCreatedPost: true,
     );
 
-    var media = state.uploadedMedia;
+    var media = state.uploadedMediaFilePath == trimmedPath
+        ? state.uploadedMedia
+        : null;
     if (media == null) {
       final uploadResult = await _uploadPostMediaUseCase(
         UploadPostMediaParams(filePath: trimmedPath),
@@ -66,6 +68,7 @@ class PostPreviewNotifier extends StateNotifier<PostPreviewState> {
           media = uploadedMedia;
           state = state.copyWith(
             uploadedMedia: uploadedMedia,
+            uploadedMediaFilePath: trimmedPath,
             clearErrorMessage: true,
           );
           return false;
@@ -100,6 +103,7 @@ class PostPreviewNotifier extends StateNotifier<PostPreviewState> {
         state = state.copyWith(
           isUploading: false,
           createdPost: post,
+          clearUploadedMedia: true,
           clearErrorMessage: true,
         );
       },
