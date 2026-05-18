@@ -33,8 +33,7 @@ class PushNotificationService {
        _deleteFcmTokenUseCase = deleteFcmTokenUseCase;
 
   static const String messageNewType = 'MESSAGE_NEW';
-  static const String notificationType = 'NOTIFICATION';
-  static const String postReactionNotificationType = 'PostReaction';
+  static const String postReactionType = 'POST_REACTION';
   static const String _androidChannelId = 'beacon_messages';
   static const String _androidChannelName = 'Messages';
   static const String _androidChannelDescription =
@@ -302,28 +301,13 @@ class PushNotificationService {
   }
 
   bool _isPostReactionNotification(Map<String, dynamic> data) {
-    return data['type'] == notificationType &&
-        data['notificationType'] == postReactionNotificationType;
+    return data['type'] == postReactionType;
   }
 
   _PostReactionNotificationPayload? _parsePostReactionPayload(
     Map<String, dynamic> data,
   ) {
-    final rawPayload = data['data'];
-    if (rawPayload is! String || rawPayload.trim().isEmpty) {
-      return null;
-    }
-
-    try {
-      final decoded = jsonDecode(rawPayload);
-      if (decoded is! Map<String, dynamic>) {
-        return null;
-      }
-
-      return _PostReactionNotificationPayload.fromJson(decoded);
-    } on FormatException {
-      return null;
-    }
+    return _PostReactionNotificationPayload.fromJson(data);
   }
 
   String _fallbackNotificationTitle(Map<String, dynamic> data) {

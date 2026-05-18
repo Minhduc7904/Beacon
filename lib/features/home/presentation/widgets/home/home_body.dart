@@ -1211,7 +1211,7 @@ class _PostReactionUserTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final icons = item.icons.join(', ');
+    final icons = item.icons.join(' - ');
     final displayName = item.user.displayName.trim().isEmpty
         ? 'Nguoi dung'
         : item.user.displayName.trim();
