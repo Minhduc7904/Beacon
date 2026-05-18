@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/color/app_colors.dart';
 import 'home_avatar_button.dart';
 import 'home_chat_button.dart';
+import 'home_feed_filter_dropdown.dart';
 import 'home_streak_chip.dart';
 
 class HomeAppBarContent extends StatelessWidget {
@@ -12,6 +13,7 @@ class HomeAppBarContent extends StatelessWidget {
     required this.givenName,
     required this.streakDays,
     required this.unreadMessages,
+    required this.showFeedFilter,
     required this.onOpenProfile,
     required this.onOpenMessages,
   });
@@ -20,6 +22,7 @@ class HomeAppBarContent extends StatelessWidget {
   final String? givenName;
   final int streakDays;
   final int unreadMessages;
+  final bool showFeedFilter;
   final VoidCallback onOpenProfile;
   final VoidCallback onOpenMessages;
 
@@ -41,7 +44,19 @@ class HomeAppBarContent extends StatelessWidget {
               avatarSize: 28,
               circleColor: AppColors.sky400,
             ),
-            HomeStreakChip(days: streakDays),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: showFeedFilter
+                  ? const HomeFeedFilterDropdown(
+                      key: ValueKey<String>('feed-filter'),
+                    )
+                  : HomeStreakChip(
+                      key: const ValueKey<String>('streak-chip'),
+                      days: streakDays,
+                    ),
+            ),
             HomeChatButton(
               unreadCount: unreadMessages,
               onPressed: onOpenMessages,

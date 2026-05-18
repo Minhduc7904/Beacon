@@ -1,103 +1,348 @@
-GET /friends/search?search
+1. api/v1/posts	
+- Method: POST
 
-#region
-    /// <summary>Tìm kiếm bạn bè theo số điện thoại.</summary>
-    /// <remarks>
-    /// Yêu cầu: <c>Authorization: Bearer &lt;token&gt;</c>
-    ///
-    /// Tìm trong danh sách bạn bè của user hiện tại theo số điện thoại (partial match).
-    /// Kết quả sắp xếp theo thời gian kết bạn mới nhất trước.
-    ///
-    /// **Query params:**
-    /// - <c>search</c> (string, bắt buộc, tối thiểu 3 ký tự): Chuỗi tìm kiếm khớp một phần với số điện thoại.
-    /// - <c>cursor</c> (string ISO-8601 UTC, tuỳ chọn): Load kết quả cũ hơn mốc này.
-    /// - <c>limit</c> (int, tuỳ chọn, mặc định 20, tối đa 100): Số bản ghi mỗi trang.
-    ///
-    /// **Response khi thành công (HTTP 200):**
-    /// <code>
-    /// {
-    ///   "success": true,
-    ///   "message": "...",
-    ///   "code": null,
-    ///   "data": {
-    ///     "data": [
-    ///       {
-    ///         "userId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    ///         "username": "alice",
-    ///         "avatarUrl": null,
-    ///         "type": 2,
-    ///         "createdAtUtc": "2026-05-01T08:00:00Z",
-    ///         "messageGroupId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-    ///       }
-    ///     ],
-    ///     "meta": {
-    ///       "nextCursor": "2026-05-01T08:00:00Z",
-    ///       "limit": 20,
-    ///       "hasMore": false
-    ///     }
-    ///   },
-    ///   "errors": null
-    /// }
-    /// </code>
-    ///
-    /// **Giải thích các trường:**
-    /// - <c>userId</c>: Id của người bạn (không phải của user hiện tại).
-    /// - <c>type</c>: Loại bạn bè — <c>0</c> = Family, <c>1</c> = CloseFriend, <c>2</c> = Normal, <c>3</c> = Custom.
-    /// - <c>messageGroupId</c>: Id nhóm chat riêng tư với người bạn này. Dùng để gọi GET /api/v1/message-groups/{groupId}/messages.
-    ///
-    /// **Các giá trị <c>code</c>:**
-    /// - <c>null</c>: Thành công (HTTP 200).
-    /// - <c>VALIDATION_ERROR</c>: <c>search</c> trống hoặc ngắn hơn 3 ký tự (HTTP 400).
-    /// - <c>401</c>: Token không hợp lệ hoặc hết hạn.
-    /// </remarks>
+/// <summary>
+/// Tạo bài đăng mới kèm media.
+/// </summary>
+/// <remarks>
+/// Yêu cầu: <c>Authorization: Bearer &lt;token&gt;</c>.
+///
+/// Media phải do chính người dùng upload và có trạng thái <c>Ready</c>.
+///
+/// Các giá trị <c>code</c> có thể xuất hiện trong response:
+///
+/// - <c>null</c>: Tạo bài đăng thành công.
+/// - <c>VALIDATION_ERROR</c>: Dữ liệu đầu vào không hợp lệ.
+/// - <c>MEDIA_NOT_FOUND</c>: Media không tồn tại.
+/// - <c>MEDIA_ACCESS_DENIED</c>: Bạn không sở hữu media này.
+/// - <c>MEDIA_NOT_READY</c>: Media chưa được xử lý xong.
+/// - <c>UNSUPPORTED_MEDIA_TYPE</c>: Loại media không được hỗ trợ.
+/// - <c>INVALID_VIDEO_DURATION</c>: Video phải dài từ 5–10 giây.
+/// - <c>INVALID_VISIBILITY</c>: Visibility không hợp lệ (chỉ nhận ""friends"" | ""private"").
+///
+/// Cấu trúc <c>data</c> khi thành công:
+/// <code>
+/// {
+///   ""id"":           ""guid"",
+///   ""ownerUserId"":  ""guid"",
+///   ""media"": {
+///     ""id"":               ""guid"",
+///     ""url"":              ""string  (presigned URL, hết hạn 15 phút)"",
+///     ""type"":             ""string  (image | video)"",
+///     ""thumbnailUrl"":     ""string? (null nếu là ảnh)"",
+///     ""durationSeconds"":  ""int?    (null nếu là ảnh)"",
+///     ""width"":            ""int?"",
+///     ""height"":           ""int?""
+///   },
+///   ""caption"":      ""string?"",
+///   ""visibility"":   ""string  (friends | private)"",
+///   ""status"":       ""string  (active)"",
+///   ""createdAtUtc"": ""datetime (UTC)"",
+///   ""updatedAtUtc"": ""datetime? (UTC)""
+/// }
+/// </code>
+///
+/// Format response chuẩn: <c>{ success, message, code, data, errors }</c>
+/// </remarks>
+/// <param name=""request"">
+/// Body JSON:
+/// <code>
+/// {
+///   ""mediaId"":    ""guid     (bắt buộc)"",
+///   ""caption"":    ""string?  (tuỳ chọn, tối đa 2 000 ký tự)"",
+///   ""visibility"": ""string?  (tuỳ chọn — friends | private; mặc định friends)""
+/// }
+/// </code>
 
-GET /message-groups/group{id}
 
-#region
-    /// <summary>Xem thông tin chi tiết nhóm chat kèm danh sách thành viên.</summary>
-    /// <remarks>
-    /// Yêu cầu: <c>Authorization: Bearer &lt;token&gt;</c>
-    ///
-    /// Trả về metadata của nhóm và toàn bộ danh sách thành viên.
-    /// Chỉ thành viên của nhóm mới được xem.
-    ///
-    /// **Path param:**
-    /// - <c>groupId</c> (guid, bắt buộc): Id của nhóm. Lấy từ <c>groupId</c> trong danh sách hội thoại
-    ///   hoặc <c>messageGroupId</c> trong danh sách bạn bè.
-    ///
-    /// **Response khi thành công (HTTP 200):**
-    /// <code>
-    /// {
-    ///   "success": true,
-    ///   "message": "...",
-    ///   "code": null,
-    ///   "data": {
-    ///     "groupId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    ///     "isPrivate": true,
-    ///     "createdAtUtc": "2026-05-01T08:00:00Z",
-    ///     "members": [
-    ///       {
-    ///         "userId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    ///         "username": "alice",
-    ///         "familyName": "Nguyen",
-    ///         "givenName": "Alice",
-    ///         "avatarUrl": null
-    ///       }
-    ///     ]
-    ///   },
-    ///   "errors": null
-    /// }
-    /// </code>
-    ///
-    /// **Giải thích các trường:**
-    /// - <c>isPrivate</c>: <c>true</c> nếu là chat 1-1 (giữa 2 bạn bè), <c>false</c> nếu là nhóm nhiều người.
-    /// - <c>members</c>: Toàn bộ thành viên của nhóm, bao gồm cả user hiện tại.
-    /// - <c>familyName</c> / <c>givenName</c>: Họ và tên của thành viên, có thể <c>null</c> nếu chưa cập nhật.
-    /// - <c>avatarUrl</c>: URL ảnh đại diện, <c>null</c> nếu chưa có.
-    ///
-    /// **Các giá trị <c>code</c>:**
-    /// - <c>null</c>: Thành công (HTTP 200).
-    /// - <c>MESSAGE_GROUP_NOT_FOUND</c>: Nhóm không tồn tại (HTTP 404).
-    /// - <c>MESSAGE_GROUP_FORBIDDEN</c>: Không phải thành viên nhóm (HTTP 403).
-    /// - <c>401</c>: Token không hợp lệ hoặc hết hạn.
-    /// </remarks>
+2. api/v1/posts/feed
+- Method: GET
+
+/// <summary>
+/// Lấy feed trang chủ (bài đăng của bản thân + bạn bè, cursor pagination).
+/// </summary>
+/// <remarks>
+/// Yêu cầu: <c>Authorization: Bearer &lt;token&gt;</c>.
+///
+/// Query:
+/// - <c>cursor</c> (tuỳ chọn, ISO datetime UTC): trả các bài có <c>createdAtUtc</c> nhỏ hơn giá trị này.
+/// - <c>limit</c> (mặc định 20, tối đa 100).
+///
+/// Các giá trị <c>code</c> có thể xuất hiện trong response:
+///
+/// - <c>null</c>: Thành công.
+///
+/// Cấu trúc <c>data</c> khi thành công:
+/// <code>
+/// {
+///   ""items"": [
+///     {
+///       ""id"":          ""guid"",
+///       ""ownerUserId"": ""guid"",
+///       ""owner"": {
+///         ""id"":          ""guid"",
+///         ""displayName"": ""string"",
+///         ""avatarUrl"":   ""string?""
+///       },
+///       ""media"": {
+///         ""id"":               ""guid"",
+///         ""url"":              ""string"",
+///         ""type"":             ""string  (image | video)"",
+///         ""thumbnailUrl"":     ""string?"",
+///         ""durationSeconds"":  ""int?"",
+///         ""width"":            ""int?"",
+///         ""height"":           ""int?""
+///       },
+///       ""caption"":         ""string?"",
+///       ""visibility"":      ""string"",
+///       ""createdAtUtc"":    ""datetime (UTC)"",
+///       ""reactionSummary"": { ""totalCount"": ""int"", ""icons"": { ""heart"": ""int"", ... } },
+///       ""myReaction"":      { ""icon"": ""string"" }
+///     }
+///   ],
+///   ""nextCursor"": ""string? (null khi hết trang)""
+/// }
+/// </code>
+///
+/// Format response chuẩn: <c>{ success, message, code, data, errors }</c>
+/// </remarks>
+
+3. api/v1/posts/friends/{friendId}
+- Method: GET
+
+/// Lấy bài đăng (visibility=friends) từ một bạn bè cụ thể (cursor pagination).
+/// </summary>
+/// <remarks>
+/// Yêu cầu: <c>Authorization: Bearer &lt;token&gt;</c>.
+///
+/// Query:
+/// - <c>cursor</c> (tuỳ chọn, ISO datetime UTC): trả các bài có <c>createdAtUtc</c> nhỏ hơn giá trị này.
+/// - <c>limit</c> (mặc định 20, tối đa 100).
+///
+/// Các giá trị <c>code</c> có thể xuất hiện trong response:
+///
+/// - <c>null</c>: Thành công.
+/// - <c>POST_ACCESS_DENIED</c>: Người dùng chỉ định không phải bạn bè.
+///
+/// Cấu trúc <c>data</c> khi thành công: giống <c>GET /api/v1/posts/feed</c>
+/// (<c>items</c> + <c>nextCursor</c>), chỉ bao gồm bài của <c>friendId</c>.
+///
+/// Format response chuẩn: <c>{ success, message, code, data, errors }</c>
+/// </remarks>
+
+3. api/v1/posts/me
+- Method: GET
+
+/// <summary>
+/// Lấy danh sách bài đăng của bản thân (cursor pagination).
+/// </summary>
+/// <remarks>
+/// Yêu cầu: <c>Authorization: Bearer &lt;token&gt;</c>.
+///
+/// Query:
+/// - <c>cursor</c> (tuỳ chọn, ISO datetime UTC): trả các bài có <c>createdAtUtc</c> nhỏ hơn giá trị này.
+/// - <c>limit</c> (mặc định 20, tối đa 100).
+///
+/// Các giá trị <c>code</c> có thể xuất hiện trong response:
+///
+/// - <c>null</c>: Thành công.
+///
+/// Cấu trúc <c>data</c> khi thành công: giống <c>GET /api/v1/posts/feed</c>
+/// (<c>items</c> + <c>nextCursor</c>), chỉ bao gồm bài đăng của chính người dùng.
+///
+/// Format response chuẩn: <c>{ success, message, code, data, errors }</c>
+/// </remarks>
+
+4. api/v1/posts/{postId}
+- Method: GET
+
+/// <summary>
+/// Lấy chi tiết một bài đăng theo ID.
+/// </summary>
+/// <remarks>
+/// Yêu cầu: <c>Authorization: Bearer &lt;token&gt;</c>.
+///
+/// Chỉ chủ sở hữu hoặc bạn bè (khi visibility=friends) mới được xem.
+///
+/// Các giá trị <c>code</c> có thể xuất hiện trong response:
+///
+/// - <c>null</c>: Thành công.
+/// - <c>POST_NOT_FOUND</c>: Bài đăng không tồn tại hoặc đã bị xóa.
+/// - <c>POST_ACCESS_DENIED</c>: Bạn không có quyền xem bài đăng này.
+///
+/// Cấu trúc <c>data</c> khi thành công:
+/// <code>
+/// {
+///   ""id"":          ""guid"",
+///   ""ownerUserId"": ""guid"",
+///   ""owner"": {
+///     ""id"":          ""guid"",
+///     ""displayName"": ""string"",
+///     ""avatarUrl"":   ""string?""
+///   },
+///   ""media"": {
+///     ""id"":               ""guid"",
+///     ""url"":              ""string  (presigned URL, hết hạn 15 phút)"",
+///     ""type"":             ""string  (image | video)"",
+///     ""thumbnailUrl"":     ""string?"",
+///     ""durationSeconds"":  ""int?"",
+///     ""width"":            ""int?"",
+///     ""height"":           ""int?""
+///   },
+///   ""caption"":         ""string?"",
+///   ""visibility"":      ""string  (friends | private)"",
+///   ""status"":          ""string  (active)"",
+///   ""createdAtUtc"":    ""datetime (UTC)"",
+///   ""updatedAtUtc"":    ""datetime? (UTC)"",
+///   ""reactionSummary"": { ""totalCount"": ""int"", ""icons"": { ""heart"": ""int"", ... } },
+///   ""myReaction"":      { ""icon"": ""string"" }
+/// }
+/// </code>
+///
+/// Format response chuẩn: <c>{ success, message, code, data, errors }</c>
+/// </remarks>"
+
+5. api/v1/posts/{postId}
+- Method: PATCH
+
+/// <summary>
+/// Cập nhật caption hoặc visibility của bài đăng.
+/// </summary>
+/// <remarks>
+/// Yêu cầu: <c>Authorization: Bearer &lt;token&gt;</c>.
+///
+/// Chỉ chủ sở hữu bài đăng mới được chỉnh sửa.
+/// Bỏ qua field hoặc truyền <c>null</c> = giữ nguyên giá trị hiện tại.
+///
+/// Các giá trị <c>code</c> có thể xuất hiện trong response:
+///
+/// - <c>null</c>: Cập nhật thành công.
+/// - <c>VALIDATION_ERROR</c>: Dữ liệu đầu vào không hợp lệ.
+/// - <c>POST_NOT_FOUND</c>: Bài đăng không tồn tại.
+/// - <c>POST_UPDATE_DENIED</c>: Bạn không có quyền chỉnh sửa bài đăng này.
+/// - <c>INVALID_VISIBILITY</c>: Visibility không hợp lệ (chỉ nhận ""friends"" | ""private"").
+///
+/// Cấu trúc <c>data</c> khi thành công:
+/// <code>
+/// {
+///   ""id"":           ""guid"",
+///   ""ownerUserId"":  ""guid"",
+///   ""media"": {
+///     ""id"":               ""guid"",
+///     ""url"":              ""string"",
+///     ""type"":             ""string  (image | video)"",
+///     ""thumbnailUrl"":     ""string?"",
+///     ""durationSeconds"":  ""int?"",
+///     ""width"":            ""int?"",
+///     ""height"":           ""int?""
+///   },
+///   ""caption"":      ""string?"",
+///   ""visibility"":   ""string  (friends | private)"",
+///   ""status"":       ""string  (active)"",
+///   ""createdAtUtc"": ""datetime (UTC)"",
+///   ""updatedAtUtc"": ""datetime? (UTC)""
+/// }
+/// </code>
+///
+/// Format response chuẩn: <c>{ success, message, code, data, errors }</c>
+/// </remarks>
+/// <param name=""request"">
+/// Body JSON (tất cả tuỳ chọn):
+/// <code>
+/// {
+///   ""caption"":    ""string?  (null = giữ nguyên)"",
+///   ""visibility"": ""string?  (friends | private; null = giữ nguyên)""
+/// }
+/// </code>
+/// </param>"
+
+6. api/v1/posts/{postId}
+- Method: DELETE
+
+/// <summary>
+/// Soft-delete bài đăng của người dùng hiện tại.
+/// </summary>
+/// <remarks>
+/// Yêu cầu: <c>Authorization: Bearer &lt;token&gt;</c>.
+///
+/// Chỉ chủ sở hữu bài đăng mới được xóa.
+/// Media đính kèm không bị xóa theo.
+///
+/// Các giá trị <c>code</c> có thể xuất hiện trong response:
+///
+/// - <c>null</c>: Xóa thành công.
+/// - <c>POST_NOT_FOUND</c>: Bài đăng không tồn tại.
+/// - <c>POST_DELETE_DENIED</c>: Bạn không có quyền xóa bài đăng này.
+///
+/// Cấu trúc <c>data</c> khi thành công: <c>null</c>
+///
+/// Format response chuẩn: <c>{ success, message, code, data, errors }</c>
+/// </remarks>
+
+7. api/v1/posts/{postId}/reaction
+- Method: PUT
+
+/// <summary>
+/// Tạo hoặc cập nhật reaction trên một bài đăng.
+/// </summary>
+/// <remarks>
+/// Yêu cầu: <c>Authorization: Bearer &lt;token&gt;</c>.
+///
+/// Nếu người dùng đã có reaction trên bài đăng này, icon sẽ được cập nhật (upsert).
+///
+/// Các giá trị <c>code</c> có thể xuất hiện trong response:
+///
+/// - <c>null</c>: Thành công.
+/// - <c>VALIDATION_ERROR</c>: Icon rỗng hoặc không hợp lệ.
+/// - <c>INVALID_REACTION_ICON</c>: Icon không nằm trong danh sách hỗ trợ (heart, haha, like, sad, wow).
+/// - <c>POST_NOT_FOUND</c>: Bài đăng không tồn tại hoặc đã bị xóa.
+/// - <c>POST_ACCESS_DENIED</c>: Bạn không có quyền xem bài đăng này.
+///
+/// Cấu trúc <c>data</c> khi thành công:
+/// <code>
+/// {
+///   ""postId"":          ""guid"",
+///   ""myReaction"":      { ""icon"": ""string"" },
+///   ""reactionSummary"": { ""totalCount"": ""int"", ""icons"": { ""heart"": ""int"", ... } }
+/// }
+/// </code>
+///
+/// Format response chuẩn: <c>{ success, message, code, data, errors }</c>
+/// </remarks>
+/// <param name=""request"">
+/// Body JSON:
+/// <code>
+/// {
+///   ""icon"": ""string  (bắt buộc — heart | haha | like | sad | wow)""
+/// }
+/// </code>
+/// </param>
+
+8. api/v1/posts/{postId}/reaction
+- Method: DELETE
+
+/// <summary>
+/// Xóa reaction của người dùng trên một bài đăng (idempotent).
+/// </summary>
+/// <remarks>
+/// Yêu cầu: <c>Authorization: Bearer &lt;token&gt;</c>.
+///
+/// Trả thành công kể cả khi reaction chưa tồn tại.
+///
+/// Các giá trị <c>code</c> có thể xuất hiện trong response:
+///
+/// - <c>null</c>: Thành công.
+/// - <c>POST_NOT_FOUND</c>: Bài đăng không tồn tại hoặc đã bị xóa.
+/// - <c>POST_ACCESS_DENIED</c>: Bạn không có quyền xem bài đăng này.
+///
+/// Cấu trúc <c>data</c> khi thành công:
+/// <code>
+/// {
+///   ""postId"":          ""guid"",
+///   ""myReaction"":      null,
+///   ""reactionSummary"": { ""totalCount"": ""int"", ""icons"": { ""heart"": ""int"", ... } }
+/// }
+/// </code>
+///
+/// Format response chuẩn: <c>{ success, message, code, data, errors }</c>
+/// </remarks>

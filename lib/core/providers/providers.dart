@@ -97,6 +97,18 @@ import '../../features/post_preview/domain/repositories/post_preview_repository.
 import '../../features/post_preview/domain/usecase/upload_post_media_usecase.dart';
 import '../../features/post_preview/presentation/controllers/post_preview_notifier.dart';
 import '../../features/post_preview/presentation/controllers/post_preview_state.dart';
+import '../../features/posts/data/datasources/posts_remote_datasource.dart';
+import '../../features/posts/data/datasources/posts_remote_datasource_impl.dart';
+import '../../features/posts/data/repositories/posts_repository_impl.dart';
+import '../../features/posts/domain/repositories/posts_repository.dart';
+import '../../features/posts/domain/usecase/create_post_usecase.dart';
+import '../../features/posts/domain/usecase/delete_post_usecase.dart';
+import '../../features/posts/domain/usecase/delete_post_reaction_usecase.dart';
+import '../../features/posts/domain/usecase/get_feed_posts_usecase.dart';
+import '../../features/posts/domain/usecase/get_friend_posts_usecase.dart';
+import '../../features/posts/domain/usecase/get_my_posts_usecase.dart';
+import '../../features/posts/domain/usecase/set_post_reaction_usecase.dart';
+import '../../features/posts/domain/usecase/update_post_usecase.dart';
 import '../../features/safety/data/datasources/safety_remote_datasource.dart';
 import '../../features/safety/data/datasources/safety_remote_datasource_impl.dart';
 import '../../features/safety/data/repositories/safety_repository_impl.dart';
@@ -215,6 +227,10 @@ final postPreviewRemoteDatasourceProvider =
       return PostPreviewRemoteDatasourceImpl(ref.watch(dioClientProvider));
     });
 
+final postsRemoteDatasourceProvider = Provider<PostsRemoteDatasource>((ref) {
+  return PostsRemoteDatasourceImpl(ref.watch(dioClientProvider));
+});
+
 final safetyRemoteDatasourceProvider = Provider<SafetyRemoteDatasource>((ref) {
   return SafetyRemoteDatasourceImpl(ref.watch(dioClientProvider));
 });
@@ -256,6 +272,13 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 final postPreviewRepositoryProvider = Provider<PostPreviewRepository>((ref) {
   return PostPreviewRepositoryImpl(
     remoteDatasource: ref.watch(postPreviewRemoteDatasourceProvider),
+    networkInfo: ref.watch(networkInfoProvider),
+  );
+});
+
+final postsRepositoryProvider = Provider<PostsRepository>((ref) {
+  return PostsRepositoryImpl(
+    remoteDatasource: ref.watch(postsRemoteDatasourceProvider),
     networkInfo: ref.watch(networkInfoProvider),
   );
 });
@@ -408,6 +431,40 @@ final postPreviewUploadPostMediaUseCaseProvider =
     Provider<UploadPostMediaUseCase>((ref) {
       return UploadPostMediaUseCase(ref.watch(postPreviewRepositoryProvider));
     });
+
+final createPostUseCaseProvider = Provider<CreatePostUseCase>((ref) {
+  return CreatePostUseCase(ref.watch(postsRepositoryProvider));
+});
+
+final updatePostUseCaseProvider = Provider<UpdatePostUseCase>((ref) {
+  return UpdatePostUseCase(ref.watch(postsRepositoryProvider));
+});
+
+final deletePostUseCaseProvider = Provider<DeletePostUseCase>((ref) {
+  return DeletePostUseCase(ref.watch(postsRepositoryProvider));
+});
+
+final getFeedPostsUseCaseProvider = Provider<GetFeedPostsUseCase>((ref) {
+  return GetFeedPostsUseCase(ref.watch(postsRepositoryProvider));
+});
+
+final getFriendPostsUseCaseProvider = Provider<GetFriendPostsUseCase>((ref) {
+  return GetFriendPostsUseCase(ref.watch(postsRepositoryProvider));
+});
+
+final getMyPostsUseCaseProvider = Provider<GetMyPostsUseCase>((ref) {
+  return GetMyPostsUseCase(ref.watch(postsRepositoryProvider));
+});
+
+final setPostReactionUseCaseProvider = Provider<SetPostReactionUseCase>((ref) {
+  return SetPostReactionUseCase(ref.watch(postsRepositoryProvider));
+});
+
+final deletePostReactionUseCaseProvider = Provider<DeletePostReactionUseCase>((
+  ref,
+) {
+  return DeletePostReactionUseCase(ref.watch(postsRepositoryProvider));
+});
 
 final checkinUseCaseProvider = Provider<CheckinUseCase>((ref) {
   return CheckinUseCase(ref.watch(checkinRepositoryProvider));
@@ -643,6 +700,7 @@ final postPreviewNotifierProvider =
     ) {
       return PostPreviewNotifier(
         ref.watch(postPreviewUploadPostMediaUseCaseProvider),
+        ref.watch(createPostUseCaseProvider),
         ref.watch(appMessageProvider.notifier),
       );
     });

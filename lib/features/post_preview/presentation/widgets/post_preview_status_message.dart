@@ -19,9 +19,9 @@ class PostPreviewStatusMessage extends ConsumerWidget {
     return Text(
       errorMessage,
       textAlign: TextAlign.center,
-      style: Theme.of(
-        context,
-      ).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.error),
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: Theme.of(context).colorScheme.error,
+      ),
     );
   }
 }

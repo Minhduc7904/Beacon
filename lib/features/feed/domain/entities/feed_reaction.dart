@@ -1,11 +1,4 @@
-enum ReactionType {
-  heart,
-  fire,
-  laugh,
-  sad,
-  wow,
-  clap,
-}
+enum ReactionType { heart, haha, like, sad, wow }
 
 class FeedReaction {
   final String id;

@@ -10,7 +10,9 @@ import '../../../../core/widgets/dev/test/test_post_media_send_signal_provider.d
 import '../controllers/post_preview_image_path_provider.dart';
 
 class PostPreviewSendButton extends ConsumerStatefulWidget {
-  const PostPreviewSendButton({super.key});
+  const PostPreviewSendButton({super.key, required this.captionController});
+
+  final TextEditingController captionController;
 
   @override
   ConsumerState<PostPreviewSendButton> createState() =>
@@ -41,12 +43,14 @@ class _PostPreviewSendButtonState extends ConsumerState<PostPreviewSendButton> {
           return;
         }
 
-        ref.read(postPreviewNotifierProvider.notifier).postMedia(filePath);
+        ref
+            .read(postPreviewNotifierProvider.notifier)
+            .postMedia(filePath, caption: widget.captionController.text);
       });
     }
 
     ref.listen(postPreviewNotifierProvider, (previous, next) {
-      if (previous?.uploadedMedia == null && next.uploadedMedia != null) {
+      if (previous?.createdPost == null && next.createdPost != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (context.mounted) {
             context.pop(true);
@@ -58,7 +62,12 @@ class _PostPreviewSendButtonState extends ConsumerState<PostPreviewSendButton> {
     final canTap = !state.isUploading;
 
     return InkWell(
-      onTap: canTap ? () => notifier.postMedia(filePath) : null,
+      onTap: canTap
+          ? () => notifier.postMedia(
+              filePath,
+              caption: widget.captionController.text,
+            )
+          : null,
       customBorder: const CircleBorder(),
       child: SizedBox(
         width: 80,

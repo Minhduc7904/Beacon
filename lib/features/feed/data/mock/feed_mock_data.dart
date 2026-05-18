@@ -22,7 +22,7 @@ class FeedMockData {
         FeedReaction(
           id: 'r2',
           userName: 'Thu Hà',
-          type: ReactionType.fire,
+          type: ReactionType.like,
           createdAt: DateTime.now().subtract(const Duration(minutes: 8)),
         ),
       ],
@@ -37,7 +37,7 @@ class FeedMockData {
         FeedReaction(
           id: 'r3',
           userName: 'Minh Anh',
-          type: ReactionType.clap,
+          type: ReactionType.like,
           createdAt: DateTime.now().subtract(const Duration(minutes: 50)),
         ),
       ],
@@ -102,13 +102,13 @@ class FeedMockData {
         FeedReaction(
           id: 'r8',
           userName: 'Thu Hà',
-          type: ReactionType.fire,
+          type: ReactionType.like,
           createdAt: DateTime.now().subtract(const Duration(hours: 20)),
         ),
         FeedReaction(
           id: 'r9',
           userName: 'Hải Đăng',
-          type: ReactionType.clap,
+          type: ReactionType.haha,
           createdAt: DateTime.now().subtract(const Duration(hours: 18)),
         ),
       ],
