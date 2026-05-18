@@ -56,7 +56,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         /// tránh navigate trong cùng frame
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          context.go(AppRoutes.home);
+          context.go(AppRoutes.splash);
         });
       }
     });

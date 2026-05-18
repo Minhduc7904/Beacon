@@ -6,6 +6,7 @@ import '../../../../core/network/dio_client.dart';
 import '../mappers/posts_error_code_mapper.dart';
 import '../models/post_model.dart';
 import '../models/post_page_model.dart';
+import '../models/post_reaction_page_model.dart';
 import '../models/post_reaction_result_model.dart';
 import 'posts_remote_datasource.dart';
 
@@ -123,7 +124,7 @@ class PostsRemoteDatasourceImpl implements PostsRemoteDatasource {
   }
 
   @override
-  Future<PostReactionResultModel> setReaction({
+  Future<PostReactionResultModel> setReactionIcon({
     required String postId,
     required String icon,
   }) async {
@@ -162,6 +163,42 @@ class PostsRemoteDatasourceImpl implements PostsRemoteDatasource {
         response,
         fromJsonT: (json) =>
             PostReactionResultModel.fromJson(json as Map<String, dynamic>),
+        codeMessageMapper: PostsErrorCodeMapper.mapCode,
+      );
+
+      return result.data!;
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: PostsErrorCodeMapper.mapCode,
+      );
+    }
+  }
+
+  @override
+  Future<PostReactionPageModel> getReactions({
+    required String postId,
+    String? cursor,
+    int? limit,
+  }) async {
+    final query = <String, dynamic>{};
+    if (cursor != null && cursor.trim().isNotEmpty) {
+      query['cursor'] = cursor.trim();
+    }
+    if (limit != null) {
+      query['limit'] = limit;
+    }
+
+    try {
+      final response = await _dioClient.get(
+        ApiEndpoints.postReactions(postId),
+        queryParameters: query.isEmpty ? null : query,
+      );
+
+      final result = ApiHandler.handle<PostReactionPageModel>(
+        response,
+        fromJsonT: (json) =>
+            PostReactionPageModel.fromJson(json as Map<String, dynamic>),
         codeMessageMapper: PostsErrorCodeMapper.mapCode,
       );
 

@@ -33,7 +33,6 @@ class HomeAppBarContent extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             HomeAvatarButton(
@@ -44,19 +43,27 @@ class HomeAppBarContent extends StatelessWidget {
               avatarSize: 28,
               circleColor: AppColors.sky400,
             ),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              switchInCurve: Curves.easeOutCubic,
-              switchOutCurve: Curves.easeInCubic,
-              child: showFeedFilter
-                  ? const HomeFeedFilterDropdown(
-                      key: ValueKey<String>('feed-filter'),
-                    )
-                  : HomeStreakChip(
-                      key: const ValueKey<String>('streak-chip'),
-                      days: streakDays,
-                    ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                child: SizedBox(
+                  key: ValueKey<String>(
+                    showFeedFilter ? 'feed-filter' : 'streak-chip',
+                  ),
+                  width: double.infinity,
+                  child: showFeedFilter
+                      ? const HomeFeedFilterDropdown()
+                      : Align(
+                          alignment: Alignment.center,
+                          child: HomeStreakChip(days: streakDays),
+                        ),
+                ),
+              ),
             ),
+            const SizedBox(width: 12),
             HomeChatButton(
               unreadCount: unreadMessages,
               onPressed: onOpenMessages,

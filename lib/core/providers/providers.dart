@@ -51,6 +51,7 @@ import '../../features/friends/domain/usecase/get_friends_presence_usecase.dart'
 import '../../features/friends/domain/usecase/search_friends_usecase.dart';
 import '../../features/friends/domain/usecase/subscribe_friend_presence_realtime_usecase.dart';
 import '../../features/friends/domain/usecase/update_friend_type_usecase.dart';
+import '../../features/friends/domain/entities/friend_profile.dart';
 import '../../features/friends/presentation/controllers/friends_presence_notifier.dart';
 import '../../features/friends/presentation/controllers/friends_presence_state.dart';
 import '../../features/home/data/datasources/checkin_remote_datasource.dart';
@@ -107,7 +108,9 @@ import '../../features/posts/domain/usecase/delete_post_reaction_usecase.dart';
 import '../../features/posts/domain/usecase/get_feed_posts_usecase.dart';
 import '../../features/posts/domain/usecase/get_friend_posts_usecase.dart';
 import '../../features/posts/domain/usecase/get_my_posts_usecase.dart';
+import '../../features/posts/domain/usecase/get_post_reactions_usecase.dart';
 import '../../features/posts/domain/usecase/set_post_reaction_usecase.dart';
+import '../../features/posts/domain/usecase/set_post_reaction_icon_usecase.dart';
 import '../../features/posts/domain/usecase/update_post_usecase.dart';
 import '../../features/safety/data/datasources/safety_remote_datasource.dart';
 import '../../features/safety/data/datasources/safety_remote_datasource_impl.dart';
@@ -460,10 +463,22 @@ final setPostReactionUseCaseProvider = Provider<SetPostReactionUseCase>((ref) {
   return SetPostReactionUseCase(ref.watch(postsRepositoryProvider));
 });
 
+final setPostReactionIconUseCaseProvider = Provider<SetPostReactionIconUseCase>(
+  (ref) {
+    return SetPostReactionIconUseCase(ref.watch(postsRepositoryProvider));
+  },
+);
+
 final deletePostReactionUseCaseProvider = Provider<DeletePostReactionUseCase>((
   ref,
 ) {
   return DeletePostReactionUseCase(ref.watch(postsRepositoryProvider));
+});
+
+final getPostReactionsUseCaseProvider = Provider<GetPostReactionsUseCase>((
+  ref,
+) {
+  return GetPostReactionsUseCase(ref.watch(postsRepositoryProvider));
 });
 
 final checkinUseCaseProvider = Provider<CheckinUseCase>((ref) {
@@ -675,9 +690,7 @@ final homeNotifierProvider = StateNotifierProvider<HomeNotifier, HomeState>((
 });
 
 final homeCheckinNotifierProvider =
-    StateNotifierProvider.autoDispose<HomeCheckinNotifier, HomeCheckinState>((
-      ref,
-    ) {
+    StateNotifierProvider<HomeCheckinNotifier, HomeCheckinState>((ref) {
       return HomeCheckinNotifier(
         ref.watch(getTodayStatusUseCaseProvider),
         ref.watch(checkinUseCaseProvider),
@@ -693,6 +706,17 @@ final friendsPresenceNotifierProvider =
         ref.watch(appMessageProvider.notifier),
       );
     });
+
+final homeUnreadMessageCountsProvider = StateProvider<Map<String, int>>(
+  (ref) => const <String, int>{},
+);
+
+final homeFeedFilterFriendsProvider = FutureProvider<List<FriendProfile>>((
+  ref,
+) async {
+  final result = await ref.watch(getFriendsUseCaseProvider).call(limit: 100);
+  return result.fold((failure) => throw failure, (page) => page.items);
+});
 
 final postPreviewNotifierProvider =
     StateNotifierProvider.autoDispose<PostPreviewNotifier, PostPreviewState>((

@@ -5,6 +5,7 @@ import '../../../../core/network/network_info.dart';
 import '../../domain/entities/post.dart';
 import '../../domain/entities/post_page.dart';
 import '../../domain/entities/post_reaction_icon.dart';
+import '../../domain/entities/post_reaction_page.dart';
 import '../../domain/entities/post_reaction_result.dart';
 import '../../domain/entities/post_visibility.dart';
 import '../../domain/repositories/posts_repository.dart';
@@ -113,7 +114,17 @@ class PostsRepositoryImpl implements PostsRepository {
     required PostReactionIcon icon,
   }) {
     return _changeReaction(
-      () => _remoteDatasource.setReaction(postId: postId, icon: icon.value),
+      () => _remoteDatasource.setReactionIcon(postId: postId, icon: icon.value),
+    );
+  }
+
+  @override
+  Future<Either<Failure, PostReactionResult>> setReactionIcon({
+    required String postId,
+    required String icon,
+  }) {
+    return _changeReaction(
+      () => _remoteDatasource.setReactionIcon(postId: postId, icon: icon),
     );
   }
 
@@ -124,6 +135,28 @@ class PostsRepositoryImpl implements PostsRepository {
     return _changeReaction(
       () => _remoteDatasource.deleteReaction(postId: postId),
     );
+  }
+
+  @override
+  Future<Either<Failure, PostReactionPage>> getReactions({
+    required String postId,
+    String? cursor,
+    int? limit,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      final page = await _remoteDatasource.getReactions(
+        postId: postId,
+        cursor: cursor,
+        limit: limit,
+      );
+      return Right(page);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
   }
 
   Future<Either<Failure, PostReactionResult>> _changeReaction(

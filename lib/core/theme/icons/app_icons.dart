@@ -32,6 +32,9 @@ class AppIcons {
   static const AppIconData caretDown = AppIconData.phosphor(
     PhosphorIconsRegular.caretDown,
   );
+  static const AppIconData caretUp = AppIconData.phosphor(
+    PhosphorIconsRegular.caretUp,
+  );
   static const AppIconData grid = AppIconData.phosphor(
     PhosphorIconsRegular.squaresFour,
   );

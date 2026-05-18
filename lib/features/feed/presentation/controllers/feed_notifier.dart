@@ -14,6 +14,8 @@ import '../../../posts/domain/usecase/delete_post_reaction_usecase.dart';
 import '../../../posts/domain/usecase/get_feed_posts_usecase.dart';
 import '../../../posts/domain/usecase/get_friend_posts_usecase.dart';
 import '../../../posts/domain/usecase/get_my_posts_usecase.dart';
+import '../../../posts/domain/usecase/get_post_reactions_usecase.dart';
+import '../../../posts/domain/usecase/set_post_reaction_icon_usecase.dart';
 import '../../../posts/domain/usecase/set_post_reaction_usecase.dart';
 import '../../../posts/domain/usecase/update_post_usecase.dart';
 import '../../domain/entities/feed_filter.dart';
@@ -28,7 +30,9 @@ class FeedNotifier extends StateNotifier<FeedState> {
   final GetMyPostsUseCase _getMyPostsUseCase;
   final GetFriendPostsUseCase _getFriendPostsUseCase;
   final SetPostReactionUseCase _setPostReactionUseCase;
+  final SetPostReactionIconUseCase _setPostReactionIconUseCase;
   final DeletePostReactionUseCase _deletePostReactionUseCase;
+  final GetPostReactionsUseCase _getPostReactionsUseCase;
   final UpdatePostUseCase _updatePostUseCase;
   final DeletePostUseCase _deletePostUseCase;
   final AppMessageNotifier _messageNotifier;
@@ -39,7 +43,9 @@ class FeedNotifier extends StateNotifier<FeedState> {
     this._getMyPostsUseCase,
     this._getFriendPostsUseCase,
     this._setPostReactionUseCase,
+    this._setPostReactionIconUseCase,
     this._deletePostReactionUseCase,
+    this._getPostReactionsUseCase,
     this._updatePostUseCase,
     this._deletePostUseCase,
     this._messageNotifier,
@@ -57,6 +63,8 @@ class FeedNotifier extends StateNotifier<FeedState> {
       hasMore: false,
       clearNextCursor: true,
       clearErrorMessage: true,
+      postReactionPages: const {},
+      loadingReactionPostIds: const {},
     );
 
     final result = await _loadPage(filter: state.filter, limit: _pageLimit);
@@ -222,6 +230,60 @@ class FeedNotifier extends StateNotifier<FeedState> {
       },
       (reactionResult) {
         _applyReactionResult(reactionResult);
+      },
+    );
+  }
+
+  Future<void> setReactionIcon(String postId, String icon) async {
+    if (_reactingPostIds.contains(postId)) {
+      return;
+    }
+
+    final posts = List<FeedPost>.from(state.posts);
+    final idx = posts.indexWhere((p) => p.id == postId);
+    if (idx == -1) return;
+
+    _reactingPostIds.add(postId);
+    final result = await _setPostReactionIconUseCase(
+      SetPostReactionIconParams(postId: postId, icon: icon),
+    );
+    _reactingPostIds.remove(postId);
+
+    result.fold(
+      (failure) {
+        _messageNotifier.addError(failure.message);
+      },
+      (reactionResult) {
+        _applyReactionResult(reactionResult);
+      },
+    );
+  }
+
+  Future<void> loadPostReactions(String postId) async {
+    if (state.loadingReactionPostIds.contains(postId)) {
+      return;
+    }
+
+    state = state.copyWith(
+      loadingReactionPostIds: {...state.loadingReactionPostIds, postId},
+    );
+
+    final result = await _getPostReactionsUseCase(
+      GetPostReactionsParams(postId: postId, limit: 20),
+    );
+
+    final loadingIds = Set<String>.from(state.loadingReactionPostIds)
+      ..remove(postId);
+
+    result.fold(
+      (failure) {
+        state = state.copyWith(loadingReactionPostIds: loadingIds);
+      },
+      (page) {
+        state = state.copyWith(
+          postReactionPages: {...state.postReactionPages, postId: page},
+          loadingReactionPostIds: loadingIds,
+        );
       },
     );
   }

@@ -4,6 +4,7 @@ import '../../../../core/errors/failures.dart';
 import '../entities/post.dart';
 import '../entities/post_page.dart';
 import '../entities/post_reaction_icon.dart';
+import '../entities/post_reaction_page.dart';
 import '../entities/post_reaction_result.dart';
 import '../entities/post_visibility.dart';
 
@@ -37,7 +38,18 @@ abstract class PostsRepository {
     required PostReactionIcon icon,
   });
 
+  Future<Either<Failure, PostReactionResult>> setReactionIcon({
+    required String postId,
+    required String icon,
+  });
+
   Future<Either<Failure, PostReactionResult>> deleteReaction({
     required String postId,
+  });
+
+  Future<Either<Failure, PostReactionPage>> getReactions({
+    required String postId,
+    String? cursor,
+    int? limit,
   });
 }

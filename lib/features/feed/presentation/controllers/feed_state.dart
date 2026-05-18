@@ -1,5 +1,6 @@
 import '../../domain/entities/feed_filter.dart';
 import '../../domain/entities/feed_post.dart';
+import '../../../posts/domain/entities/post_reaction_page.dart';
 
 enum FeedStatus { initial, loading, loaded, error }
 
@@ -14,6 +15,8 @@ class FeedState {
   final bool hasMore;
   final bool isLoadingMore;
   final String? errorMessage;
+  final Map<String, PostReactionPage> postReactionPages;
+  final Set<String> loadingReactionPostIds;
 
   const FeedState({
     this.status = FeedStatus.initial,
@@ -24,6 +27,8 @@ class FeedState {
     this.hasMore = false,
     this.isLoadingMore = false,
     this.errorMessage,
+    this.postReactionPages = const {},
+    this.loadingReactionPostIds = const {},
   });
 
   FeedState copyWith({
@@ -37,6 +42,8 @@ class FeedState {
     bool? isLoadingMore,
     String? errorMessage,
     bool clearErrorMessage = false,
+    Map<String, PostReactionPage>? postReactionPages,
+    Set<String>? loadingReactionPostIds,
   }) {
     return FeedState(
       status: status ?? this.status,
@@ -49,6 +56,9 @@ class FeedState {
       errorMessage: clearErrorMessage
           ? null
           : (errorMessage ?? this.errorMessage),
+      postReactionPages: postReactionPages ?? this.postReactionPages,
+      loadingReactionPostIds:
+          loadingReactionPostIds ?? this.loadingReactionPostIds,
     );
   }
 }

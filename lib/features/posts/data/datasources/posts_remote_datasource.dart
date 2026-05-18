@@ -1,5 +1,6 @@
 import '../models/post_model.dart';
 import '../models/post_page_model.dart';
+import '../models/post_reaction_page_model.dart';
 import '../models/post_reaction_result_model.dart';
 
 abstract class PostsRemoteDatasource {
@@ -27,10 +28,16 @@ abstract class PostsRemoteDatasource {
 
   Future<void> deletePost({required String postId});
 
-  Future<PostReactionResultModel> setReaction({
+  Future<PostReactionResultModel> setReactionIcon({
     required String postId,
     required String icon,
   });
 
   Future<PostReactionResultModel> deleteReaction({required String postId});
+
+  Future<PostReactionPageModel> getReactions({
+    required String postId,
+    String? cursor,
+    int? limit,
+  });
 }

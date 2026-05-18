@@ -13,7 +13,11 @@ class MessageGroupListNotifier extends StateNotifier<MessageGroupListState> {
   MessageGroupListNotifier(this._getMessageGroupsUseCase, this._messageNotifier)
     : super(const MessageGroupListState());
 
-  Future<void> load() async {
+  Future<void> load({bool forceRefresh = false}) async {
+    if (!forceRefresh && state.status == MessageGroupListStatus.loaded) {
+      return;
+    }
+
     state = state.copyWith(status: MessageGroupListStatus.loading);
     await _loadInternal(showErrorBanner: true);
   }

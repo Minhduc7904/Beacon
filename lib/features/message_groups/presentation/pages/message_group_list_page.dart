@@ -18,10 +18,9 @@ import '../widgets/list/message_group_empty_state.dart';
 import '../widgets/list/message_group_tile.dart';
 
 final messageGroupListProvider =
-    StateNotifierProvider.autoDispose<
-      MessageGroupListNotifier,
-      MessageGroupListState
-    >((ref) {
+    StateNotifierProvider<MessageGroupListNotifier, MessageGroupListState>((
+      ref,
+    ) {
       return MessageGroupListNotifier(
         ref.watch(getMessageGroupsUseCaseProvider),
         ref.watch(appMessageProvider.notifier),

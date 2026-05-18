@@ -8,6 +8,8 @@ import '../../../../core/config/app_routes.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../core/widgets/image/logo_image.dart';
 import '../../../../core/widgets/layout/screen_layout.dart';
+import '../../../feed/presentation/pages/feed_page.dart';
+import '../../../message_groups/presentation/pages/message_group_list_page.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
@@ -59,12 +61,18 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     }
 
     if (isAuthenticated) {
-      unawaited(_connectSignalR());
-      unawaited(
+      await Future.wait([
+        _connectSignalR(),
+        _preloadHomeData(),
         ref
             .read(pushNotificationServiceProvider)
             .syncCurrentDeviceTokenIfAuthorized(),
-      );
+      ]);
+
+      if (!mounted) {
+        return;
+      }
+
       context.go(AppRoutes.home);
       return;
     }
@@ -78,6 +86,48 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
   Future<void> _connectSignalR() async {
     await ref.read(signalRServiceProvider).connect();
+  }
+
+  Future<void> _preloadHomeData() async {
+    final tasks = <Future<void>>[
+      _preloadProfile(),
+      ref.read(homeCheckinNotifierProvider.notifier).load(),
+      ref.read(feedProvider.notifier).load(),
+      ref.read(friendsPresenceNotifierProvider.notifier).load(),
+      ref.read(messageGroupListProvider.notifier).load(),
+      _preloadUnreadMessageCounts(),
+      _preloadFeedFilterFriends(),
+    ];
+
+    await Future.wait(tasks);
+  }
+
+  Future<void> _preloadProfile() async {
+    if (ref.read(meProfileProvider).valueOrNull != null) {
+      return;
+    }
+
+    await ref.read(meProfileProvider.notifier).fetchProfile();
+  }
+
+  Future<void> _preloadUnreadMessageCounts() async {
+    final result = await ref
+        .read(getMessageGroupsUseCaseProvider)
+        .call(limit: 100);
+
+    result.fold((_) {}, (page) {
+      ref.read(homeUnreadMessageCountsProvider.notifier).state = {
+        for (final group in page.items) group.groupId: group.unreadCount,
+      };
+    });
+  }
+
+  Future<void> _preloadFeedFilterFriends() async {
+    try {
+      await ref.read(homeFeedFilterFriendsProvider.future);
+    } catch (_) {
+      // The dropdown already renders its own error state.
+    }
   }
 
   @override

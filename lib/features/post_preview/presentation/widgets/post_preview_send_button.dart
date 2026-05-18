@@ -7,6 +7,7 @@ import '../../../../core/theme/color/app_colors.dart';
 import '../../../../core/theme/icons/app_icon.dart';
 import '../../../../core/theme/icons/app_icons.dart';
 import '../../../../core/widgets/dev/test/test_post_media_send_signal_provider.dart';
+import '../../../feed/presentation/pages/feed_page.dart';
 import '../controllers/post_preview_image_path_provider.dart';
 
 class PostPreviewSendButton extends ConsumerStatefulWidget {
@@ -51,7 +52,9 @@ class _PostPreviewSendButtonState extends ConsumerState<PostPreviewSendButton> {
 
     ref.listen(postPreviewNotifierProvider, (previous, next) {
       if (previous?.createdPost == null && next.createdPost != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          await ref.read(feedProvider.notifier).load(forceRefresh: true);
+
           if (context.mounted) {
             context.pop(true);
           }

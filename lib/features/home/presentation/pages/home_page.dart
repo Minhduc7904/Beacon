@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/providers.dart';
 import '../../../auth/presentation/pages/profile/profile_page.dart';
-import '../../../feed/presentation/pages/feed_page.dart';
 import '../../../message_groups/presentation/pages/message_group_list_page.dart';
 import '../widgets/home/home_center_scaffold.dart';
 import '../widgets/home/home_keep_alive_page.dart';
@@ -27,7 +26,6 @@ class _HomePageState extends ConsumerState<HomePage>
 
   late final PageController _horizontalController;
   AppLifecycleState? _lastLifecycleState;
-  final Map<String, int> _unreadByGroupId = <String, int>{};
   void Function()? _unsubscribeUnreadMessageCount;
   void Function()? _unsubscribeFriendPresence;
 
@@ -42,15 +40,6 @@ class _HomePageState extends ConsumerState<HomePage>
         return;
       }
 
-      final profile = ref.read(meProfileProvider).valueOrNull;
-      if (profile == null) {
-        ref.read(meProfileProvider.notifier).fetchProfile();
-      }
-
-      ref.read(homeCheckinNotifierProvider.notifier).load();
-      ref.read(feedProvider.notifier).load();
-      ref.read(friendsPresenceNotifierProvider.notifier).load();
-      unawaited(_seedUnreadMessageCount());
       unawaited(_subscribeUnreadMessageCount());
       unawaited(_subscribeFriendPresence());
     });
@@ -101,20 +90,16 @@ class _HomePageState extends ConsumerState<HomePage>
     }
     result.fold(
       (failure) {
-        ref.read(appMessageProvider.notifier).addWarning(
-          'Khong the tai so tin nhan chua doc: ${failure.message}',
-        );
+        ref
+            .read(appMessageProvider.notifier)
+            .addWarning(
+              'Khong the tai so tin nhan chua doc: ${failure.message}',
+            );
       },
       (page) {
-        final next = <String, int>{};
-        for (final group in page.items) {
-          next[group.groupId] = group.unreadCount;
-        }
-        setState(() {
-          _unreadByGroupId
-            ..clear()
-            ..addAll(next);
-        });
+        ref.read(homeUnreadMessageCountsProvider.notifier).state = {
+          for (final group in page.items) group.groupId: group.unreadCount,
+        };
       },
     );
   }
@@ -127,9 +112,11 @@ class _HomePageState extends ConsumerState<HomePage>
             if (!mounted) {
               return;
             }
-            setState(() {
-              _unreadByGroupId[groupId] = unreadCount;
-            });
+            final current = ref.read(homeUnreadMessageCountsProvider);
+            ref.read(homeUnreadMessageCountsProvider.notifier).state = {
+              ...current,
+              groupId: unreadCount,
+            };
           },
         );
     _unsubscribeUnreadMessageCount = ref
@@ -159,7 +146,8 @@ class _HomePageState extends ConsumerState<HomePage>
   Widget build(BuildContext context) {
     final checkinState = ref.watch(homeCheckinNotifierProvider);
     final streakDays = checkinState.streakDays;
-    final unreadMessageCount = _unreadByGroupId.values.fold<int>(
+    final unreadByGroupId = ref.watch(homeUnreadMessageCountsProvider);
+    final unreadMessageCount = unreadByGroupId.values.fold<int>(
       0,
       (sum, item) => sum + item,
     );

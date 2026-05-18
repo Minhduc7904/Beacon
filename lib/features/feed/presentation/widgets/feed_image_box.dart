@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/text/app_text_theme.dart';
+import '../../../../core/widgets/text/text.dart';
 import '../../domain/entities/feed_post.dart';
 
-/// Displays the feed post image in a square box with rounded corners,
-/// matching the PostPreviewImageBox style from the post_preview feature.
 class FeedImageBox extends StatelessWidget {
   const FeedImageBox({super.key, required this.post});
 
@@ -12,6 +12,7 @@ class FeedImageBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imageBoxSize = _imageBoxSize(context);
+    final caption = post.caption?.trim() ?? '';
 
     return Container(
       width: imageBoxSize,
@@ -32,30 +33,63 @@ class FeedImageBox extends StatelessWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Image.network(
-        post.imageUrl,
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, progress) {
-          if (progress == null) return child;
-          return Center(
-            child: CircularProgressIndicator(
-              value: progress.expectedTotalBytes != null
-                  ? progress.cumulativeBytesLoaded /
-                        progress.expectedTotalBytes!
-                  : null,
-              strokeWidth: 2,
-              color: Colors.white54,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            post.imageUrl,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, progress) {
+              if (progress == null) return child;
+              return Center(
+                child: CircularProgressIndicator(
+                  value: progress.expectedTotalBytes != null
+                      ? progress.cumulativeBytesLoaded /
+                            progress.expectedTotalBytes!
+                      : null,
+                  strokeWidth: 2,
+                  color: Colors.white54,
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return const Center(
+                child: Text(
+                  'Khong the tai anh',
+                  style: TextStyle(color: Colors.white70),
+                ),
+              );
+            },
+          ),
+          if (caption.isNotEmpty)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.48),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: AppText(
+                    caption,
+                    size: AppTextSize.small,
+                    spacing: AppTextSpacing.normal,
+                    weight: AppTextWeight.medium,
+                    color: Colors.white,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
             ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) {
-          return const Center(
-            child: Text(
-              'Không thể tải ảnh',
-              style: TextStyle(color: Colors.white70),
-            ),
-          );
-        },
+        ],
       ),
     );
   }

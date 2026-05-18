@@ -8,17 +8,12 @@ import '../../../../../core/theme/color/app_colors.dart';
 import '../../../../../core/theme/icons/app_icon.dart';
 import '../../../../../core/theme/icons/app_icons.dart';
 import '../../../../../core/theme/text/app_text_theme.dart';
+import '../../../../../core/widgets/popup/app_popup_overlay.dart';
 import '../../../../../core/widgets/text/text.dart';
 import '../../../../feed/domain/entities/feed_filter.dart';
 import '../../../../feed/presentation/pages/feed_page.dart';
 import '../../../../friends/domain/entities/friend_profile.dart';
-
-final homeFeedFilterFriendsProvider = FutureProvider<List<FriendProfile>>((
-  ref,
-) async {
-  final result = await ref.watch(getFriendsUseCaseProvider).call(limit: 100);
-  return result.fold((failure) => throw failure, (page) => page.items);
-});
+import 'home_feed_filter_menu_item.dart';
 
 class HomeFeedFilterDropdown extends ConsumerWidget {
   const HomeFeedFilterDropdown({super.key});
@@ -28,90 +23,102 @@ class HomeFeedFilterDropdown extends ConsumerWidget {
     final filter = ref.watch(feedProvider.select((state) => state.filter));
     final friends = ref.watch(homeFeedFilterFriendsProvider);
     final items = _buildItems(filter, friends.valueOrNull ?? const []);
-    final selectedLabel = filter.label;
+    final selectedLabel = _buttonLabel(filter);
 
-    return PopupMenuButton<String>(
-      tooltip: 'Lọc feed',
-      onSelected: (key) {
-        _FeedFilterItem? selected;
-        for (final item in items) {
-          if (item.key == key) {
-            selected = item;
-            break;
-          }
-        }
-        if (selected == null) {
-          return;
-        }
-
-        unawaited(
-          ref.read(feedProvider.notifier).updateFilter(selected.filter),
+    return AppPopupOverlay(
+      gap: 12,
+      popupBuilder: (popupContext, closePopup) {
+        return ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 280, maxWidth: 320),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _PopupAction(
+                onTap: () => _select(ref, items, 'all', closePopup),
+                child: const HomeFeedFilterAllFriendsItem(),
+              ),
+              ...items
+                  .where((item) => item.friend != null)
+                  .map(
+                    (item) => _PopupAction(
+                      onTap: () => _select(ref, items, item.key, closePopup),
+                      child: HomeFeedFilterFriendItem(friend: item.friend!),
+                    ),
+                  ),
+              if (friends.isLoading)
+                const HomeFeedFilterStatusItem(label: 'Dang tai ban be'),
+              if (friends.hasError)
+                const HomeFeedFilterStatusItem(label: 'Khong tai duoc ban be'),
+            ],
+          ),
         );
       },
-      itemBuilder: (context) {
-        final menuItems = <PopupMenuEntry<String>>[
-          ...items.map(
-            (item) => PopupMenuItem<String>(
-              value: item.key,
-              child: _FeedFilterMenuLabel(
-                label: item.label,
-                isSelected: item.key == filter.key,
-              ),
+      triggerBuilder: (context, isOpen, toggle) {
+        return GestureDetector(
+          onTap: toggle,
+          child: Container(
+            height: 48,
+            width: double.infinity,
+            padding: const EdgeInsetsDirectional.only(start: 16, end: 12),
+            decoration: BoxDecoration(
+              color: AppColors.sky100,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: AppColors.sky400, width: 1.2),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: AppText(
+                    selectedLabel,
+                    size: AppTextSize.small,
+                    spacing: AppTextSpacing.tight,
+                    weight: AppTextWeight.bold,
+                    color: AppColors.ink500,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                AppIcon(
+                  isOpen ? AppIcons.caretUp : AppIcons.caretDown,
+                  color: AppColors.ink400,
+                  size: 16,
+                ),
+              ],
             ),
           ),
-        ];
-
-        if (friends.isLoading) {
-          menuItems.add(
-            const PopupMenuItem<String>(
-              enabled: false,
-              child: _FeedFilterMenuLabel(label: 'Đang tải bạn bè'),
-            ),
-          );
-        } else if (friends.hasError) {
-          menuItems.add(
-            const PopupMenuItem<String>(
-              enabled: false,
-              child: _FeedFilterMenuLabel(label: 'Không tải được bạn bè'),
-            ),
-          );
-        }
-
-        return menuItems;
+        );
       },
-      child: Container(
-        height: 48,
-        constraints: const BoxConstraints(maxWidth: 152),
-        padding: const EdgeInsetsDirectional.only(start: 16, end: 12),
-        decoration: BoxDecoration(
-          color: AppColors.sky100,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: AppColors.sky400, width: 1.2),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: AppText(
-                selectedLabel,
-                size: AppTextSize.small,
-                spacing: AppTextSpacing.tight,
-                weight: AppTextWeight.bold,
-                color: AppColors.ink500,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const AppIcon(
-              AppIcons.caretDown,
-              color: AppColors.ink400,
-              size: 16,
-            ),
-          ],
-        ),
-      ),
     );
+  }
+
+  void _select(
+    WidgetRef ref,
+    List<_FeedFilterItem> items,
+    String key,
+    VoidCallback closePopup,
+  ) {
+    final selected = items.where((item) => item.key == key).firstOrNull;
+    if (selected == null) {
+      return;
+    }
+
+    unawaited(ref.read(feedProvider.notifier).updateFilter(selected.filter));
+    closePopup();
+  }
+
+  String _buttonLabel(FeedFilter filter) {
+    if (filter.type != FeedFilterType.friend) {
+      return filter.label;
+    }
+
+    final parts = filter.label.trim().split(RegExp(r'\s+'));
+    if (parts.length <= 1) {
+      return filter.label;
+    }
+
+    return parts.sublist(0, parts.length - 1).join(' ');
   }
 
   List<_FeedFilterItem> _buildItems(
@@ -121,19 +128,23 @@ class HomeFeedFilterDropdown extends ConsumerWidget {
     final items = <_FeedFilterItem>[
       const _FeedFilterItem(
         key: 'all',
-        label: 'Tất cả',
+        label: 'Tat ca',
         filter: FeedFilter.all(),
       ),
-      const _FeedFilterItem(key: 'me', label: 'Tôi', filter: FeedFilter.me()),
       ...friends.map((friend) {
         final name = friend.fullName.trim().isEmpty
-            ? 'Bạn bè'
+            ? 'Ban be'
             : friend.fullName.trim();
         final filter = FeedFilter.friend(
           friendId: friend.userId,
           friendName: name,
         );
-        return _FeedFilterItem(key: filter.key, label: name, filter: filter);
+        return _FeedFilterItem(
+          key: filter.key,
+          label: name,
+          filter: filter,
+          friend: friend,
+        );
       }),
     ];
 
@@ -154,46 +165,34 @@ class HomeFeedFilterDropdown extends ConsumerWidget {
   }
 }
 
+class _PopupAction extends StatelessWidget {
+  const _PopupAction({required this.onTap, required this.child});
+
+  final VoidCallback onTap;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: child,
+      ),
+    );
+  }
+}
+
 class _FeedFilterItem {
   final String key;
   final String label;
   final FeedFilter filter;
+  final FriendProfile? friend;
 
   const _FeedFilterItem({
     required this.key,
     required this.label,
     required this.filter,
+    this.friend,
   });
-}
-
-class _FeedFilterMenuLabel extends StatelessWidget {
-  const _FeedFilterMenuLabel({required this.label, this.isSelected = false});
-
-  final String label;
-  final bool isSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Row(
-      children: [
-        Expanded(
-          child: AppText(
-            label,
-            size: AppTextSize.small,
-            spacing: AppTextSpacing.tight,
-            weight: isSelected ? AppTextWeight.bold : AppTextWeight.regular,
-            color: colorScheme.onSurface,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        if (isSelected) ...[
-          const SizedBox(width: 12),
-          AppIcon(AppIcons.check, size: 16, color: colorScheme.primary),
-        ],
-      ],
-    );
-  }
 }
