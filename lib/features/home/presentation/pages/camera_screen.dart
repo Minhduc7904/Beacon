@@ -62,6 +62,10 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isScreenFlashVisible = ref.watch(
+      homeNotifierProvider.select((state) => state.isScreenFlashVisible),
+    );
+
     ref.listen(homeNotifierProvider, (previous, next) {
       final previousPath = previous?.capturedImagePath;
       final nextPath = next.capturedImagePath;
@@ -75,15 +79,24 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
           return;
         }
 
-        await context.pushNamed(
+        final notifier = ref.read(homeNotifierProvider.notifier);
+        await notifier.deactivateCameraForPreview();
+        final didUpload = await context.pushNamed<bool>(
           AppRoutes.postPreviewName,
           extra: <String, dynamic>{'filePath': nextPath},
         );
+
         if (!mounted) {
           return;
         }
 
-        ref.read(homeNotifierProvider.notifier).clearCapturedImage();
+        if (didUpload == true) {
+          notifier.discardRetakeCameraState();
+          notifier.clearCapturedImage();
+          return;
+        }
+
+        await notifier.restoreCameraForRetake();
       });
 
       if (!widget.autoCaptureOnOpen || _didAutoCapture) {
@@ -119,19 +132,34 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
     });
 
     return Scaffold(
-      body: SafeArea(
-        child: AppScreenLayout(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            children: [
-              const CameraHeader(),
-              const SizedBox(height: 96),
-              const CameraBox(),
-              const SizedBox(height: 50),
-              const ActionButton(),
-            ],
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          SafeArea(
+            child: AppScreenLayout(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                children: [
+                  const CameraHeader(),
+                  const SizedBox(height: 96),
+                  const CameraBox(),
+                  const SizedBox(height: 50),
+                  const ActionButton(),
+                ],
+              ),
+            ),
           ),
-        ),
+          IgnorePointer(
+            child: AnimatedOpacity(
+              opacity: isScreenFlashVisible ? 1 : 0,
+              duration: isScreenFlashVisible
+                  ? Duration.zero
+                  : const Duration(milliseconds: 120),
+              curve: Curves.easeOut,
+              child: const ColoredBox(color: Colors.white),
+            ),
+          ),
+        ],
       ),
     );
   }

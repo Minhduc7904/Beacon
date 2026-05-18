@@ -9,23 +9,27 @@ class CameraFlashButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final controller = ref.read(homeNotifierProvider.notifier).cameraController;
-    final isEnabled = controller != null && controller.value.isInitialized;
+    final state = ref.watch(homeNotifierProvider);
+    final isEnabled = state.canToggleFlash;
+    final isFlashEnabled = state.isFlashEnabled;
 
     return SizedBox(
       width: 60,
       height: 60,
       child: Material(
-        color: AppColors.sky100,
+        color: isFlashEnabled ? AppColors.amber400 : AppColors.sky100,
         shape: const CircleBorder(),
         child: IconButton(
+          tooltip: isFlashEnabled ? 'Tắt flash' : 'Bật flash',
           onPressed: isEnabled
               ? () => ref.read(homeNotifierProvider.notifier).toggleFlash()
               : null,
-          icon: const Icon(
-            Icons.bolt_rounded,
+          icon: Icon(
+            isFlashEnabled ? Icons.flash_on_rounded : Icons.flash_off_rounded,
             size: 36,
-            color: AppColors.amber400,
+            color: isEnabled
+                ? (isFlashEnabled ? AppColors.sky100 : AppColors.amber400)
+                : AppColors.sky600,
           ),
         ),
       ),
