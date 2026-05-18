@@ -6,7 +6,7 @@ import '../../../../../core/providers/providers.dart';
 import 'home_app_bar_content.dart';
 import 'home_body.dart';
 
-class HomeCenterScaffold extends ConsumerWidget {
+class HomeCenterScaffold extends ConsumerStatefulWidget {
   const HomeCenterScaffold({
     super.key,
     required this.onOpenProfile,
@@ -21,7 +21,24 @@ class HomeCenterScaffold extends ConsumerWidget {
   final int unreadMessages;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeCenterScaffold> createState() => _HomeCenterScaffoldState();
+}
+
+class _HomeCenterScaffoldState extends ConsumerState<HomeCenterScaffold> {
+  bool _isFeedVisible = false;
+
+  void _handleFeedVisibilityChanged(bool isVisible) {
+    if (_isFeedVisible == isVisible) {
+      return;
+    }
+
+    setState(() {
+      _isFeedVisible = isVisible;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final profile = ref.watch(meProfileProvider).valueOrNull;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -38,20 +55,22 @@ class HomeCenterScaffold extends ConsumerWidget {
         title: HomeAppBarContent(
           avatarUrl: profile?.avatarUrl,
           givenName: profile?.givenName,
-          streakDays: streakDays,
-          unreadMessages: unreadMessages,
-          onOpenProfile: onOpenProfile,
-          onOpenMessages: onOpenMessages,
+          streakDays: widget.streakDays,
+          unreadMessages: widget.unreadMessages,
+          showFeedFilter: _isFeedVisible,
+          onOpenProfile: widget.onOpenProfile,
+          onOpenMessages: widget.onOpenMessages,
         ),
       ),
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(
-            AppImages.homeBackground,
-            fit: BoxFit.cover,
+          Image.asset(AppImages.homeBackground, fit: BoxFit.cover),
+          SafeArea(
+            child: HomeBody(
+              onFeedVisibilityChanged: _handleFeedVisibilityChanged,
+            ),
           ),
-          const SafeArea(child: HomeBody()),
         ],
       ),
     );

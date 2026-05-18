@@ -7,9 +7,10 @@ import '../../domain/entities/feed_post.dart';
 
 /// Displays author avatar, name, and relative timestamp for a feed post.
 class FeedPostHeader extends StatelessWidget {
-  const FeedPostHeader({super.key, required this.post});
+  const FeedPostHeader({super.key, required this.post, this.trailing});
 
   final FeedPost post;
+  final Widget? trailing;
 
   String _formatTime(DateTime dateTime) {
     final diff = DateTime.now().difference(dateTime);
@@ -54,6 +55,7 @@ class FeedPostHeader extends StatelessWidget {
             ],
           ),
         ),
+        if (trailing != null) ...[const SizedBox(width: 8), trailing!],
       ],
     );
   }

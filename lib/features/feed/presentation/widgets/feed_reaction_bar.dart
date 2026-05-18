@@ -11,19 +11,20 @@ class FeedReactionBar extends StatelessWidget {
     required this.myReaction,
     required this.reactionCounts,
     required this.onReact,
+    this.enabled = true,
   });
 
   final ReactionType? myReaction;
   final Map<ReactionType, int> reactionCounts;
   final ValueChanged<ReactionType> onReact;
+  final bool enabled;
 
   static const _reactionEmojis = {
     ReactionType.heart: '❤️',
-    ReactionType.fire: '🔥',
-    ReactionType.laugh: '😂',
+    ReactionType.haha: '😂',
+    ReactionType.like: '👍',
     ReactionType.sad: '😢',
     ReactionType.wow: '😮',
-    ReactionType.clap: '👏',
   };
 
   @override
@@ -41,6 +42,7 @@ class FeedReactionBar extends StatelessWidget {
             emoji: emoji,
             count: count,
             isSelected: isSelected,
+            enabled: enabled,
             onTap: () => onReact(type),
           ),
         );
@@ -54,12 +56,14 @@ class _ReactionChip extends StatefulWidget {
     required this.emoji,
     required this.count,
     required this.isSelected,
+    required this.enabled,
     required this.onTap,
   });
 
   final String emoji;
   final int count;
   final bool isSelected;
+  final bool enabled;
   final VoidCallback onTap;
 
   @override
@@ -78,9 +82,10 @@ class _ReactionChipState extends State<_ReactionChip>
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
-    _scale = Tween<double>(begin: 1.0, end: 1.35).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
+    _scale = Tween<double>(
+      begin: 1.0,
+      end: 1.35,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
   }
 
   @override
@@ -102,7 +107,7 @@ class _ReactionChipState extends State<_ReactionChip>
     final colorScheme = Theme.of(context).colorScheme;
 
     return GestureDetector(
-      onTap: widget.onTap,
+      onTap: widget.enabled ? widget.onTap : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),

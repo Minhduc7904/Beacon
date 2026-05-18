@@ -57,6 +57,24 @@ class ErrorMessages {
       'File vượt quá dung lượng cho phép';
   static const String postMediaUploadFailed =
       'Upload thất bại. Vui lòng thử lại';
+  static const String postValidationError = 'Dữ liệu bài đăng không hợp lệ';
+  static const String postMediaNotFound = 'Không tìm thấy media đính kèm';
+  static const String postMediaAccessDenied =
+      'Bạn không sở hữu media đính kèm này';
+  static const String postMediaNotReady = 'Media chưa sẵn sàng để đăng';
+  static const String postUnsupportedMediaType = 'Loại media không được hỗ trợ';
+  static const String postInvalidVideoDuration =
+      'Video phải dài từ 5 đến 10 giây';
+  static const String postInvalidVisibility =
+      'Chế độ hiển thị bài đăng không hợp lệ';
+  static const String postNotFound = 'Không tìm thấy bài đăng';
+  static const String postAccessDenied = 'Bạn không có quyền xem bài đăng này';
+  static const String postUpdateDenied =
+      'Bạn không có quyền chỉnh sửa bài đăng này';
+  static const String postDeleteDenied = 'Bạn không có quyền xóa bài đăng này';
+  static const String postInvalidReactionIcon = 'Cảm xúc không được hỗ trợ';
+  static const String postCaptionTooLong =
+      'Caption không được vượt quá 2000 ký tự';
 
   static const String checkinValidationError = 'Dữ liệu check-in không hợp lệ';
   static const String checkinMediaNotFound = 'Không tìm thấy ảnh đính kèm';
@@ -81,8 +99,7 @@ class ErrorMessages {
       'Đã có lời mời kết bạn đang chờ xử lý';
   static const String friendRequestAlreadyFriends =
       'Hai người dùng đã là bạn bè';
-  static const String friendRequestNotFound =
-      'Không tìm thấy lời mời kết bạn';
+  static const String friendRequestNotFound = 'Không tìm thấy lời mời kết bạn';
   static const String friendRequestForbidden =
       'Bạn không có quyền xử lý lời mời kết bạn này';
   static const String friendRequestNotPending =

@@ -1,5 +1,6 @@
 import 'package:beacon_app/core/theme/text/app_text_theme.dart';
 import 'package:flutter/material.dart' as m;
+import 'package:flutter/services.dart';
 
 import '../../constants/app_images.dart';
 import '../../theme/color/app_colors.dart';
@@ -31,6 +32,7 @@ class Input extends m.StatelessWidget {
   final bool enabled;
   final int maxLines;
   final String? errorText;
+  final List<TextInputFormatter>? inputFormatters;
   final InputMode? mode;
   final InputType type;
   final InputState state;
@@ -53,6 +55,7 @@ class Input extends m.StatelessWidget {
     this.enabled = true,
     this.maxLines = 1,
     this.errorText,
+    this.inputFormatters,
     this.mode,
     this.type = InputType.text,
     this.state = InputState.defaultState,
@@ -170,6 +173,7 @@ class Input extends m.StatelessWidget {
       controller: controller,
       onChanged: onChanged,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       obscureText: obscureText,
       enabled: !isDisabled,
       textAlignVertical: m.TextAlignVertical.center,

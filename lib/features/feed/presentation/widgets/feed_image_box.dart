@@ -41,7 +41,7 @@ class FeedImageBox extends StatelessWidget {
             child: CircularProgressIndicator(
               value: progress.expectedTotalBytes != null
                   ? progress.cumulativeBytesLoaded /
-                      progress.expectedTotalBytes!
+                        progress.expectedTotalBytes!
                   : null,
               strokeWidth: 2,
               color: Colors.white54,

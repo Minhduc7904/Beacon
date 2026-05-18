@@ -36,6 +36,14 @@ class ApiEndpoints {
   static const String mediaByIdTemplate = '/media/{id}';
   static const String mediaSoftDeleteTemplate = '/media/{id}/soft';
 
+  // Posts
+  static const String posts = '/posts';
+  static const String postsFeed = '/posts/feed';
+  static const String postsMe = '/posts/me';
+  static const String postByIdTemplate = '/posts/{postId}';
+  static const String postsFriendTemplate = '/posts/friends/{friendId}';
+  static const String postReactionTemplate = '/posts/{postId}/reaction';
+
   // Friend requests
   static const String friendRequests = '/friend-requests';
   static const String friendRequestsReceived = '/friend-requests/received';
@@ -62,6 +70,9 @@ class ApiEndpoints {
 
   static String mediaById(String id) => '/media/$id';
   static String mediaSoftDelete(String id) => '/media/$id/soft';
+  static String postById(String postId) => '/posts/$postId';
+  static String postsFriend(String friendId) => '/posts/friends/$friendId';
+  static String postReaction(String postId) => '/posts/$postId/reaction';
   static String friendRequestAccept(String id) => '/friend-requests/$id/accept';
   static String friendRequestDecline(String id) =>
       '/friend-requests/$id/decline';

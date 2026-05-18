@@ -24,10 +24,22 @@ class ApiErrorCodes {
   static const String invalidFileType = 'INVALID_FILE_TYPE';
   static const String fileTooLarge = 'FILE_TOO_LARGE';
   static const String uploadFailed = 'UPLOAD_FAILED';
+  static const String mediaAccessDenied = 'MEDIA_ACCESS_DENIED';
+  static const String mediaNotReady = 'MEDIA_NOT_READY';
+  static const String unsupportedMediaType = 'UNSUPPORTED_MEDIA_TYPE';
+  static const String invalidVideoDuration = 'INVALID_VIDEO_DURATION';
 
   // Check-in
   static const String mediaNotFound = 'MEDIA_NOT_FOUND';
   static const String alreadyCheckedIn = 'ALREADY_CHECKED_IN';
+
+  // Posts / reactions
+  static const String invalidVisibility = 'INVALID_VISIBILITY';
+  static const String postNotFound = 'POST_NOT_FOUND';
+  static const String postAccessDenied = 'POST_ACCESS_DENIED';
+  static const String postUpdateDenied = 'POST_UPDATE_DENIED';
+  static const String postDeleteDenied = 'POST_DELETE_DENIED';
+  static const String invalidReactionIcon = 'INVALID_REACTION_ICON';
 
   // Friend requests
   static const String selfFriendRequest = 'SELF_FRIEND_REQUEST';

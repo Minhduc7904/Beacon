@@ -29,9 +29,22 @@ class AppIcons {
   static const AppIconData caretRight = AppIconData.phosphor(
     PhosphorIconsRegular.caretRight,
   );
-  static const AppIconData close = AppIconData.phosphor(
-    PhosphorIconsRegular.x,
+  static const AppIconData caretDown = AppIconData.phosphor(
+    PhosphorIconsRegular.caretDown,
   );
+  static const AppIconData grid = AppIconData.phosphor(
+    PhosphorIconsRegular.squaresFour,
+  );
+  static const AppIconData moreVertical = AppIconData.phosphor(
+    PhosphorIconsRegular.dotsThreeVertical,
+  );
+  static const AppIconData pencil = AppIconData.phosphor(
+    PhosphorIconsRegular.pencilSimple,
+  );
+  static const AppIconData trash = AppIconData.phosphor(
+    PhosphorIconsRegular.trash,
+  );
+  static const AppIconData close = AppIconData.phosphor(PhosphorIconsRegular.x);
   static const AppIconData check = AppIconData.phosphor(
     PhosphorIconsRegular.check,
   );
