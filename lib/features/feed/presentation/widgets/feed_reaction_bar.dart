@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/text/app_text_theme.dart';
+import '../../../../core/widgets/emoji/app_emoji.dart';
 import '../../../../core/widgets/text/text.dart';
 import '../../domain/entities/feed_reaction.dart';
 
@@ -128,7 +129,7 @@ class _ReactionChipState extends State<_ReactionChip>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(widget.emoji, style: const TextStyle(fontSize: 16)),
+              AppEmoji(emoji: widget.emoji, size: 16),
               if (widget.count > 0) ...[
                 const SizedBox(width: 3),
                 AppText(

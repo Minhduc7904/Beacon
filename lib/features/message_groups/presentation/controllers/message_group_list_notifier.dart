@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/messages/app_message_notifier.dart';
@@ -36,7 +38,17 @@ class MessageGroupListNotifier extends StateNotifier<MessageGroupListState> {
       return;
     }
 
+    if (message.type == GroupMessageType.groupDeleted) {
+      groups.removeAt(index);
+      state = state.copyWith(
+        status: MessageGroupListStatus.loaded,
+        groups: groups,
+      );
+      return;
+    }
+
     final current = groups.removeAt(index);
+    final metadata = _metadataMap(message);
     final updated = MessageGroup(
       groupId: current.groupId,
       isPrivate: current.isPrivate,
@@ -51,8 +63,12 @@ class MessageGroupListNotifier extends StateNotifier<MessageGroupListState> {
           : current.lastSeenMessageId,
       isSeenLatest: isFromCurrentUser,
       unreadCount: isFromCurrentUser ? 0 : current.unreadCount + 1,
-      displayName: current.displayName,
-      displayAvatarUrl: current.displayAvatarUrl,
+      displayName: _displayNameFor(message, metadata, current.displayName),
+      displayAvatarUrl: _displayAvatarUrlFor(
+        message,
+        metadata,
+        current.displayAvatarUrl,
+      ),
       peerUserId: current.peerUserId,
       requireApprovalToAddMembers: current.requireApprovalToAddMembers,
     );
@@ -61,6 +77,58 @@ class MessageGroupListNotifier extends StateNotifier<MessageGroupListState> {
       status: MessageGroupListStatus.loaded,
       groups: groups,
     );
+  }
+
+  String? _displayNameFor(
+    GroupMessage message,
+    Map<String, dynamic>? metadata,
+    String? currentDisplayName,
+  ) {
+    if (message.type != GroupMessageType.groupNameChanged) {
+      return currentDisplayName;
+    }
+
+    return _nullableStringValue(metadata?['name']) ?? currentDisplayName;
+  }
+
+  String? _displayAvatarUrlFor(
+    GroupMessage message,
+    Map<String, dynamic>? metadata,
+    String? currentDisplayAvatarUrl,
+  ) {
+    if (message.type != GroupMessageType.groupAvatarChanged) {
+      return currentDisplayAvatarUrl;
+    }
+
+    return _nullableStringValue(metadata?['avatarUrl']) ??
+        currentDisplayAvatarUrl;
+  }
+
+  Map<String, dynamic>? _metadataMap(GroupMessage message) {
+    final raw = message.metadataJson?.trim();
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      if (decoded is Map) {
+        return decoded.map((key, value) => MapEntry(key.toString(), value));
+      }
+    } catch (_) {}
+
+    return null;
+  }
+
+  String? _nullableStringValue(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+    final raw = value.toString().trim();
+    return raw.isEmpty ? null : raw;
   }
 
   void applyMessageGroupSeen({

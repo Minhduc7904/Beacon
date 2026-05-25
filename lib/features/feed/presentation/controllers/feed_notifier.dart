@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,6 +20,7 @@ import '../../../posts/domain/usecase/get_my_posts_usecase.dart';
 import '../../../posts/domain/usecase/get_post_reactions_usecase.dart';
 import '../../../posts/domain/usecase/set_post_reaction_icon_usecase.dart';
 import '../../../posts/domain/usecase/set_post_reaction_usecase.dart';
+import '../../../posts/domain/usecase/subscribe_new_posts_realtime_usecase.dart';
 import '../../../posts/domain/usecase/update_post_usecase.dart';
 import '../../domain/entities/feed_filter.dart';
 import '../../domain/entities/feed_post.dart';
@@ -36,8 +39,11 @@ class FeedNotifier extends StateNotifier<FeedState> {
   final GetPostReactionsUseCase _getPostReactionsUseCase;
   final UpdatePostUseCase _updatePostUseCase;
   final DeletePostUseCase _deletePostUseCase;
+  final SubscribeNewPostsRealtimeUseCase _subscribeNewPostsRealtimeUseCase;
   final AppMessageNotifier _messageNotifier;
   final Set<String> _reactingPostIds = <String>{};
+  void Function()? _unsubscribeNewPosts;
+  bool _isBindingRealtime = false;
 
   FeedNotifier(
     this._getFeedPostsUseCase,
@@ -49,10 +55,13 @@ class FeedNotifier extends StateNotifier<FeedState> {
     this._getPostReactionsUseCase,
     this._updatePostUseCase,
     this._deletePostUseCase,
+    this._subscribeNewPostsRealtimeUseCase,
     this._messageNotifier,
   ) : super(const FeedState());
 
   Future<void> load({bool forceRefresh = false}) async {
+    unawaited(_bindRealtime());
+
     if (state.status == FeedStatus.loading && !forceRefresh) {
       return;
     }
@@ -147,6 +156,28 @@ class FeedNotifier extends StateNotifier<FeedState> {
     }
 
     state = state.copyWith(viewMode: viewMode);
+  }
+
+  void applyIncomingPost(Post post) {
+    if (!_shouldIncludeIncomingPost(post)) {
+      return;
+    }
+
+    final posts = List<FeedPost>.from(state.posts);
+    final incoming = _mapPost(post);
+    final existingIndex = posts.indexWhere((item) => item.id == incoming.id);
+    if (existingIndex >= 0) {
+      posts[existingIndex] = incoming;
+    } else {
+      posts.add(incoming);
+    }
+
+    posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    state = state.copyWith(
+      status: FeedStatus.loaded,
+      posts: posts,
+      clearErrorMessage: true,
+    );
   }
 
   Future<void> updatePost({
@@ -311,6 +342,31 @@ class FeedNotifier extends StateNotifier<FeedState> {
     }
   }
 
+  Future<void> _bindRealtime() async {
+    if (_isBindingRealtime || _unsubscribeNewPosts != null) {
+      return;
+    }
+
+    _isBindingRealtime = true;
+    try {
+      await _subscribeNewPostsRealtimeUseCase.call(onPost: applyIncomingPost);
+      _unsubscribeNewPosts = _subscribeNewPostsRealtimeUseCase.unsubscribe();
+    } finally {
+      _isBindingRealtime = false;
+    }
+  }
+
+  bool _shouldIncludeIncomingPost(Post post) {
+    switch (state.filter.type) {
+      case FeedFilterType.all:
+        return true;
+      case FeedFilterType.friend:
+        return state.filter.friendId == post.ownerUserId;
+      case FeedFilterType.me:
+        return false;
+    }
+  }
+
   FeedPost _mapPost(Post post) {
     final ownerName = post.owner?.displayName.trim();
     final imageUrl = post.media.thumbnailUrl?.trim().isNotEmpty == true
@@ -393,5 +449,12 @@ class FeedNotifier extends StateNotifier<FeedState> {
       case null:
         return null;
     }
+  }
+
+  @override
+  void dispose() {
+    _unsubscribeNewPosts?.call();
+    _unsubscribeNewPosts = null;
+    super.dispose();
   }
 }
