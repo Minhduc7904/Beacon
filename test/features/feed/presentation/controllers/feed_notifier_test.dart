@@ -26,6 +26,7 @@ import 'package:beacon_app/features/posts/domain/usecase/get_my_posts_usecase.da
 import 'package:beacon_app/features/posts/domain/usecase/get_post_reactions_usecase.dart';
 import 'package:beacon_app/features/posts/domain/usecase/set_post_reaction_icon_usecase.dart';
 import 'package:beacon_app/features/posts/domain/usecase/set_post_reaction_usecase.dart';
+import 'package:beacon_app/features/posts/domain/usecase/subscribe_new_posts_realtime_usecase.dart';
 import 'package:beacon_app/features/posts/domain/usecase/update_post_usecase.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -52,6 +53,9 @@ class MockGetPostReactionsUseCase extends Mock
 class MockUpdatePostUseCase extends Mock implements UpdatePostUseCase {}
 
 class MockDeletePostUseCase extends Mock implements DeletePostUseCase {}
+
+class MockSubscribeNewPostsRealtimeUseCase extends Mock
+    implements SubscribeNewPostsRealtimeUseCase {}
 
 class MockAppMessageNotifier extends Mock implements AppMessageNotifier {}
 
@@ -148,6 +152,7 @@ void main() {
   late MockGetPostReactionsUseCase getPostReactionsUseCase;
   late MockUpdatePostUseCase updatePostUseCase;
   late MockDeletePostUseCase deletePostUseCase;
+  late MockSubscribeNewPostsRealtimeUseCase subscribeNewPostsRealtimeUseCase;
   late MockAppMessageNotifier messageNotifier;
   late FeedNotifier notifier;
 
@@ -187,7 +192,15 @@ void main() {
     getPostReactionsUseCase = MockGetPostReactionsUseCase();
     updatePostUseCase = MockUpdatePostUseCase();
     deletePostUseCase = MockDeletePostUseCase();
+    subscribeNewPostsRealtimeUseCase = MockSubscribeNewPostsRealtimeUseCase();
     messageNotifier = MockAppMessageNotifier();
+
+    when(
+      () => subscribeNewPostsRealtimeUseCase.call(onPost: any(named: 'onPost')),
+    ).thenAnswer((_) async {});
+    when(
+      () => subscribeNewPostsRealtimeUseCase.unsubscribe(),
+    ).thenReturn(() {});
 
     notifier = FeedNotifier(
       getFeedPostsUseCase,
@@ -199,6 +212,7 @@ void main() {
       getPostReactionsUseCase,
       updatePostUseCase,
       deletePostUseCase,
+      subscribeNewPostsRealtimeUseCase,
       messageNotifier,
     );
   });

@@ -61,43 +61,47 @@ Tài liệu này mô tả toàn bộ hệ thống agent persona và skills nội
 - File: `.agents/skills/test-strategy-skill/SKILL.md`
 - Dùng để xác định test level và checklist verify cho từng thay đổi.
 
-8. `bugfix-skill`
+8. `integration-test-skill`
+- File: `.agents/skills/integration-test-skill/SKILL.md`
+- Dùng khi thêm hoặc mở rộng Flutter integration/E2E test với fake backend, ProviderScope overrides và test robot.
+
+9. `bugfix-skill`
 - File: `.agents/skills/bugfix-skill/SKILL.md`
 - Dùng để sửa bug theo 5 bước reproduce -> localize -> reduce -> fix -> guard.
 
-9. `performance-skill`
+10. `performance-skill`
 - File: `.agents/skills/performance-skill/SKILL.md`
 - Dùng khi có dấu hiệu chậm, rebuild dư thừa, network inefficiency.
 
 ### Nhóm Review
 
-10. `code-review-skill`
+11. `code-review-skill`
 - File: `.agents/skills/code-review-skill/SKILL.md`
 - Dùng như quality gate trước merge.
 
-11. `security-hardening-skill`
+12. `security-hardening-skill`
 - File: `.agents/skills/security-hardening-skill/SKILL.md`
 - Dùng để rà soát bảo mật cho thay đổi nhạy cảm.
 
 ### Nhóm Ship
 
-12. `git-versioning-skill`
+13. `git-versioning-skill`
 - File: `.agents/skills/git-versioning-skill/SKILL.md`
 - Dùng để chuẩn hóa branch, commit, PR theo `docs/git_workflow.md`.
 
-13. `ci-cd-skill`
+14. `ci-cd-skill`
 - File: `.agents/skills/ci-cd-skill/SKILL.md`
 - Dùng để thiết lập quality gates và tự động hóa pipeline.
 
-14. `release-launch-skill`
+15. `release-launch-skill`
 - File: `.agents/skills/release-launch-skill/SKILL.md`
 - Dùng cho checklist trước/sau release và phương án rollback.
 
-15. `documentation-adr-skill`
+16. `documentation-adr-skill`
 - File: `.agents/skills/documentation-adr-skill/SKILL.md`
 - Dùng để ghi nhận quyết định kỹ thuật và cập nhật tài liệu vận hành.
 
-16. `workflow-map-skill`
+17. `workflow-map-skill`
 - File: `.agents/skills/workflow-map-skill/SKILL.md`
 - Dùng như bản đồ chọn skill nhanh theo vòng đời task.
 
@@ -112,7 +116,7 @@ Tài liệu này mô tả toàn bộ hệ thống agent persona và skills nội
 5. Chọn skill theo vòng đời:
    - Define/Plan: `spec-skill`, `planning-task-skill`
    - Build: `context-engineering-skill`, `flutter-feature-skill`, `ui-design-skill` hoặc `api-integration-skill`
-   - Verify: `test-strategy-skill`, `bugfix-skill`
+   - Verify: `test-strategy-skill`, `integration-test-skill`, `bugfix-skill`
    - Review: `code-review-skill`, `security-hardening-skill`
    - Ship: `git-versioning-skill`, `ci-cd-skill`, `release-launch-skill`, `documentation-adr-skill`
 6. Khi cần review chuyên sâu, gọi agent persona tương ứng:
