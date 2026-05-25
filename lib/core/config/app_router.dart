@@ -19,7 +19,9 @@ import '../../features/message_groups/presentation/pages/group_chat_detail_page.
 import '../../features/message_groups/presentation/pages/message_group_add_members_page.dart';
 import '../../features/message_groups/presentation/pages/message_group_info_page.dart';
 import '../../features/message_groups/presentation/pages/message_group_members_page.dart';
+import '../../features/message_groups/presentation/pages/message_group_notification_page.dart';
 import '../../features/message_groups/presentation/pages/message_group_nicknames_page.dart';
+import '../../features/message_groups/presentation/pages/message_group_search_results_page.dart';
 import '../../features/message_groups/domain/entities/message_group.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/post_preview/presentation/pages/post_preview_page.dart';
@@ -407,6 +409,47 @@ final appRouter = GoRouter(
             child: MessageGroupAddMembersPage(
               group: args.group,
               detail: args.detail,
+            ),
+          ),
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.messageGroupNotification,
+      name: AppRoutes.messageGroupNotificationName,
+      pageBuilder: (context, state) {
+        final args = state.extra;
+        if (args is! MessageGroupNotificationPageArgs) {
+          return _buildSlidePage(state, const NotFoundPage());
+        }
+
+        return _buildSlidePage(
+          state,
+          AuthGuard(
+            child: MessageGroupNotificationPage(
+              groupId: args.groupId,
+              initialMuted: args.isMuted,
+            ),
+          ),
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.messageGroupSearchResults,
+      name: AppRoutes.messageGroupSearchResultsName,
+      pageBuilder: (context, state) {
+        final args = state.extra;
+        if (args is! MessageGroupSearchResultsArgs) {
+          return _buildSlidePage(state, const NotFoundPage());
+        }
+
+        return _buildSlidePage(
+          state,
+          AuthGuard(
+            child: MessageGroupSearchResultsPage(
+              groupId: args.groupId,
+              groupName: args.groupName,
+              keyword: args.keyword,
             ),
           ),
         );

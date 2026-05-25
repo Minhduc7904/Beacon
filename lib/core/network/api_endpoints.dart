@@ -67,14 +67,30 @@ class ApiEndpoints {
   static const String messageGroupMessages = '/message-groups/messages';
   static const String messageGroupMessageTemplate =
       '/message-groups/{groupId}/messages';
+  static const String messageGroupMessageSearchTemplate =
+      '/message-groups/{groupId}/messages/search';
   static const String messageGroupDetailTemplate =
       '/message-groups/group/{groupId}';
   static const String messageGroupMemberCustomNameTemplate =
       '/message-groups/{groupId}/members/{userId}/custom-name';
+  static const String messageGroupMemberTemplate =
+      '/message-groups/{groupId}/members/{userId}';
+  static const String messageGroupMemberApproveTemplate =
+      '/message-groups/{groupId}/members/{userId}/approve';
+  static const String messageGroupMemberDenyTemplate =
+      '/message-groups/{groupId}/members/{userId}/deny';
   static const String messageGroupLeaveTemplate =
       '/message-groups/{groupId}/members/me';
+  static const String messageGroupMuteTemplate =
+      '/message-groups/{groupId}/members/me/mute';
   static const String messageGroupRequireApprovalTemplate =
       '/message-groups/{groupId}/require-approval-to-add-members';
+  static const String messageGroupNameTemplate =
+      '/message-groups/{groupId}/name';
+  static const String messageGroupAvatarTemplate =
+      '/message-groups/{groupId}/avatar';
+  static const String messageGroupOwnerTemplate =
+      '/message-groups/{groupId}/owner';
 
   static String mediaById(String id) => '/media/$id';
   static String mediaSoftDelete(String id) => '/media/$id/soft';
@@ -90,6 +106,8 @@ class ApiEndpoints {
   static String friendDeleteByUserId(String userId) => '/friend/$userId';
   static String messageGroupMessage(String groupId) =>
       '/message-groups/$groupId/messages';
+  static String messageGroupMessageSearch(String groupId) =>
+      '/message-groups/$groupId/messages/search';
   static String messageGroupDetail(String groupId) =>
       '/message-groups/$groupId';
   static String messageGroupSeen(String groupId) =>
@@ -98,8 +116,22 @@ class ApiEndpoints {
       '/message-groups/$groupId/members';
   static String messageGroupMemberCustomName(String groupId, String userId) =>
       '/message-groups/$groupId/members/$userId/custom-name';
+  static String messageGroupMember(String groupId, String userId) =>
+      '/message-groups/$groupId/members/$userId';
+  static String messageGroupMemberApprove(String groupId, String userId) =>
+      '/message-groups/$groupId/members/$userId/approve';
+  static String messageGroupMemberDeny(String groupId, String userId) =>
+      '/message-groups/$groupId/members/$userId/deny';
   static String messageGroupLeave(String groupId) =>
       '/message-groups/$groupId/members/me';
+  static String messageGroupMute(String groupId) =>
+      '/message-groups/$groupId/members/me/mute';
   static String messageGroupRequireApproval(String groupId) =>
       '/message-groups/$groupId/require-approval-to-add-members';
+  static String messageGroupName(String groupId) =>
+      '/message-groups/$groupId/name';
+  static String messageGroupAvatar(String groupId) =>
+      '/message-groups/$groupId/avatar';
+  static String messageGroupOwner(String groupId) =>
+      '/message-groups/$groupId/owner';
 }

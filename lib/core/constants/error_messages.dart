@@ -119,4 +119,8 @@ class ErrorMessages {
   static const String messageGroupNotFound = 'Không tìm thấy nhóm chat';
   static const String groupMemberAlreadyExists =
       'Người dùng đã là thành viên nhóm';
+  static const String groupMemberNotFound =
+      'Không tìm thấy thành viên trong nhóm';
+  static const String groupMemberNotPending =
+      'Thành viên không ở trạng thái chờ duyệt';
 }

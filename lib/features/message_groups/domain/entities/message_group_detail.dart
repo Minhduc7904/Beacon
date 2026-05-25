@@ -8,6 +8,7 @@ class MessageGroupDetail {
   final String? displayAvatarUrl;
   final List<MessageGroupMember> members;
   final bool requireApprovalToAddMembers;
+  final bool isMuted;
 
   const MessageGroupDetail({
     required this.groupId,
@@ -17,5 +18,6 @@ class MessageGroupDetail {
     required this.displayAvatarUrl,
     required this.members,
     required this.requireApprovalToAddMembers,
+    required this.isMuted,
   });
 }

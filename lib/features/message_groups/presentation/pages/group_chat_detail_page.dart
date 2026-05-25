@@ -19,6 +19,7 @@ import '../controllers/group_chat_detail_notifier.dart';
 import '../controllers/group_chat_detail_state.dart';
 import '../widgets/detail/group_message_input_bar.dart';
 import '../widgets/detail/group_message_list.dart';
+import '../widgets/detail/pending_group_members_section.dart';
 
 final groupChatDetailProvider = StateNotifierProvider.autoDispose
     .family<GroupChatDetailNotifier, GroupChatDetailState, String>((
@@ -116,6 +117,10 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
     final members = List<MessageGroupMember>.from(
       state.groupDetail?.members ?? const <MessageGroupMember>[],
     );
+    final joinedMembers = members
+        .where((member) => member.status.isJoined)
+        .toList(growable: false);
+    final displayMembers = joinedMembers.isNotEmpty ? joinedMembers : members;
     final detailDisplayName = state.groupDetail?.displayName?.trim();
     final listDisplayName = widget.group.displayName?.trim();
 
@@ -128,11 +133,11 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
       }
     }
 
-    if (members.isNotEmpty) {
-      if (members.length == 2) {
+    if (displayMembers.isNotEmpty) {
+      if (displayMembers.length == 2) {
         final meId = ref.read(meProfileProvider).valueOrNull?.id;
-        var peer = members.first;
-        for (final member in members) {
+        var peer = displayMembers.first;
+        for (final member in displayMembers) {
           if (member.userId != meId) {
             peer = member;
             break;
@@ -144,7 +149,7 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
         }
       }
 
-      return 'Nhóm ${members.length} thành viên';
+      return 'Nhóm ${displayMembers.length} thành viên';
     }
 
     return widget.group.resolvedDisplayName;
@@ -160,9 +165,18 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
     final state = ref.watch(groupChatDetailProvider(widget.group.groupId));
     final currentUserId = ref.watch(meProfileProvider).valueOrNull?.id;
     final presenceState = ref.watch(friendsPresenceNotifierProvider);
+    final members = state.groupDetail?.members ?? const <MessageGroupMember>[];
+    final joinedMembers = members
+      .where((member) => member.status.isJoined)
+      .toList(growable: false);
+    final pendingMembers = members
+      .where((member) => member.isPendingApproval)
+      .toList(growable: false);
+    final currentMember = _currentMember(members, currentUserId);
+    final canManagePending = currentMember?.isAdminRole ?? false;
     final resolvedAvatarUrl =
         state.groupDetail?.displayAvatarUrl ?? widget.group.displayAvatarUrl;
-    final peerUserId = _peerUserId(state, currentUserId);
+    final peerUserId = _peerUserId(joinedMembers, currentUserId);
     final peerPresence = presenceState.friendByUserId(peerUserId);
     final isPeerOnline = widget.group.isPrivate
         ? peerPresence?.isOnline ?? false
@@ -206,7 +220,7 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   AppText(
-                    _presenceLabel(state, isPeerOnline),
+                    _presenceLabel(isPeerOnline, joinedMembers.length),
                     size: AppTextSize.veryTiny,
                     spacing: AppTextSpacing.tight,
                     weight: AppTextWeight.regular,
@@ -232,11 +246,39 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
       ),
       body: Column(
         children: [
+          if (!isPrivateChat)
+            PendingGroupMembersSection(
+              groupId: widget.group.groupId,
+              members: pendingMembers,
+              canManage: canManagePending,
+              onMemberApproved: (userId) {
+                ref
+                    .read(
+                      groupChatDetailProvider(widget.group.groupId).notifier,
+                    )
+                    .updateMemberStatus(
+                      userId: userId,
+                      status: MessageGroupMemberStatus.joined,
+                    );
+              },
+              onMemberDenied: (userId) {
+                ref
+                    .read(
+                      groupChatDetailProvider(widget.group.groupId).notifier,
+                    )
+                    .removeMember(userId);
+              },
+            ),
           Expanded(
             child: SafeArea(
               bottom: false,
               child: AppScreenLayout(
-                child: _buildMessages(state, colorScheme, currentUserId),
+                child: _buildMessages(
+                  state,
+                  colorScheme,
+                  currentUserId,
+                  joinedMembers,
+                ),
               ),
             ),
           ),
@@ -267,6 +309,7 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
     GroupChatDetailState state,
     ColorScheme colorScheme,
     String? currentUserId,
+    List<MessageGroupMember> members,
   ) {
     switch (state.status) {
       case GroupChatDetailStatus.initial:
@@ -285,7 +328,7 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
       case GroupChatDetailStatus.loaded:
         return GroupMessageList(
           messages: state.messages,
-          members: state.groupDetail?.members ?? const [],
+          members: members,
           scrollController: _scrollController,
           currentUserId: currentUserId,
           isPrivateChat: state.groupDetail?.isPrivate ?? widget.group.isPrivate,
@@ -293,12 +336,14 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
     }
   }
 
-  String? _peerUserId(GroupChatDetailState state, String? currentUserId) {
+  String? _peerUserId(
+    List<MessageGroupMember> members,
+    String? currentUserId,
+  ) {
     if (!widget.group.isPrivate) {
       return null;
     }
 
-    final members = state.groupDetail?.members ?? const <MessageGroupMember>[];
     for (final member in members) {
       if (member.userId != currentUserId) {
         return member.userId;
@@ -307,10 +352,25 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
     return null;
   }
 
-  String _presenceLabel(GroupChatDetailState state, bool? isPeerOnline) {
+  MessageGroupMember? _currentMember(
+    List<MessageGroupMember> members,
+    String? currentUserId,
+  ) {
+    if (currentUserId == null || currentUserId.trim().isEmpty) {
+      return null;
+    }
+
+    for (final member in members) {
+      if (member.userId == currentUserId) {
+        return member;
+      }
+    }
+    return null;
+  }
+
+  String _presenceLabel(bool? isPeerOnline, int joinedCount) {
     if (!widget.group.isPrivate) {
-      final count = state.groupDetail?.members.length;
-      return count == null || count == 0 ? 'Nhóm chat' : '$count thành viên';
+      return joinedCount == 0 ? 'Nhóm chat' : '$joinedCount thành viên';
     }
 
     return isPeerOnline == true ? 'Đang hoạt động' : 'Không hoạt động';

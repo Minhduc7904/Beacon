@@ -78,6 +78,9 @@ import '../../features/message_groups/domain/usecase/join_message_group_realtime
 import '../../features/message_groups/domain/usecase/leave_message_group_usecase.dart';
 import '../../features/message_groups/domain/usecase/leave_message_group_realtime_usecase.dart';
 import '../../features/message_groups/domain/usecase/mark_message_group_seen_usecase.dart';
+import '../../features/message_groups/domain/usecase/approve_message_group_member_usecase.dart';
+import '../../features/message_groups/domain/usecase/deny_message_group_member_usecase.dart';
+import '../../features/message_groups/domain/usecase/remove_message_group_member_usecase.dart';
 import '../../features/message_groups/domain/usecase/subscribe_new_messages_realtime_usecase.dart';
 import '../../features/message_groups/domain/usecase/subscribe_message_group_seen_realtime_usecase.dart';
 import '../../features/message_groups/domain/usecase/subscribe_message_seen_status_realtime_usecase.dart';
@@ -85,9 +88,14 @@ import '../../features/message_groups/domain/usecase/subscribe_typing_status_rea
 import '../../features/message_groups/domain/usecase/subscribe_unread_message_count_realtime_usecase.dart';
 import '../../features/message_groups/domain/usecase/get_message_group_detail_usecase.dart';
 import '../../features/message_groups/domain/usecase/get_message_groups_usecase.dart';
+import '../../features/message_groups/domain/usecase/search_group_messages_usecase.dart';
 import '../../features/message_groups/domain/usecase/send_group_message_usecase.dart';
 import '../../features/message_groups/domain/usecase/send_typing_status_realtime_usecase.dart';
+import '../../features/message_groups/domain/usecase/update_message_group_avatar_usecase.dart';
 import '../../features/message_groups/domain/usecase/update_message_group_member_custom_name_usecase.dart';
+import '../../features/message_groups/domain/usecase/update_message_group_member_role_usecase.dart';
+import '../../features/message_groups/domain/usecase/update_message_group_name_usecase.dart';
+import '../../features/message_groups/domain/usecase/update_message_group_mute_usecase.dart';
 import '../../features/message_groups/domain/usecase/update_message_group_require_approval_usecase.dart';
 import '../../features/message_groups/presentation/controllers/add_group_members_notifier.dart';
 import '../../features/message_groups/presentation/controllers/add_group_members_state.dart';
@@ -624,6 +632,14 @@ final getGroupMessagesUseCaseProvider = Provider<GetGroupMessagesUseCase>((
   return GetGroupMessagesUseCase(ref.watch(messageGroupsRepositoryProvider));
 });
 
+final searchGroupMessagesUseCaseProvider = Provider<SearchGroupMessagesUseCase>(
+  (ref) {
+    return SearchGroupMessagesUseCase(
+      ref.watch(messageGroupsRepositoryProvider),
+    );
+  },
+);
+
 final getMessageGroupDetailUseCaseProvider =
     Provider<GetMessageGroupDetailUseCase>((ref) {
       return GetMessageGroupDetailUseCase(
@@ -638,9 +654,58 @@ final updateMessageGroupRequireApprovalUseCaseProvider =
       );
     });
 
+final updateMessageGroupNameUseCaseProvider =
+    Provider<UpdateMessageGroupNameUseCase>((ref) {
+      return UpdateMessageGroupNameUseCase(
+        ref.watch(messageGroupsRepositoryProvider),
+      );
+    });
+
+final updateMessageGroupAvatarUseCaseProvider =
+    Provider<UpdateMessageGroupAvatarUseCase>((ref) {
+      return UpdateMessageGroupAvatarUseCase(
+        ref.watch(messageGroupsRepositoryProvider),
+      );
+    });
+
 final updateMessageGroupMemberCustomNameUseCaseProvider =
     Provider<UpdateMessageGroupMemberCustomNameUseCase>((ref) {
       return UpdateMessageGroupMemberCustomNameUseCase(
+        ref.watch(messageGroupsRepositoryProvider),
+      );
+    });
+
+final updateMessageGroupMemberRoleUseCaseProvider =
+    Provider<UpdateMessageGroupMemberRoleUseCase>((ref) {
+      return UpdateMessageGroupMemberRoleUseCase(
+        ref.watch(messageGroupsRepositoryProvider),
+      );
+    });
+
+final approveMessageGroupMemberUseCaseProvider =
+    Provider<ApproveMessageGroupMemberUseCase>((ref) {
+      return ApproveMessageGroupMemberUseCase(
+        ref.watch(messageGroupsRepositoryProvider),
+      );
+    });
+
+final denyMessageGroupMemberUseCaseProvider =
+    Provider<DenyMessageGroupMemberUseCase>((ref) {
+      return DenyMessageGroupMemberUseCase(
+        ref.watch(messageGroupsRepositoryProvider),
+      );
+    });
+
+final updateMessageGroupMuteUseCaseProvider =
+    Provider<UpdateMessageGroupMuteUseCase>((ref) {
+      return UpdateMessageGroupMuteUseCase(
+        ref.watch(messageGroupsRepositoryProvider),
+      );
+    });
+
+final removeMessageGroupMemberUseCaseProvider =
+    Provider<RemoveMessageGroupMemberUseCase>((ref) {
+      return RemoveMessageGroupMemberUseCase(
         ref.watch(messageGroupsRepositoryProvider),
       );
     });

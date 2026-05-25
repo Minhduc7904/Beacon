@@ -176,6 +176,44 @@ class MessageGroupsRemoteDatasourceImpl
   }
 
   @override
+  Future<GroupMessagePageModel> searchMessages({
+    required String groupId,
+    required String search,
+    String? cursor,
+    int? limit,
+  }) async {
+    try {
+      final query = <String, dynamic>{'search': search.trim()};
+      if (cursor != null && cursor.trim().isNotEmpty) {
+        query['cursor'] = cursor.trim();
+      }
+      if (limit != null) {
+        query['limit'] = limit;
+      }
+
+      final response = await _dioClient.get(
+        ApiEndpoints.messageGroupMessageSearch(groupId),
+        queryParameters: query,
+      );
+
+      final result = ApiHandler.handle<GroupMessagePageModel>(
+        response,
+        fromJsonT: (json) =>
+            GroupMessagePageModel.fromJson(json as Map<String, dynamic>),
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+
+      return result.data!;
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+      rethrow;
+    }
+  }
+
+  @override
   Future<MessageGroupDetailModel> getGroupDetail({
     required String groupId,
   }) async {
@@ -252,6 +290,122 @@ class MessageGroupsRemoteDatasourceImpl
   }
 
   @override
+  Future<void> updateMemberRole({
+    required String groupId,
+    required String targetUserId,
+    required int role,
+  }) async {
+    try {
+      final response = await _dioClient.put(
+        ApiEndpoints.messageGroupOwner(groupId),
+        data: {
+          'targetUserId': targetUserId,
+          'role': role,
+        },
+      );
+
+      ApiHandler.handle<void>(
+        response,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    }
+  }
+
+  @override
+  Future<void> approveMember({
+    required String groupId,
+    required String userId,
+  }) async {
+    try {
+      final response = await _dioClient.patch(
+        ApiEndpoints.messageGroupMemberApprove(groupId, userId),
+      );
+
+      ApiHandler.handle<void>(
+        response,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    }
+  }
+
+  @override
+  Future<void> denyMember({
+    required String groupId,
+    required String userId,
+  }) async {
+    try {
+      final response = await _dioClient.delete(
+        ApiEndpoints.messageGroupMemberDeny(groupId, userId),
+      );
+
+      ApiHandler.handle<void>(
+        response,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    }
+  }
+
+  @override
+  Future<void> updateMuteStatus({
+    required String groupId,
+    required bool isMuted,
+  }) async {
+    try {
+      final response = await _dioClient.patch(
+        ApiEndpoints.messageGroupMute(groupId),
+        data: {'isMuted': isMuted},
+      );
+
+      ApiHandler.handle<void>(
+        response,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    }
+  }
+
+  @override
+  Future<void> removeMember({
+    required String groupId,
+    required String userId,
+  }) async {
+    try {
+      final response = await _dioClient.delete(
+        ApiEndpoints.messageGroupMember(groupId, userId),
+      );
+
+      ApiHandler.handle<void>(
+        response,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    }
+  }
+
+  @override
   Future<void> deleteGroup({required String groupId}) async {
     try {
       final response = await _dioClient.delete(
@@ -300,6 +454,61 @@ class MessageGroupsRemoteDatasourceImpl
         data: {
           'requireApprovalToAddMembers': requireApprovalToAddMembers,
         },
+      );
+
+      ApiHandler.handle<void>(
+        response,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    }
+  }
+
+  @override
+  Future<void> updateGroupName({
+    required String groupId,
+    required String name,
+  }) async {
+    try {
+      final response = await _dioClient.patch(
+        ApiEndpoints.messageGroupName(groupId),
+        data: {'name': name},
+      );
+
+      ApiHandler.handle<void>(
+        response,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    }
+  }
+
+  @override
+  Future<void> updateGroupAvatar({
+    required String groupId,
+    required String filePath,
+  }) async {
+    try {
+      final fileName = filePath.split(RegExp(r'[\\/]')).last;
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          filePath,
+          filename: fileName.isEmpty ? 'group_avatar.jpg' : fileName,
+        ),
+      });
+
+      final response = await _dioClient.put(
+        ApiEndpoints.messageGroupAvatar(groupId),
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
       );
 
       ApiHandler.handle<void>(

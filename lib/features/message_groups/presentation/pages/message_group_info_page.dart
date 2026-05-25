@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +19,10 @@ import '../../domain/entities/message_group.dart';
 import '../../domain/entities/message_group_detail.dart';
 import 'message_group_add_members_page.dart';
 import 'message_group_members_page.dart';
+import 'message_group_notification_page.dart';
+import 'message_group_search_results_page.dart';
+import '../widgets/message_group_name_dialog.dart';
+import '../widgets/message_group_search_dialog.dart';
 
 final messageGroupInfoProvider = FutureProvider.autoDispose
     .family<MessageGroupDetail, MessageGroup>((ref, group) async {
@@ -40,6 +45,7 @@ class MessageGroupInfoPage extends ConsumerStatefulWidget {
 
 class _MessageGroupInfoPageState extends ConsumerState<MessageGroupInfoPage> {
   bool _isUpdatingApproval = false;
+  bool _isUpdatingAvatar = false;
   bool _isDeleting = false;
   bool _isLeaving = false;
 
@@ -216,6 +222,75 @@ class _MessageGroupInfoPageState extends ConsumerState<MessageGroupInfoPage> {
     }
   }
 
+  Future<void> _handleChangeAvatar(MessageGroupDetail detail) async {
+    if (_isUpdatingAvatar) {
+      return;
+    }
+
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: false,
+      type: FileType.image,
+    );
+
+    if (!mounted || result == null || result.files.isEmpty) {
+      return;
+    }
+
+    final filePath = result.files.single.path?.trim() ?? '';
+    if (filePath.isEmpty) {
+      ref
+          .read(appMessageProvider.notifier)
+          .addError('Không đọc được đường dẫn ảnh đã chọn');
+      return;
+    }
+
+    setState(() => _isUpdatingAvatar = true);
+
+    final response = await ref
+        .read(updateMessageGroupAvatarUseCaseProvider)
+        .call(groupId: detail.groupId, filePath: filePath);
+
+    if (!mounted) {
+      return;
+    }
+
+    response.fold(
+      (failure) {
+        ref.read(appMessageProvider.notifier).addError(failure.message);
+        setState(() => _isUpdatingAvatar = false);
+      },
+      (_) {
+        ref
+            .read(appMessageProvider.notifier)
+            .addSuccess('Đã cập nhật ảnh nhóm');
+        ref.invalidate(messageGroupInfoProvider(widget.group));
+        setState(() => _isUpdatingAvatar = false);
+      },
+    );
+  }
+
+  Future<void> _handleEditName(MessageGroupDetail detail) async {
+    final currentName = detail.displayName?.trim();
+    final initialName = (currentName != null && currentName.isNotEmpty)
+        ? currentName
+        : widget.group.resolvedDisplayName;
+
+    final updated = await showDialog<bool>(
+      context: context,
+      builder: (context) => MessageGroupNameDialog(
+        groupId: detail.groupId,
+        initialName: initialName,
+        onUpdated: () {
+          ref.invalidate(messageGroupInfoProvider(widget.group));
+        },
+      ),
+    );
+
+    if (updated == true) {
+      ref.invalidate(messageGroupInfoProvider(widget.group));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -258,6 +333,9 @@ class _MessageGroupInfoPageState extends ConsumerState<MessageGroupInfoPage> {
               detail: detail,
               isOwner: _isOwner(detail, currentUserId),
               isUpdatingApproval: _isUpdatingApproval,
+              isUpdatingAvatar: _isUpdatingAvatar,
+              onChangeAvatar: () => _handleChangeAvatar(detail),
+              onEditName: () => _handleEditName(detail),
               onDeleteGroup:
                   _isDeleting || _isLeaving ? null : _handleDeleteGroup,
               onLeaveGroup:
@@ -301,6 +379,35 @@ class _MessageGroupInfoPageState extends ConsumerState<MessageGroupInfoPage> {
                   ref.invalidate(messageGroupInfoProvider(widget.group));
                 }
               },
+              onOpenNotifications: () {
+                context.pushNamed(
+                  AppRoutes.messageGroupNotificationName,
+                  extra: MessageGroupNotificationPageArgs(
+                    groupId: detail.groupId,
+                    isMuted: detail.isMuted,
+                  ),
+                );
+              },
+              onSearch: () async {
+                final keyword = await MessageGroupSearchDialog.show(context);
+                if (keyword == null || !context.mounted) {
+                  return;
+                }
+
+                final displayName = detail.displayName?.trim();
+                final groupName = (displayName != null && displayName.isNotEmpty)
+                    ? displayName
+                    : widget.group.resolvedDisplayName;
+
+                context.pushNamed(
+                  AppRoutes.messageGroupSearchResultsName,
+                  extra: MessageGroupSearchResultsArgs(
+                    groupId: widget.group.groupId,
+                    groupName: groupName,
+                    keyword: keyword,
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -315,9 +422,14 @@ class _MessageGroupInfoBody extends StatelessWidget {
     required this.detail,
     required this.isOwner,
     required this.isUpdatingApproval,
+    required this.isUpdatingAvatar,
+    required this.onChangeAvatar,
+    required this.onEditName,
     required this.onAddMembers,
     required this.onOpenNicknames,
     required this.onOpenMembers,
+    required this.onOpenNotifications,
+    required this.onSearch,
     required this.onLeaveGroup,
     required this.onDeleteGroup,
     required this.onToggleRequireApproval,
@@ -327,9 +439,14 @@ class _MessageGroupInfoBody extends StatelessWidget {
   final MessageGroupDetail detail;
   final bool isOwner;
   final bool isUpdatingApproval;
+  final bool isUpdatingAvatar;
+  final VoidCallback onChangeAvatar;
+  final VoidCallback onEditName;
   final VoidCallback onAddMembers;
   final VoidCallback onOpenNicknames;
   final VoidCallback onOpenMembers;
+  final VoidCallback onOpenNotifications;
+  final VoidCallback onSearch;
   final VoidCallback? onLeaveGroup;
   final VoidCallback? onDeleteGroup;
   final ValueChanged<bool>? onToggleRequireApproval;
@@ -346,7 +463,9 @@ class _MessageGroupInfoBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final members = detail.members;
+    final joinedCount = detail.members
+        .where((member) => member.status.isJoined)
+        .length;
 
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 20),
@@ -354,32 +473,101 @@ class _MessageGroupInfoBody extends StatelessWidget {
         Center(
           child: Column(
             children: [
-              UserAvatar(
-                avatarUrl: detail.displayAvatarUrl ?? group.displayAvatarUrl,
-                givenName: _displayName,
-                size: 82,
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  UserAvatar(
+                    avatarUrl: detail.displayAvatarUrl ?? group.displayAvatarUrl,
+                    givenName: _displayName,
+                    size: 82,
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: isUpdatingAvatar ? null : onChangeAvatar,
+                        borderRadius: BorderRadius.circular(18),
+                        child: Ink(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: isUpdatingAvatar
+                              ? const Padding(
+                                  padding: EdgeInsets.all(7),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.sky100,
+                                  ),
+                                )
+                              : const AppIcon(
+                                  AppIcons.camera,
+                                  size: 16,
+                                  color: AppColors.sky100,
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 14),
-              AppText(
-                _displayName,
-                size: AppTextSize.large,
-                spacing: AppTextSpacing.tight,
-                weight: AppTextWeight.bold,
-                color: colorScheme.onSurface,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onEditName,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.sizeOf(context).width - 72,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: AppText(
+                              _displayName,
+                              size: AppTextSize.large,
+                              spacing: AppTextSpacing.tight,
+                              weight: AppTextWeight.bold,
+                              color: colorScheme.onSurface,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          AppIcon(
+                            AppIcons.pencil,
+                            size: 18,
+                            color: colorScheme.onSurface.withValues(alpha: 0.7),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 18),
               _GroupInfoActionRow(
                 onAddMembers: onAddMembers,
                 onOpenNicknames: onOpenNicknames,
+                onSearch: onSearch,
               ),
             ],
           ),
         ),
         const SizedBox(height: 30),
-        _SectionLabel(text: '${members.length} thành viên'),
+        _SectionLabel(text: '$joinedCount thành viên'),
         const SizedBox(height: 8),
         _InfoActionTile(
           icon: AppIcons.users,
@@ -401,9 +589,10 @@ class _MessageGroupInfoBody extends StatelessWidget {
         ],
         const _SectionLabel(text: 'Thông báo'),
         const SizedBox(height: 8),
-        const _InfoActionTile(
+        _InfoActionTile(
           icon: AppIcons.notification,
           label: 'Thông báo và âm thanh',
+          onTap: onOpenNotifications,
         ),
         const SizedBox(height: 28),
         if (isOwner) ...[
@@ -430,10 +619,12 @@ class _GroupInfoActionRow extends StatelessWidget {
   const _GroupInfoActionRow({
     required this.onAddMembers,
     required this.onOpenNicknames,
+    required this.onSearch,
   });
 
   final VoidCallback onAddMembers;
   final VoidCallback onOpenNicknames;
+  final VoidCallback onSearch;
 
   @override
   Widget build(BuildContext context) {
@@ -452,7 +643,11 @@ class _GroupInfoActionRow extends StatelessWidget {
           onTap: onOpenNicknames,
         ),
         const SizedBox(width: 18),
-        const _RoundInfoAction(icon: AppIcons.search, label: 'Tìm kiếm'),
+        _RoundInfoAction(
+          icon: AppIcons.search,
+          label: 'Tìm kiếm',
+          onTap: onSearch,
+        ),
       ],
     );
   }

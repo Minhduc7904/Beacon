@@ -122,6 +122,30 @@ class MessageGroupsRepositoryImpl implements MessageGroupsRepository {
   }
 
   @override
+  Future<Either<Failure, GroupMessagePage>> searchMessages({
+    required String groupId,
+    required String search,
+    String? cursor,
+    int? limit,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      final result = await _remoteDatasource.searchMessages(
+        groupId: groupId,
+        search: search,
+        cursor: cursor,
+        limit: limit,
+      );
+      return Right(result);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, MessageGroupDetail>> getGroupDetail({
     required String groupId,
   }) async {
@@ -180,6 +204,105 @@ class MessageGroupsRepositoryImpl implements MessageGroupsRepository {
   }
 
   @override
+  Future<Either<Failure, void>> updateMemberRole({
+    required String groupId,
+    required String targetUserId,
+    required int role,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      await _remoteDatasource.updateMemberRole(
+        groupId: groupId,
+        targetUserId: targetUserId,
+        role: role,
+      );
+      return const Right(null);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> approveMember({
+    required String groupId,
+    required String userId,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      await _remoteDatasource.approveMember(
+        groupId: groupId,
+        userId: userId,
+      );
+      return const Right(null);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> denyMember({
+    required String groupId,
+    required String userId,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      await _remoteDatasource.denyMember(
+        groupId: groupId,
+        userId: userId,
+      );
+      return const Right(null);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateMuteStatus({
+    required String groupId,
+    required bool isMuted,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      await _remoteDatasource.updateMuteStatus(
+        groupId: groupId,
+        isMuted: isMuted,
+      );
+      return const Right(null);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> removeMember({
+    required String groupId,
+    required String userId,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      await _remoteDatasource.removeMember(groupId: groupId, userId: userId);
+      return const Right(null);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> deleteGroup({required String groupId}) async {
     if (!await _networkInfo.isConnected) {
       return const Left(NetworkFailure());
@@ -220,6 +343,46 @@ class MessageGroupsRepositoryImpl implements MessageGroupsRepository {
       await _remoteDatasource.updateRequireApprovalToAddMembers(
         groupId: groupId,
         requireApprovalToAddMembers: requireApprovalToAddMembers,
+      );
+      return const Right(null);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateGroupName({
+    required String groupId,
+    required String name,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      await _remoteDatasource.updateGroupName(
+        groupId: groupId,
+        name: name,
+      );
+      return const Right(null);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateGroupAvatar({
+    required String groupId,
+    required String filePath,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      await _remoteDatasource.updateGroupAvatar(
+        groupId: groupId,
+        filePath: filePath,
       );
       return const Right(null);
     } on Exception catch (e) {

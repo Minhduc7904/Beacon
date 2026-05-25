@@ -1,3 +1,18 @@
+enum MessageGroupMemberStatus {
+  joined,
+  pendingApproval;
+
+  static MessageGroupMemberStatus fromInt(int value) {
+    if (value == 1) {
+      return MessageGroupMemberStatus.pendingApproval;
+    }
+    return MessageGroupMemberStatus.joined;
+  }
+
+  bool get isJoined => this == MessageGroupMemberStatus.joined;
+  bool get isPendingApproval => this == MessageGroupMemberStatus.pendingApproval;
+}
+
 class MessageGroupMember {
   final String userId;
   final String? familyName;
@@ -5,6 +20,7 @@ class MessageGroupMember {
   final String? customName;
   final String? avatarUrl;
   final int role;
+  final MessageGroupMemberStatus status;
   final String? lastSeenMessageId;
   final DateTime? lastSeenAtUtc;
 
@@ -15,6 +31,7 @@ class MessageGroupMember {
     required this.customName,
     required this.avatarUrl,
     required this.role,
+    required this.status,
     required this.lastSeenMessageId,
     required this.lastSeenAtUtc,
   });
@@ -27,6 +44,8 @@ class MessageGroupMember {
   }
 
   bool get isAdminRole => role == 1 || role == 2;
+
+  bool get isPendingApproval => status.isPendingApproval;
 
   String get roleLabelVi {
     switch (role) {

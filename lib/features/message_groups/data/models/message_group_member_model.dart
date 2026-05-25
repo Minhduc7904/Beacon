@@ -8,6 +8,7 @@ class MessageGroupMemberModel extends MessageGroupMember {
     required super.customName,
     required super.avatarUrl,
     required super.role,
+    required super.status,
     required super.lastSeenMessageId,
     required super.lastSeenAtUtc,
   });
@@ -20,6 +21,7 @@ class MessageGroupMemberModel extends MessageGroupMember {
       customName: json['customName']?.toString(),
       avatarUrl: json['avatarUrl']?.toString(),
       role: _toInt(json['role']),
+      status: MessageGroupMemberStatus.fromInt(_toInt(json['status'])),
       lastSeenMessageId: json['lastSeenMessageId']?.toString(),
       lastSeenAtUtc: _toUtcDate(
         json['lastSeenAtUtc'] ??

@@ -84,11 +84,16 @@ class MessageGroupNicknamesPage extends ConsumerWidget {
                 textAlign: TextAlign.center,
               ),
             ),
-            data: (detail) => _NicknameMemberList(
-              members: detail.members,
-              onMemberTap: (member) =>
-                  _openNicknameDialog(context, ref, member),
-            ),
+            data: (detail) {
+              final joinedMembers = detail.members
+                  .where((member) => member.status.isJoined)
+                  .toList(growable: false);
+              return _NicknameMemberList(
+                members: joinedMembers,
+                onMemberTap: (member) =>
+                    _openNicknameDialog(context, ref, member),
+              );
+            },
           ),
         ),
       ),

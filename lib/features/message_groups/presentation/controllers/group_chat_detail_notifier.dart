@@ -220,10 +220,61 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
       customName: target.customName,
       avatarUrl: target.avatarUrl,
       role: target.role,
+      status: target.status,
       lastSeenMessageId: lastSeenMessageId,
       lastSeenAtUtc: seenAtUtc ?? DateTime.now().toUtc(),
     );
 
+    _updateMembers(detail, members);
+  }
+
+  void updateMemberStatus({
+    required String userId,
+    required MessageGroupMemberStatus status,
+  }) {
+    final detail = state.groupDetail;
+    if (detail == null) {
+      return;
+    }
+
+    final members = List<MessageGroupMember>.from(detail.members);
+    final targetIndex = members.indexWhere((member) => member.userId == userId);
+    if (targetIndex < 0) {
+      return;
+    }
+
+    final target = members[targetIndex];
+    members[targetIndex] = MessageGroupMember(
+      userId: target.userId,
+      familyName: target.familyName,
+      givenName: target.givenName,
+      customName: target.customName,
+      avatarUrl: target.avatarUrl,
+      role: target.role,
+      status: status,
+      lastSeenMessageId: target.lastSeenMessageId,
+      lastSeenAtUtc: target.lastSeenAtUtc,
+    );
+
+    _updateMembers(detail, members);
+  }
+
+  void removeMember(String userId) {
+    final detail = state.groupDetail;
+    if (detail == null) {
+      return;
+    }
+
+    final members = detail.members
+        .where((member) => member.userId != userId)
+        .toList(growable: false);
+    _updateMembers(detail, members);
+  }
+
+  void _updateMembers(
+    MessageGroupDetail detail,
+    List<MessageGroupMember> members,
+  ) {
     state = state.copyWith(
       groupDetail: MessageGroupDetail(
         groupId: detail.groupId,
@@ -233,6 +284,7 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
         displayAvatarUrl: detail.displayAvatarUrl,
         members: members,
         requireApprovalToAddMembers: detail.requireApprovalToAddMembers,
+        isMuted: detail.isMuted,
       ),
     );
   }

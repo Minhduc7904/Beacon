@@ -23,6 +23,10 @@ class AppRoutes {
   static const String messageGroupMembersName = 'message-group-members';
   static const String messageGroupNicknamesName = 'message-group-nicknames';
   static const String messageGroupAddMembersName = 'message-group-add-members';
+  static const String messageGroupNotificationName =
+      'message-group-notification';
+  static const String messageGroupSearchResultsName =
+      'message-group-search-results';
   static const String addFriendsName = 'add-friends';
 
   static const String splash = '/';
@@ -47,6 +51,10 @@ class AppRoutes {
   static const String messageGroupMembers = '/messages/chat/members';
   static const String messageGroupNicknames = '/messages/chat/nicknames';
   static const String messageGroupAddMembers = '/messages/chat/members/add';
+  static const String messageGroupNotification =
+      '/messages/chat/notification';
+  static const String messageGroupSearchResults =
+      '/messages/chat/search-results';
   static const String addFriends = '/friends/add';
 
   static const List<AppRouteItem> all = [
@@ -77,6 +85,14 @@ class AppRoutes {
     AppRouteItem(
       title: 'Message Group Add Members',
       path: messageGroupAddMembers,
+    ),
+    AppRouteItem(
+      title: 'Message Group Notification',
+      path: messageGroupNotification,
+    ),
+    AppRouteItem(
+      title: 'Message Group Search Results',
+      path: messageGroupSearchResults,
     ),
     AppRouteItem(title: 'Add Friends', path: addFriends),
   ];
