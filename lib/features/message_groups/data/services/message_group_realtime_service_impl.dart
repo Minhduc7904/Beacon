@@ -344,7 +344,7 @@ class MessageGroupRealtimeServiceImpl implements MessageGroupRealtimeService {
       post: postJson is Map<String, dynamic>
           ? PostModel.fromJson(postJson)
           : null,
-      type: GroupMessageType.fromValue(json['type']),
+      type: GroupMessageType.fromValue(json['type'] ?? json['messageType']),
     );
   }
 

@@ -17,21 +17,13 @@ import '../../../../core/widgets/switch_button/switch_button.dart';
 import '../../../../core/widgets/text/text.dart';
 import '../../domain/entities/message_group.dart';
 import '../../domain/entities/message_group_detail.dart';
+import '../controllers/message_group_detail_provider.dart';
 import 'message_group_add_members_page.dart';
 import 'message_group_members_page.dart';
 import 'message_group_notification_page.dart';
 import 'message_group_search_results_page.dart';
 import '../widgets/message_group_name_dialog.dart';
 import '../widgets/message_group_search_dialog.dart';
-
-final messageGroupInfoProvider = FutureProvider.autoDispose
-    .family<MessageGroupDetail, MessageGroup>((ref, group) async {
-      final result = await ref
-          .watch(getMessageGroupDetailUseCaseProvider)
-          .call(groupId: group.groupId);
-
-      return result.fold((failure) => throw failure, (detail) => detail);
-    });
 
 class MessageGroupInfoPage extends ConsumerStatefulWidget {
   const MessageGroupInfoPage({super.key, required this.group});
@@ -136,9 +128,7 @@ class _MessageGroupInfoPageState extends ConsumerState<MessageGroupInfoPage> {
         setState(() => _isDeleting = false);
       },
       (_) {
-        ref
-            .read(appMessageProvider.notifier)
-            .addSuccess('Đã xóa đoạn chat');
+        ref.read(appMessageProvider.notifier).addSuccess('Đã xóa đoạn chat');
         context.goNamed(AppRoutes.messageListName);
       },
     );
@@ -194,10 +184,7 @@ class _MessageGroupInfoPageState extends ConsumerState<MessageGroupInfoPage> {
 
     final result = await ref
         .read(updateMessageGroupRequireApprovalUseCaseProvider)
-        .call(
-          groupId: detail.groupId,
-          requireApprovalToAddMembers: value,
-        );
+        .call(groupId: detail.groupId, requireApprovalToAddMembers: value);
 
     if (!mounted) {
       return;
@@ -208,12 +195,14 @@ class _MessageGroupInfoPageState extends ConsumerState<MessageGroupInfoPage> {
         ref.read(appMessageProvider.notifier).addError(failure.message);
       },
       (_) {
-        ref.read(appMessageProvider.notifier).addSuccess(
-          value
-              ? 'Đã bật yêu cầu duyệt thành viên'
-              : 'Đã tắt yêu cầu duyệt thành viên',
-        );
-        ref.invalidate(messageGroupInfoProvider(widget.group));
+        ref
+            .read(appMessageProvider.notifier)
+            .addSuccess(
+              value
+                  ? 'Đã bật yêu cầu duyệt thành viên'
+                  : 'Đã tắt yêu cầu duyệt thành viên',
+            );
+        ref.invalidate(messageGroupDetailProvider(widget.group.groupId));
       },
     );
 
@@ -263,7 +252,7 @@ class _MessageGroupInfoPageState extends ConsumerState<MessageGroupInfoPage> {
         ref
             .read(appMessageProvider.notifier)
             .addSuccess('Đã cập nhật ảnh nhóm');
-        ref.invalidate(messageGroupInfoProvider(widget.group));
+        ref.invalidate(messageGroupDetailProvider(widget.group.groupId));
         setState(() => _isUpdatingAvatar = false);
       },
     );
@@ -281,20 +270,22 @@ class _MessageGroupInfoPageState extends ConsumerState<MessageGroupInfoPage> {
         groupId: detail.groupId,
         initialName: initialName,
         onUpdated: () {
-          ref.invalidate(messageGroupInfoProvider(widget.group));
+          ref.invalidate(messageGroupDetailProvider(widget.group.groupId));
         },
       ),
     );
 
     if (updated == true) {
-      ref.invalidate(messageGroupInfoProvider(widget.group));
+      ref.invalidate(messageGroupDetailProvider(widget.group.groupId));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final detailAsync = ref.watch(messageGroupInfoProvider(widget.group));
+    final detailAsync = ref.watch(
+      messageGroupDetailProvider(widget.group.groupId),
+    );
     final currentUserId = ref.watch(meProfileProvider).valueOrNull?.id;
 
     return Scaffold(
@@ -336,10 +327,12 @@ class _MessageGroupInfoPageState extends ConsumerState<MessageGroupInfoPage> {
               isUpdatingAvatar: _isUpdatingAvatar,
               onChangeAvatar: () => _handleChangeAvatar(detail),
               onEditName: () => _handleEditName(detail),
-              onDeleteGroup:
-                  _isDeleting || _isLeaving ? null : _handleDeleteGroup,
-              onLeaveGroup:
-                  _isDeleting || _isLeaving ? null : _handleLeaveGroup,
+              onDeleteGroup: _isDeleting || _isLeaving
+                  ? null
+                  : _handleDeleteGroup,
+              onLeaveGroup: _isDeleting || _isLeaving
+                  ? null
+                  : _handleLeaveGroup,
               onToggleRequireApproval: _isUpdatingApproval
                   ? null
                   : (value) => _handleToggleRequireApproval(detail, value),
@@ -353,7 +346,9 @@ class _MessageGroupInfoPageState extends ConsumerState<MessageGroupInfoPage> {
                 );
 
                 if (added == true) {
-                  ref.invalidate(messageGroupInfoProvider(widget.group));
+                  ref.invalidate(
+                    messageGroupDetailProvider(widget.group.groupId),
+                  );
                 }
               },
               onOpenNicknames: () async {
@@ -363,7 +358,9 @@ class _MessageGroupInfoPageState extends ConsumerState<MessageGroupInfoPage> {
                 );
 
                 if (updated == true) {
-                  ref.invalidate(messageGroupInfoProvider(widget.group));
+                  ref.invalidate(
+                    messageGroupDetailProvider(widget.group.groupId),
+                  );
                 }
               },
               onOpenMembers: () async {
@@ -376,7 +373,9 @@ class _MessageGroupInfoPageState extends ConsumerState<MessageGroupInfoPage> {
                 );
 
                 if (added == true) {
-                  ref.invalidate(messageGroupInfoProvider(widget.group));
+                  ref.invalidate(
+                    messageGroupDetailProvider(widget.group.groupId),
+                  );
                 }
               },
               onOpenNotifications: () {
@@ -395,7 +394,8 @@ class _MessageGroupInfoPageState extends ConsumerState<MessageGroupInfoPage> {
                 }
 
                 final displayName = detail.displayName?.trim();
-                final groupName = (displayName != null && displayName.isNotEmpty)
+                final groupName =
+                    (displayName != null && displayName.isNotEmpty)
                     ? displayName
                     : widget.group.resolvedDisplayName;
 
@@ -477,7 +477,8 @@ class _MessageGroupInfoBody extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                   UserAvatar(
-                    avatarUrl: detail.displayAvatarUrl ?? group.displayAvatarUrl,
+                    avatarUrl:
+                        detail.displayAvatarUrl ?? group.displayAvatarUrl,
                     givenName: _displayName,
                     size: 82,
                   ),

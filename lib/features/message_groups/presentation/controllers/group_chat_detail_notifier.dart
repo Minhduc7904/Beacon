@@ -7,7 +7,6 @@ import '../../domain/entities/group_message.dart';
 import '../../domain/entities/message_group_detail.dart';
 import '../../domain/entities/message_group_member.dart';
 import '../../domain/usecase/get_group_messages_usecase.dart';
-import '../../domain/usecase/get_message_group_detail_usecase.dart';
 import '../../domain/usecase/join_message_group_realtime_usecase.dart';
 import '../../domain/usecase/leave_message_group_realtime_usecase.dart';
 import '../../domain/usecase/mark_message_group_seen_usecase.dart';
@@ -20,7 +19,6 @@ import 'group_chat_detail_state.dart';
 class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
   final String groupId;
   final GetGroupMessagesUseCase _getGroupMessagesUseCase;
-  final GetMessageGroupDetailUseCase _getMessageGroupDetailUseCase;
   final SendGroupMessageUseCase _sendGroupMessageUseCase;
   final MarkMessageGroupSeenUseCase _markMessageGroupSeenUseCase;
   final AppMessageNotifier _messageNotifier;
@@ -40,7 +38,6 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
   GroupChatDetailNotifier({
     required this.groupId,
     required GetGroupMessagesUseCase getGroupMessagesUseCase,
-    required GetMessageGroupDetailUseCase getMessageGroupDetailUseCase,
     required SendGroupMessageUseCase sendGroupMessageUseCase,
     required MarkMessageGroupSeenUseCase markMessageGroupSeenUseCase,
     required AppMessageNotifier messageNotifier,
@@ -53,7 +50,6 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
     subscribeTypingStatusRealtimeUseCase,
     required String? currentUserId,
   }) : _getGroupMessagesUseCase = getGroupMessagesUseCase,
-       _getMessageGroupDetailUseCase = getMessageGroupDetailUseCase,
        _sendGroupMessageUseCase = sendGroupMessageUseCase,
        _markMessageGroupSeenUseCase = markMessageGroupSeenUseCase,
        _messageNotifier = messageNotifier,
@@ -67,21 +63,12 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
        _currentUserId = currentUserId,
        super(const GroupChatDetailState());
 
-  Future<void> load() async {
+  Future<void> load({MessageGroupDetail? initialDetail}) async {
     state = state.copyWith(status: GroupChatDetailStatus.loading);
 
-    final detailResult = await _getMessageGroupDetailUseCase.call(
-      groupId: groupId,
-    );
-    detailResult.fold((_) {}, (detail) {
-      for (final member in detail.members) {
-        if (member.userId == _currentUserId) {
-          _lastSeenMessageId = member.lastSeenMessageId;
-          break;
-        }
-      }
-      state = state.copyWith(groupDetail: detail);
-    });
+    if (initialDetail != null) {
+      setGroupDetail(initialDetail);
+    }
 
     final result = await _getGroupMessagesUseCase.call(
       groupId: groupId,
@@ -114,6 +101,16 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
 
     await _markLatestSeenIfNeeded();
     await _bindRealtime();
+  }
+
+  void setGroupDetail(MessageGroupDetail detail) {
+    for (final member in detail.members) {
+      if (member.userId == _currentUserId) {
+        _lastSeenMessageId = member.lastSeenMessageId;
+        break;
+      }
+    }
+    state = state.copyWith(groupDetail: detail);
   }
 
   Future<void> sendMessage(String content) async {

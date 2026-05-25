@@ -9,7 +9,10 @@ enum GroupMessageType {
   memberNicknameChanged(5),
   groupAvatarChanged(6),
   groupDeleted(7),
-  groupApprovalSettingChanged(8);
+  groupApprovalSettingChanged(8),
+  memberApproved(9),
+  memberDenied(10),
+  groupNameChanged(11);
 
   const GroupMessageType(this.value);
 
@@ -22,8 +25,27 @@ enum GroupMessageType {
         ? value.toInt()
         : int.tryParse(value?.toString() ?? '');
 
+    if (parsed != null) {
+      return GroupMessageType.values.firstWhere(
+        (type) => type.value == parsed,
+        orElse: () => GroupMessageType.normal,
+      );
+    }
+
+    final normalized = value
+        ?.toString()
+        .trim()
+        .replaceAll(RegExp(r'[^a-zA-Z0-9]'), '')
+        .toLowerCase();
+    if (normalized == null || normalized.isEmpty) {
+      return GroupMessageType.normal;
+    }
+
     return GroupMessageType.values.firstWhere(
-      (type) => type.value == parsed,
+      (type) =>
+          type.name.toLowerCase() == normalized ||
+          type.name.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase() ==
+              normalized,
       orElse: () => GroupMessageType.normal,
     );
   }

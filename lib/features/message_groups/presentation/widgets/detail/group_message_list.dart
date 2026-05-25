@@ -362,6 +362,12 @@ class SystemMessageItem extends StatelessWidget {
         return 'Nhóm đã bị xóa';
       case GroupMessageType.groupApprovalSettingChanged:
         return '$actor đã thay đổi cài đặt duyệt thành viên';
+      case GroupMessageType.memberApproved:
+        return '$actor đã duyệt một thành viên vào nhóm';
+      case GroupMessageType.memberDenied:
+        return '$actor đã từ chối yêu cầu tham gia nhóm';
+      case GroupMessageType.groupNameChanged:
+        return '$actor đã đổi tên nhóm';
       case GroupMessageType.normal:
         return '';
     }

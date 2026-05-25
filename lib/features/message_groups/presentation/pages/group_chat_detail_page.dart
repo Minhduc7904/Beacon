@@ -14,9 +14,11 @@ import '../../../../core/widgets/image/user_avatar.dart';
 import '../../../../core/widgets/layout/screen_layout.dart';
 import '../../../../core/widgets/text/text.dart';
 import '../../domain/entities/message_group.dart';
+import '../../domain/entities/message_group_detail.dart';
 import '../../domain/entities/message_group_member.dart';
 import '../controllers/group_chat_detail_notifier.dart';
 import '../controllers/group_chat_detail_state.dart';
+import '../controllers/message_group_detail_provider.dart';
 import '../widgets/detail/group_message_input_bar.dart';
 import '../widgets/detail/group_message_list.dart';
 import '../widgets/detail/pending_group_members_section.dart';
@@ -29,9 +31,6 @@ final groupChatDetailProvider = StateNotifierProvider.autoDispose
       return GroupChatDetailNotifier(
         groupId: groupId,
         getGroupMessagesUseCase: ref.watch(getGroupMessagesUseCaseProvider),
-        getMessageGroupDetailUseCase: ref.watch(
-          getMessageGroupDetailUseCaseProvider,
-        ),
         sendGroupMessageUseCase: ref.watch(sendGroupMessageUseCaseProvider),
         markMessageGroupSeenUseCase: ref.watch(
           markMessageGroupSeenUseCaseProvider,
@@ -73,10 +72,7 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(groupChatDetailProvider(widget.group.groupId).notifier)
-          .load()
-          .then((_) => _scrollToBottom(animated: false));
+      _loadChatDetail();
     });
   }
 
@@ -111,6 +107,25 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
         _scrollController.jumpTo(_scrollController.position.minScrollExtent);
       });
     });
+  }
+
+  Future<void> _loadChatDetail() async {
+    MessageGroupDetail? initialDetail;
+    try {
+      initialDetail = await ref.read(
+        messageGroupDetailProvider(widget.group.groupId).future,
+      );
+    } catch (_) {}
+
+    if (!mounted) {
+      return;
+    }
+
+    await ref
+        .read(groupChatDetailProvider(widget.group.groupId).notifier)
+        .load(initialDetail: initialDetail);
+
+    _scrollToBottom(animated: false);
   }
 
   String _title(GroupChatDetailState state) {
@@ -163,15 +178,25 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final state = ref.watch(groupChatDetailProvider(widget.group.groupId));
+    ref.listen<AsyncValue<MessageGroupDetail>>(
+      messageGroupDetailProvider(widget.group.groupId),
+      (_, next) {
+        next.whenData((detail) {
+          ref
+              .read(groupChatDetailProvider(widget.group.groupId).notifier)
+              .setGroupDetail(detail);
+        });
+      },
+    );
     final currentUserId = ref.watch(meProfileProvider).valueOrNull?.id;
     final presenceState = ref.watch(friendsPresenceNotifierProvider);
     final members = state.groupDetail?.members ?? const <MessageGroupMember>[];
     final joinedMembers = members
-      .where((member) => member.status.isJoined)
-      .toList(growable: false);
+        .where((member) => member.status.isJoined)
+        .toList(growable: false);
     final pendingMembers = members
-      .where((member) => member.isPendingApproval)
-      .toList(growable: false);
+        .where((member) => member.isPendingApproval)
+        .toList(growable: false);
     final currentMember = _currentMember(members, currentUserId);
     final canManagePending = currentMember?.isAdminRole ?? false;
     final resolvedAvatarUrl =
@@ -336,10 +361,7 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
     }
   }
 
-  String? _peerUserId(
-    List<MessageGroupMember> members,
-    String? currentUserId,
-  ) {
+  String? _peerUserId(List<MessageGroupMember> members, String? currentUserId) {
     if (!widget.group.isPrivate) {
       return null;
     }
