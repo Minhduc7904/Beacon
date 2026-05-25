@@ -55,4 +55,5 @@ class ApiErrorCodes {
   // Message groups
   static const String messageGroupForbidden = 'MESSAGE_GROUP_FORBIDDEN';
   static const String messageGroupNotFound = 'MESSAGE_GROUP_NOT_FOUND';
+  static const String groupMemberAlreadyExists = 'GROUP_MEMBER_ALREADY_EXISTS';
 }

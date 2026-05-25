@@ -21,6 +21,7 @@ class FriendsRepositoryImpl implements FriendsRepository {
 
   @override
   Future<Either<Failure, FriendPage>> getFriends({
+    String? search,
     String? cursor,
     int? limit,
   }) async {
@@ -30,6 +31,7 @@ class FriendsRepositoryImpl implements FriendsRepository {
 
     try {
       final result = await _remoteDatasource.getFriends(
+        search: search,
         cursor: cursor,
         limit: limit,
       );

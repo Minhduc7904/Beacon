@@ -48,7 +48,32 @@ class MessageGroupsRemoteDatasourceImpl
         e,
         codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
       );
-      rethrow;
+    }
+  }
+
+  @override
+  Future<MessageGroupDetailModel> createMessageGroup({
+    required List<String> memberUserIds,
+  }) async {
+    try {
+      final response = await _dioClient.post(
+        ApiEndpoints.messageGroups,
+        data: {'memberUserIds': memberUserIds},
+      );
+
+      final result = ApiHandler.handle<MessageGroupDetailModel>(
+        response,
+        fromJsonT: (json) =>
+            MessageGroupDetailModel.fromJson(json as Map<String, dynamic>),
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+
+      return result.data!;
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
     }
   }
 
@@ -76,7 +101,6 @@ class MessageGroupsRemoteDatasourceImpl
         e,
         codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
       );
-      rethrow;
     }
   }
 
@@ -174,6 +198,119 @@ class MessageGroupsRemoteDatasourceImpl
         codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
       );
       rethrow;
+    }
+  }
+
+  @override
+  Future<void> addMembers({
+    required String groupId,
+    required List<String> targetUserIds,
+  }) async {
+    try {
+      final response = await _dioClient.post(
+        ApiEndpoints.messageGroupMembers(groupId),
+        data: {'targetUserIds': targetUserIds},
+      );
+
+      ApiHandler.handle<void>(
+        response,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    }
+  }
+
+  @override
+  Future<void> updateMemberCustomName({
+    required String groupId,
+    required String userId,
+    String? customName,
+  }) async {
+    try {
+      final trimmed = customName?.trim();
+      final response = await _dioClient.patch(
+        ApiEndpoints.messageGroupMemberCustomName(groupId, userId),
+        data: {
+          'customName': trimmed == null || trimmed.isEmpty ? null : trimmed,
+        },
+      );
+
+      ApiHandler.handle<void>(
+        response,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    }
+  }
+
+  @override
+  Future<void> deleteGroup({required String groupId}) async {
+    try {
+      final response = await _dioClient.delete(
+        ApiEndpoints.messageGroupDetail(groupId),
+      );
+
+      ApiHandler.handle<void>(
+        response,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    }
+  }
+
+  @override
+  Future<void> leaveGroup({required String groupId}) async {
+    try {
+      final response = await _dioClient.delete(
+        ApiEndpoints.messageGroupLeave(groupId),
+      );
+
+      ApiHandler.handle<void>(
+        response,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    }
+  }
+
+  @override
+  Future<void> updateRequireApprovalToAddMembers({
+    required String groupId,
+    required bool requireApprovalToAddMembers,
+  }) async {
+    try {
+      final response = await _dioClient.patch(
+        ApiEndpoints.messageGroupRequireApproval(groupId),
+        data: {
+          'requireApprovalToAddMembers': requireApprovalToAddMembers,
+        },
+      );
+
+      ApiHandler.handle<void>(
+        response,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(
+        e,
+        codeMessageMapper: MessageGroupsErrorCodeMapper.mapCode,
+      );
     }
   }
 

@@ -40,6 +40,24 @@ class MessageGroupsRepositoryImpl implements MessageGroupsRepository {
   }
 
   @override
+  Future<Either<Failure, MessageGroupDetail>> createMessageGroup({
+    required List<String> memberUserIds,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      final result = await _remoteDatasource.createMessageGroup(
+        memberUserIds: memberUserIds,
+      );
+      return Right(result);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, GroupMessage>> sendMessage({
     required String groupId,
     required String content,
@@ -114,6 +132,96 @@ class MessageGroupsRepositoryImpl implements MessageGroupsRepository {
     try {
       final result = await _remoteDatasource.getGroupDetail(groupId: groupId);
       return Right(result);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> addMembers({
+    required String groupId,
+    required List<String> targetUserIds,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      await _remoteDatasource.addMembers(
+        groupId: groupId,
+        targetUserIds: targetUserIds,
+      );
+      return const Right(null);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateMemberCustomName({
+    required String groupId,
+    required String userId,
+    String? customName,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      await _remoteDatasource.updateMemberCustomName(
+        groupId: groupId,
+        userId: userId,
+        customName: customName,
+      );
+      return const Right(null);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteGroup({required String groupId}) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      await _remoteDatasource.deleteGroup(groupId: groupId);
+      return const Right(null);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> leaveGroup({required String groupId}) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      await _remoteDatasource.leaveGroup(groupId: groupId);
+      return const Right(null);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateRequireApprovalToAddMembers({
+    required String groupId,
+    required bool requireApprovalToAddMembers,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+
+    try {
+      await _remoteDatasource.updateRequireApprovalToAddMembers(
+        groupId: groupId,
+        requireApprovalToAddMembers: requireApprovalToAddMembers,
+      );
+      return const Right(null);
     } on Exception catch (e) {
       return Left(e.toFailure());
     }

@@ -70,8 +70,12 @@ import '../../features/message_groups/data/repositories/message_groups_repositor
 import '../../features/message_groups/data/services/message_group_realtime_service_impl.dart';
 import '../../features/message_groups/domain/repositories/message_groups_repository.dart';
 import '../../features/message_groups/domain/services/message_group_realtime_service.dart';
+import '../../features/message_groups/domain/usecase/add_group_members_usecase.dart';
+import '../../features/message_groups/domain/usecase/create_message_group_usecase.dart';
+import '../../features/message_groups/domain/usecase/delete_message_group_usecase.dart';
 import '../../features/message_groups/domain/usecase/get_group_messages_usecase.dart';
 import '../../features/message_groups/domain/usecase/join_message_group_realtime_usecase.dart';
+import '../../features/message_groups/domain/usecase/leave_message_group_usecase.dart';
 import '../../features/message_groups/domain/usecase/leave_message_group_realtime_usecase.dart';
 import '../../features/message_groups/domain/usecase/mark_message_group_seen_usecase.dart';
 import '../../features/message_groups/domain/usecase/subscribe_new_messages_realtime_usecase.dart';
@@ -83,6 +87,12 @@ import '../../features/message_groups/domain/usecase/get_message_group_detail_us
 import '../../features/message_groups/domain/usecase/get_message_groups_usecase.dart';
 import '../../features/message_groups/domain/usecase/send_group_message_usecase.dart';
 import '../../features/message_groups/domain/usecase/send_typing_status_realtime_usecase.dart';
+import '../../features/message_groups/domain/usecase/update_message_group_member_custom_name_usecase.dart';
+import '../../features/message_groups/domain/usecase/update_message_group_require_approval_usecase.dart';
+import '../../features/message_groups/presentation/controllers/add_group_members_notifier.dart';
+import '../../features/message_groups/presentation/controllers/add_group_members_state.dart';
+import '../../features/message_groups/presentation/controllers/create_message_group_sheet_notifier.dart';
+import '../../features/message_groups/presentation/controllers/create_message_group_sheet_state.dart';
 import '../../features/onboarding/data/datasources/onboarding_local_datasource.dart';
 import '../../features/onboarding/data/datasources/onboarding_local_datasource_impl.dart';
 import '../../features/onboarding/data/repositories/onboarding_repository_impl.dart';
@@ -576,6 +586,28 @@ final getMessageGroupsUseCaseProvider = Provider<GetMessageGroupsUseCase>((
   return GetMessageGroupsUseCase(ref.watch(messageGroupsRepositoryProvider));
 });
 
+final createMessageGroupUseCaseProvider = Provider<CreateMessageGroupUseCase>((
+  ref,
+) {
+  return CreateMessageGroupUseCase(ref.watch(messageGroupsRepositoryProvider));
+});
+
+final deleteMessageGroupUseCaseProvider = Provider<DeleteMessageGroupUseCase>((
+  ref,
+) {
+  return DeleteMessageGroupUseCase(ref.watch(messageGroupsRepositoryProvider));
+});
+
+final leaveMessageGroupUseCaseProvider = Provider<LeaveMessageGroupUseCase>((
+  ref,
+) {
+  return LeaveMessageGroupUseCase(ref.watch(messageGroupsRepositoryProvider));
+});
+
+final addGroupMembersUseCaseProvider = Provider<AddGroupMembersUseCase>((ref) {
+  return AddGroupMembersUseCase(ref.watch(messageGroupsRepositoryProvider));
+});
+
 final sendGroupMessageUseCaseProvider = Provider<SendGroupMessageUseCase>((
   ref,
 ) {
@@ -595,6 +627,20 @@ final getGroupMessagesUseCaseProvider = Provider<GetGroupMessagesUseCase>((
 final getMessageGroupDetailUseCaseProvider =
     Provider<GetMessageGroupDetailUseCase>((ref) {
       return GetMessageGroupDetailUseCase(
+        ref.watch(messageGroupsRepositoryProvider),
+      );
+    });
+
+final updateMessageGroupRequireApprovalUseCaseProvider =
+    Provider<UpdateMessageGroupRequireApprovalUseCase>((ref) {
+      return UpdateMessageGroupRequireApprovalUseCase(
+        ref.watch(messageGroupsRepositoryProvider),
+      );
+    });
+
+final updateMessageGroupMemberCustomNameUseCaseProvider =
+    Provider<UpdateMessageGroupMemberCustomNameUseCase>((ref) {
+      return UpdateMessageGroupMemberCustomNameUseCase(
         ref.watch(messageGroupsRepositoryProvider),
       );
     });
@@ -707,6 +753,29 @@ final friendsPresenceNotifierProvider =
     StateNotifierProvider<FriendsPresenceNotifier, FriendsPresenceState>((ref) {
       return FriendsPresenceNotifier(
         ref.watch(getFriendsPresenceUseCaseProvider),
+        ref.watch(appMessageProvider.notifier),
+      );
+    });
+
+final createMessageGroupSheetProvider =
+    StateNotifierProvider.autoDispose<
+      CreateMessageGroupSheetNotifier,
+      CreateMessageGroupSheetState
+    >((ref) {
+      return CreateMessageGroupSheetNotifier(
+        ref.watch(getFriendsUseCaseProvider),
+        ref.watch(appMessageProvider.notifier),
+      );
+    });
+
+final addGroupMembersProvider =
+    StateNotifierProvider.autoDispose<
+      AddGroupMembersNotifier,
+      AddGroupMembersState
+    >((ref) {
+      return AddGroupMembersNotifier(
+        ref.watch(getFriendsUseCaseProvider),
+        ref.watch(addGroupMembersUseCaseProvider),
         ref.watch(appMessageProvider.notifier),
       );
     });

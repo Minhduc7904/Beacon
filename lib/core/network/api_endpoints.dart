@@ -69,6 +69,12 @@ class ApiEndpoints {
       '/message-groups/{groupId}/messages';
   static const String messageGroupDetailTemplate =
       '/message-groups/group/{groupId}';
+  static const String messageGroupMemberCustomNameTemplate =
+      '/message-groups/{groupId}/members/{userId}/custom-name';
+  static const String messageGroupLeaveTemplate =
+      '/message-groups/{groupId}/members/me';
+  static const String messageGroupRequireApprovalTemplate =
+      '/message-groups/{groupId}/require-approval-to-add-members';
 
   static String mediaById(String id) => '/media/$id';
   static String mediaSoftDelete(String id) => '/media/$id/soft';
@@ -88,4 +94,12 @@ class ApiEndpoints {
       '/message-groups/$groupId';
   static String messageGroupSeen(String groupId) =>
       '/message-groups/$groupId/seen';
+  static String messageGroupMembers(String groupId) =>
+      '/message-groups/$groupId/members';
+  static String messageGroupMemberCustomName(String groupId, String userId) =>
+      '/message-groups/$groupId/members/$userId/custom-name';
+  static String messageGroupLeave(String groupId) =>
+      '/message-groups/$groupId/members/me';
+  static String messageGroupRequireApproval(String groupId) =>
+      '/message-groups/$groupId/require-approval-to-add-members';
 }

@@ -12,6 +12,10 @@ abstract class MessageGroupsRepository {
     int? limit,
   });
 
+  Future<Either<Failure, MessageGroupDetail>> createMessageGroup({
+    required List<String> memberUserIds,
+  });
+
   Future<Either<Failure, GroupMessage>> sendMessage({
     required String groupId,
     required String content,
@@ -31,6 +35,26 @@ abstract class MessageGroupsRepository {
 
   Future<Either<Failure, MessageGroupDetail>> getGroupDetail({
     required String groupId,
+  });
+
+  Future<Either<Failure, void>> addMembers({
+    required String groupId,
+    required List<String> targetUserIds,
+  });
+
+  Future<Either<Failure, void>> updateMemberCustomName({
+    required String groupId,
+    required String userId,
+    String? customName,
+  });
+
+  Future<Either<Failure, void>> deleteGroup({required String groupId});
+
+  Future<Either<Failure, void>> leaveGroup({required String groupId});
+
+  Future<Either<Failure, void>> updateRequireApprovalToAddMembers({
+    required String groupId,
+    required bool requireApprovalToAddMembers,
   });
 
   Future<Either<Failure, void>> markSeen({

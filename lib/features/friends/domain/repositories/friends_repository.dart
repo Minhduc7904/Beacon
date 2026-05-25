@@ -8,6 +8,7 @@ import '../entities/friend_type.dart';
 
 abstract class FriendsRepository {
   Future<Either<Failure, FriendPage>> getFriends({
+    String? search,
     String? cursor,
     int? limit,
   });
@@ -32,7 +33,5 @@ abstract class FriendsRepository {
     required FriendType type,
   });
 
-  Future<Either<Failure, bool>> deleteFriend({
-    required String userId,
-  });
+  Future<Either<Failure, bool>> deleteFriend({required String userId});
 }

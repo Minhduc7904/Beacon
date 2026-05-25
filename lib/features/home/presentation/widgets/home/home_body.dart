@@ -55,6 +55,8 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
   bool _isHandlingTargetPost = false;
   int _currentPageIndex = 0;
   String? _activeReactionEffectPostId;
+  String? _activeSentReactionEffectPostId;
+  String? _activeSentReactionEffectIcon;
   String? _activeMessageEffectPostId;
   String? _sendingPostMessagePostId;
   final Set<String> _playedReactionEffectPostIds = <String>{};
@@ -296,6 +298,17 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     });
   }
 
+  void _handleSentReactionEffectCompleted(String postId) {
+    if (!mounted || _activeSentReactionEffectPostId != postId) {
+      return;
+    }
+
+    setState(() {
+      _activeSentReactionEffectPostId = null;
+      _activeSentReactionEffectIcon = null;
+    });
+  }
+
   void _handleMessageEffectCompleted(String postId) {
     if (!mounted || _activeMessageEffectPostId != postId) {
       return;
@@ -303,6 +316,29 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
 
     setState(() {
       _activeMessageEffectPostId = null;
+    });
+  }
+
+  Future<void> _handleReactIcon(FeedPost post, String icon) async {
+    final didReact = await ref
+        .read(feedProvider.notifier)
+        .setReactionIcon(post.id, icon);
+    if (!mounted || !didReact) {
+      return;
+    }
+
+    final feedState = ref.read(feedProvider);
+    final feedIndex = _currentPageIndex - 1;
+    if (feedState.viewMode != FeedViewMode.single ||
+        feedIndex < 0 ||
+        feedIndex >= feedState.posts.length ||
+        feedState.posts[feedIndex].id != post.id) {
+      return;
+    }
+
+    setState(() {
+      _activeSentReactionEffectPostId = post.id;
+      _activeSentReactionEffectIcon = icon;
     });
   }
 
@@ -553,6 +589,8 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
       );
     }
     final activeReactionEffectPostId = _activeReactionEffectPostId;
+    final activeSentReactionEffectPostId = _activeSentReactionEffectPostId;
+    final activeSentReactionEffectIcon = _activeSentReactionEffectIcon;
     final activeMessageEffectPostId = _activeMessageEffectPostId;
 
     return Stack(
@@ -599,6 +637,21 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
                   _handleReactionEffectCompleted(activeReactionEffectPostId),
             ),
           ),
+        if (activeSentReactionEffectPostId != null &&
+            activeSentReactionEffectIcon != null)
+          Positioned.fill(
+            child: ReactionFlyOverlay(
+              key: ValueKey<String>(
+                'sent-$activeSentReactionEffectPostId-$activeSentReactionEffectIcon',
+              ),
+              reactions: [activeSentReactionEffectIcon],
+              minCopiesPerReaction: 5,
+              maxCopiesPerReaction: 6,
+              onCompleted: () => _handleSentReactionEffectCompleted(
+                activeSentReactionEffectPostId,
+              ),
+            ),
+          ),
         if (activeMessageEffectPostId != null)
           Positioned.fill(
             child: ReactionFlyOverlay(
@@ -632,11 +685,8 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
                   onMessagePressed: canManage
                       ? null
                       : () => unawaited(_showPostMessageInput(footerPost)),
-                  onReactIcon: (icon) => unawaited(
-                    ref
-                        .read(feedProvider.notifier)
-                        .setReactionIcon(footerPost.id, icon),
-                  ),
+                  onReactIcon: (icon) =>
+                      unawaited(_handleReactIcon(footerPost, icon)),
                   onMenuPressed: canManage
                       ? () => _showOwnerActionSheet(footerPost)
                       : null,

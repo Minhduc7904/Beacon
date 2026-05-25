@@ -13,6 +13,7 @@ class MessageGroup {
   final String? displayName;
   final String? displayAvatarUrl;
   final String? peerUserId;
+  final bool requireApprovalToAddMembers;
 
   const MessageGroup({
     required this.groupId,
@@ -29,6 +30,7 @@ class MessageGroup {
     required this.displayName,
     required this.displayAvatarUrl,
     required this.peerUserId,
+    required this.requireApprovalToAddMembers,
   });
 
   String get lastMessageSenderFullName {

@@ -316,6 +316,7 @@ class MessageGroupRealtimeServiceImpl implements MessageGroupRealtimeService {
     final incomingGroupId = json['groupId']?.toString() ?? '';
     final senderId = json['senderId']?.toString() ?? '';
     final content = json['content']?.toString() ?? '';
+    final senderDisplayName = json['senderDisplayName']?.toString() ?? '';
     final senderFamilyName = json['senderFamilyName']?.toString() ?? '';
     final senderGivenName = json['senderGivenName']?.toString() ?? '';
     final createdAtRaw = json['createdAtUtc']?.toString();
@@ -334,6 +335,7 @@ class MessageGroupRealtimeServiceImpl implements MessageGroupRealtimeService {
       id: id,
       groupId: incomingGroupId,
       senderId: senderId,
+      senderDisplayName: senderDisplayName,
       senderFamilyName: senderFamilyName,
       senderGivenName: senderGivenName,
       content: content,
@@ -342,6 +344,7 @@ class MessageGroupRealtimeServiceImpl implements MessageGroupRealtimeService {
       post: postJson is Map<String, dynamic>
           ? PostModel.fromJson(postJson)
           : null,
+      type: GroupMessageType.fromValue(json['type']),
     );
   }
 

@@ -19,6 +19,10 @@ class AppRoutes {
   static const String widgetsName = 'widgets';
   static const String messageListName = 'message-list';
   static const String chatDetailName = 'chat-detail';
+  static const String messageGroupInfoName = 'message-group-info';
+  static const String messageGroupMembersName = 'message-group-members';
+  static const String messageGroupNicknamesName = 'message-group-nicknames';
+  static const String messageGroupAddMembersName = 'message-group-add-members';
   static const String addFriendsName = 'add-friends';
 
   static const String splash = '/';
@@ -39,6 +43,10 @@ class AppRoutes {
   static const String widgets = '/widgets';
   static const String messageList = '/messages';
   static const String chatDetail = '/messages/chat';
+  static const String messageGroupInfo = '/messages/chat/info';
+  static const String messageGroupMembers = '/messages/chat/members';
+  static const String messageGroupNicknames = '/messages/chat/nicknames';
+  static const String messageGroupAddMembers = '/messages/chat/members/add';
   static const String addFriends = '/friends/add';
 
   static const List<AppRouteItem> all = [
@@ -60,6 +68,16 @@ class AppRoutes {
     AppRouteItem(title: 'Widgets', path: widgets),
     AppRouteItem(title: 'Messages', path: messageList),
     AppRouteItem(title: 'Chat Detail', path: chatDetail),
+    AppRouteItem(title: 'Message Group Info', path: messageGroupInfo),
+    AppRouteItem(title: 'Message Group Members', path: messageGroupMembers),
+    AppRouteItem(
+      title: 'Message Group Nicknames',
+      path: messageGroupNicknames,
+    ),
+    AppRouteItem(
+      title: 'Message Group Add Members',
+      path: messageGroupAddMembers,
+    ),
     AppRouteItem(title: 'Add Friends', path: addFriends),
   ];
 }

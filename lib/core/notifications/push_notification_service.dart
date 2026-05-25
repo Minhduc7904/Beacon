@@ -281,6 +281,7 @@ class PushNotificationService {
       displayName: null,
       displayAvatarUrl: null,
       peerUserId: data['peerUserId']?.toString(),
+      requireApprovalToAddMembers: false,
     );
 
     try {

@@ -15,9 +15,16 @@ class FriendsRemoteDatasourceImpl implements FriendsRemoteDatasource {
   FriendsRemoteDatasourceImpl(this._dioClient);
 
   @override
-  Future<FriendPageModel> getFriends({String? cursor, int? limit}) async {
+  Future<FriendPageModel> getFriends({
+    String? search,
+    String? cursor,
+    int? limit,
+  }) async {
     try {
       final query = <String, dynamic>{};
+      if (search != null && search.trim().isNotEmpty) {
+        query['search'] = search.trim();
+      }
       if (cursor != null && cursor.trim().isNotEmpty) {
         query['cursor'] = cursor.trim();
       }

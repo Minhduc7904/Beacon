@@ -16,6 +16,7 @@ class MessageGroupModel extends MessageGroup {
     required super.displayName,
     required super.displayAvatarUrl,
     required super.peerUserId,
+    required super.requireApprovalToAddMembers,
   });
 
   factory MessageGroupModel.fromJson(Map<String, dynamic> json) {
@@ -37,6 +38,8 @@ class MessageGroupModel extends MessageGroup {
       displayName: json['displayName']?.toString(),
       displayAvatarUrl: json['displayAvatarUrl']?.toString(),
       peerUserId: json['peerUserId']?.toString(),
+      requireApprovalToAddMembers:
+          _toBool(json['requireApprovalToAddMembers']) ?? false,
     );
   }
 

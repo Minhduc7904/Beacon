@@ -45,6 +45,14 @@ class TimeUtils {
     return '$date $time';
   }
 
+  static String formatRelativeVietnamTime(DateTime vietnamTime) {
+    final diff = nowVietnam().difference(vietnamTime);
+    if (diff.isNegative || diff.inMinutes < 1) return 'Vừa xong';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} phút trước';
+    if (diff.inHours < 24) return '${diff.inHours} giờ trước';
+    return '${diff.inDays} ngày trước';
+  }
+
   /// Format giờ
   ///
   /// Ví dụ:
@@ -101,7 +109,13 @@ class TimeUtils {
 
     // Tạo DateTime tạm để convert
     final today = DateTime.now();
-    final vietnamDateTime = DateTime(today.year, today.month, today.day, hour, minute);
+    final vietnamDateTime = DateTime(
+      today.year,
+      today.month,
+      today.day,
+      hour,
+      minute,
+    );
     final utcDateTime = toUtc(vietnamDateTime);
 
     return '${_pad(utcDateTime.hour)}:${_pad(utcDateTime.minute)}';
@@ -125,7 +139,13 @@ class TimeUtils {
 
     // Tạo DateTime tạm để convert (tạo UTC datetime)
     final today = DateTime.now();
-    final utcDateTime = DateTime.utc(today.year, today.month, today.day, hour, minute);
+    final utcDateTime = DateTime.utc(
+      today.year,
+      today.month,
+      today.day,
+      hour,
+      minute,
+    );
     final vietnamDateTime = toVietnamTime(utcDateTime);
 
     return '${_pad(vietnamDateTime.hour)}:${_pad(vietnamDateTime.minute)}';

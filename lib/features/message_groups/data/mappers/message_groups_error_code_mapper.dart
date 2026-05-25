@@ -12,6 +12,12 @@ class MessageGroupsErrorCodeMapper {
         return ErrorMessages.messageGroupForbidden;
       case ApiErrorCodes.messageGroupNotFound:
         return ErrorMessages.messageGroupNotFound;
+      case ApiErrorCodes.userNotFound:
+        return ErrorMessages.userNotFound;
+      case ApiErrorCodes.groupMemberAlreadyExists:
+        return ErrorMessages.groupMemberAlreadyExists;
+      case ApiErrorCodes.friendNotFound:
+        return ErrorMessages.friendNotFound;
       case ApiErrorCodes.unauthorized:
         return ErrorMessages.unauthorized;
       default:

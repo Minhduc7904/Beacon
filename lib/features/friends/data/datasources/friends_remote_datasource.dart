@@ -4,6 +4,7 @@ import '../models/friend_profile_model.dart';
 
 abstract class FriendsRemoteDatasource {
   Future<FriendPageModel> getFriends({
+    String? search,
     String? cursor,
     int? limit,
   });
@@ -21,10 +22,7 @@ abstract class FriendsRemoteDatasource {
 
   Future<FriendProfileModel> getFriendDetail({required String userId});
 
-  Future<void> updateFriendType({
-    required String userId,
-    required int type,
-  });
+  Future<void> updateFriendType({required String userId, required int type});
 
   Future<void> deleteFriend({required String userId});
 }

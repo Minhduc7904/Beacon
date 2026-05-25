@@ -6,12 +6,14 @@ class GroupMessageModel extends GroupMessage {
     required super.id,
     required super.groupId,
     required super.senderId,
+    super.senderDisplayName,
     required super.senderFamilyName,
     required super.senderGivenName,
     required super.content,
     required super.createdAtUtc,
     required super.postId,
     required super.post,
+    super.type,
   });
 
   factory GroupMessageModel.fromJson(Map<String, dynamic> json) {
@@ -21,6 +23,7 @@ class GroupMessageModel extends GroupMessage {
       id: json['id']?.toString() ?? '',
       groupId: json['groupId']?.toString() ?? '',
       senderId: json['senderId']?.toString() ?? '',
+      senderDisplayName: json['senderDisplayName']?.toString() ?? '',
       senderFamilyName: json['senderFamilyName']?.toString() ?? '',
       senderGivenName:
           json['senderGivenName']?.toString() ??
@@ -32,6 +35,7 @@ class GroupMessageModel extends GroupMessage {
       post: postJson is Map<String, dynamic>
           ? PostModel.fromJson(postJson)
           : null,
+      type: GroupMessageType.fromValue(json['type']),
     );
   }
 

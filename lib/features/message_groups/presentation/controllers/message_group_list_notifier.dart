@@ -54,6 +54,7 @@ class MessageGroupListNotifier extends StateNotifier<MessageGroupListState> {
       displayName: current.displayName,
       displayAvatarUrl: current.displayAvatarUrl,
       peerUserId: current.peerUserId,
+      requireApprovalToAddMembers: current.requireApprovalToAddMembers,
     );
     groups.insert(0, updated);
     state = state.copyWith(
@@ -92,6 +93,7 @@ class MessageGroupListNotifier extends StateNotifier<MessageGroupListState> {
       displayName: current.displayName,
       displayAvatarUrl: current.displayAvatarUrl,
       peerUserId: current.peerUserId,
+      requireApprovalToAddMembers: current.requireApprovalToAddMembers,
     );
 
     state = state.copyWith(

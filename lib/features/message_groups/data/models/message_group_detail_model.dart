@@ -9,6 +9,7 @@ class MessageGroupDetailModel extends MessageGroupDetail {
     required super.displayName,
     required super.displayAvatarUrl,
     required super.members,
+    required super.requireApprovalToAddMembers,
   });
 
   factory MessageGroupDetailModel.fromJson(Map<String, dynamic> json) {
@@ -19,6 +20,8 @@ class MessageGroupDetailModel extends MessageGroupDetail {
       createdAtUtc: _toDate(json['createdAtUtc']),
       displayName: json['displayName']?.toString(),
       displayAvatarUrl: json['displayAvatarUrl']?.toString(),
+        requireApprovalToAddMembers:
+          _toBool(json['requireApprovalToAddMembers']) ?? false,
       members: membersRaw is List
           ? membersRaw
                 .whereType<Map<String, dynamic>>()

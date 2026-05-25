@@ -217,6 +217,7 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
       userId: target.userId,
       familyName: target.familyName,
       givenName: target.givenName,
+      customName: target.customName,
       avatarUrl: target.avatarUrl,
       role: target.role,
       lastSeenMessageId: lastSeenMessageId,
@@ -231,6 +232,7 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
         displayName: detail.displayName,
         displayAvatarUrl: detail.displayAvatarUrl,
         members: members,
+        requireApprovalToAddMembers: detail.requireApprovalToAddMembers,
       ),
     );
   }

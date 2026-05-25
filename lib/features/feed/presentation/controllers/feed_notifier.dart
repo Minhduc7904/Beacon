@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/errors/failures.dart';
 import '../../../../core/messages/app_message_notifier.dart';
+import '../../../../core/utils/time_utils.dart';
 import '../../../posts/domain/entities/post.dart';
 import '../../../posts/domain/entities/post_page.dart';
 import '../../../posts/domain/entities/post_reaction_icon.dart';
@@ -234,14 +235,14 @@ class FeedNotifier extends StateNotifier<FeedState> {
     );
   }
 
-  Future<void> setReactionIcon(String postId, String icon) async {
+  Future<bool> setReactionIcon(String postId, String icon) async {
     if (_reactingPostIds.contains(postId)) {
-      return;
+      return false;
     }
 
     final posts = List<FeedPost>.from(state.posts);
     final idx = posts.indexWhere((p) => p.id == postId);
-    if (idx == -1) return;
+    if (idx == -1) return false;
 
     _reactingPostIds.add(postId);
     final result = await _setPostReactionIconUseCase(
@@ -257,6 +258,8 @@ class FeedNotifier extends StateNotifier<FeedState> {
         _applyReactionResult(reactionResult);
       },
     );
+
+    return result.isRight();
   }
 
   Future<void> loadPostReactions(String postId) async {
@@ -324,7 +327,7 @@ class FeedNotifier extends StateNotifier<FeedState> {
       imageUrl: imageUrl,
       caption: post.caption,
       visibility: post.visibility,
-      createdAt: post.createdAtUtc.toLocal(),
+      createdAt: TimeUtils.toVietnamTime(post.createdAtUtc),
       latitude: post.latitude,
       longitude: post.longitude,
       hasDailySafetyRecord: post.dailySafetyRecord != null,

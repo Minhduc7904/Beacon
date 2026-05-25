@@ -187,7 +187,7 @@ class _GroupMessageListState extends State<GroupMessageList>
                 );
               }
 
-              return _MessageWithSeenIndicator(
+              return NormalMessageItem(
                 message: item.message!,
                 seenMembers: seenByMessageId[item.message!.id] ?? const [],
                 currentUserId: widget.currentUserId,
@@ -203,27 +203,19 @@ class _GroupMessageListState extends State<GroupMessageList>
   }
 
   Map<String, List<MessageGroupMember>> _buildSeenByMessageId() {
-    final messageIndexById = <String, int>{};
-    for (var i = 0; i < widget.messages.length; i++) {
-      messageIndexById[widget.messages[i].id] = i;
+    final seenByMessageId = <String, List<MessageGroupMember>>{};
+
+    for (final message in widget.messages) {
+      final seenMembers = getSeenMembersForMessage(
+        message.id,
+        widget.members,
+        widget.currentUserId,
+      );
+      if (seenMembers.isNotEmpty) {
+        seenByMessageId[message.id] = seenMembers;
+      }
     }
 
-    final seenByMessageId = <String, List<MessageGroupMember>>{};
-    for (final member in widget.members) {
-      if (member.userId == widget.currentUserId) {
-        continue;
-      }
-      final seenId = member.lastSeenMessageId;
-      if (seenId == null || seenId.isEmpty) {
-        continue;
-      }
-      final seenIndex = messageIndexById[seenId];
-      if (seenIndex == null) {
-        continue;
-      }
-      final seenMessageId = widget.messages[seenIndex].id;
-      seenByMessageId.putIfAbsent(seenMessageId, () => []).add(member);
-    }
     return seenByMessageId;
   }
 
@@ -263,8 +255,8 @@ class _GroupMessageListState extends State<GroupMessageList>
   }
 }
 
-class _MessageWithSeenIndicator extends StatelessWidget {
-  const _MessageWithSeenIndicator({
+class NormalMessageItem extends StatelessWidget {
+  const NormalMessageItem({
     required this.message,
     required this.seenMembers,
     required this.currentUserId,
@@ -285,6 +277,13 @@ class _MessageWithSeenIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (message.isSystemMessage) {
+      return SystemMessageItem(message: message);
+    }
+
+    final shouldShowSeen =
+        seenMembers.isNotEmpty && (!isPrivateChat || _isMine);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -294,13 +293,111 @@ class _MessageWithSeenIndicator extends StatelessWidget {
           timeRevealProgress: timeRevealProgress,
           contentShift: contentShift,
         ),
-        if (_isMine && seenMembers.isNotEmpty)
+        if (shouldShowSeen)
           GroupMessageSeenIndicator(
             seenMembers: seenMembers,
             isPrivateChat: isPrivateChat,
             contentShift: contentShift,
           ),
       ],
+    );
+  }
+}
+
+List<MessageGroupMember> getSeenMembersForMessage(
+  String messageId,
+  List<MessageGroupMember> members,
+  String? currentUserId,
+) {
+  final normalizedId = messageId.trim();
+  if (normalizedId.isEmpty || members.isEmpty) {
+    return const [];
+  }
+
+  final seenMembers = <MessageGroupMember>[];
+  for (final member in members) {
+    if (currentUserId != null && member.userId == currentUserId) {
+      continue;
+    }
+    final seenId = member.lastSeenMessageId?.trim();
+    if (seenId == null || seenId.isEmpty) {
+      continue;
+    }
+    if (seenId == normalizedId) {
+      seenMembers.add(member);
+    }
+  }
+
+  return seenMembers.isEmpty ? const [] : seenMembers;
+}
+
+class SystemMessageItem extends StatelessWidget {
+  const SystemMessageItem({required this.message});
+
+  final GroupMessage message;
+
+  String get _text {
+    final content = message.content.trim();
+    if (content.isNotEmpty) {
+      return content;
+    }
+
+    final sender = message.senderFullName.trim();
+    final actor = sender.isNotEmpty ? sender : 'Một thành viên';
+
+    switch (message.type) {
+      case GroupMessageType.nicknameChanged:
+        return 'Biệt danh đã được cập nhật';
+      case GroupMessageType.roleChanged:
+        return '$actor đã thay đổi vai trò thành viên';
+      case GroupMessageType.memberAdded:
+        return '$actor đã thêm một thành viên vào nhóm';
+      case GroupMessageType.memberLeft:
+        return '$actor đã rời khỏi nhóm';
+      case GroupMessageType.memberNicknameChanged:
+        return '$actor đã đổi biệt danh thành viên';
+      case GroupMessageType.groupAvatarChanged:
+        return '$actor đã đổi ảnh nhóm';
+      case GroupMessageType.groupDeleted:
+        return 'Nhóm đã bị xóa';
+      case GroupMessageType.groupApprovalSettingChanged:
+        return '$actor đã thay đổi cài đặt duyệt thành viên';
+      case GroupMessageType.normal:
+        return '';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final text = _text;
+    if (text.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
+      child: Center(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.64),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: AppText(
+              text,
+              size: AppTextSize.veryTiny,
+              spacing: AppTextSpacing.tight,
+              weight: AppTextWeight.medium,
+              color: colorScheme.onSurface.withValues(alpha: 0.62),
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -332,8 +429,8 @@ class _PostMessageThread extends StatelessWidget {
           _MessagePostPreview(post: thread.post, currentUserId: currentUserId),
           const SizedBox(height: 8),
           for (final message in thread.messages)
-            if (message.content.trim().isNotEmpty)
-              _MessageWithSeenIndicator(
+            if (message.isSystemMessage || message.content.trim().isNotEmpty)
+              NormalMessageItem(
                 message: message,
                 seenMembers: seenByMessageId[message.id] ?? const [],
                 currentUserId: currentUserId,

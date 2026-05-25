@@ -1,9 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/providers.dart';
+import '../../../../core/utils/debouncer.dart';
 import '../../../../core/widgets/image/user_avatar.dart';
 import '../../../../core/widgets/input/input.dart';
 import '../../../friend_requests/presentation/widgets/received_friend_requests_section.dart';
@@ -20,20 +19,21 @@ class AddFriendsPage extends ConsumerStatefulWidget {
 
 class _AddFriendsPageState extends ConsumerState<AddFriendsPage> {
   final TextEditingController _searchController = TextEditingController();
-  Timer? _debounce;
+  final Debouncer _searchDebouncer = Debouncer(
+    delay: const Duration(milliseconds: 450),
+  );
   List<FriendProfile> _results = const [];
   bool _isSearching = false;
 
   @override
   void dispose() {
-    _debounce?.cancel();
+    _searchDebouncer.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
   void _onSearchChanged(String value) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 450), () {
+    _searchDebouncer.run(() {
       _search(value);
     });
   }

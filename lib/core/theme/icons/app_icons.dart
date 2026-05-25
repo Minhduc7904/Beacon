@@ -51,6 +51,15 @@ class AppIcons {
   static const AppIconData check = AppIconData.phosphor(
     PhosphorIconsRegular.check,
   );
+  static const AppIconData plus = AppIconData.phosphor(
+    PhosphorIconsRegular.plus,
+  );
+  static const AppIconData search = AppIconData.phosphor(
+    PhosphorIconsRegular.magnifyingGlass,
+  );
+  static const AppIconData info = AppIconData.phosphor(
+    PhosphorIconsRegular.info,
+  );
   static const AppIconData download = AppIconData.phosphor(
     PhosphorIconsRegular.downloadSimple,
   );

@@ -16,6 +16,10 @@ import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/friends/presentation/pages/add_friends_page.dart';
 import '../../features/message_groups/presentation/pages/message_group_list_page.dart';
 import '../../features/message_groups/presentation/pages/group_chat_detail_page.dart';
+import '../../features/message_groups/presentation/pages/message_group_add_members_page.dart';
+import '../../features/message_groups/presentation/pages/message_group_info_page.dart';
+import '../../features/message_groups/presentation/pages/message_group_members_page.dart';
+import '../../features/message_groups/presentation/pages/message_group_nicknames_page.dart';
 import '../../features/message_groups/domain/entities/message_group.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/post_preview/presentation/pages/post_preview_page.dart';
@@ -335,6 +339,76 @@ final appRouter = GoRouter(
         return _buildSlidePage(
           state,
           AuthGuard(child: GroupChatDetailPage(group: group)),
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.messageGroupInfo,
+      name: AppRoutes.messageGroupInfoName,
+      pageBuilder: (context, state) {
+        final group = state.extra;
+        if (group is! MessageGroup) {
+          return _buildSlidePage(state, const NotFoundPage());
+        }
+
+        return _buildSlidePage(
+          state,
+          AuthGuard(child: MessageGroupInfoPage(group: group)),
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.messageGroupMembers,
+      name: AppRoutes.messageGroupMembersName,
+      pageBuilder: (context, state) {
+        final args = state.extra;
+        if (args is! MessageGroupMembersPageArgs) {
+          return _buildSlidePage(state, const NotFoundPage());
+        }
+
+        return _buildSlidePage(
+          state,
+          AuthGuard(
+            child: MessageGroupMembersPage(
+              group: args.group,
+              detail: args.detail,
+            ),
+          ),
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.messageGroupNicknames,
+      name: AppRoutes.messageGroupNicknamesName,
+      pageBuilder: (context, state) {
+        final group = state.extra;
+        if (group is! MessageGroup) {
+          return _buildSlidePage(state, const NotFoundPage());
+        }
+
+        return _buildSlidePage(
+          state,
+          AuthGuard(child: MessageGroupNicknamesPage(group: group)),
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.messageGroupAddMembers,
+      name: AppRoutes.messageGroupAddMembersName,
+      pageBuilder: (context, state) {
+        final args = state.extra;
+        if (args is! MessageGroupAddMembersPageArgs) {
+          return _buildSlidePage(state, const NotFoundPage());
+        }
+
+        return _buildSlidePage(
+          state,
+          AuthGuard(
+            child: MessageGroupAddMembersPage(
+              group: args.group,
+              detail: args.detail,
+            ),
+          ),
         );
       },
     ),

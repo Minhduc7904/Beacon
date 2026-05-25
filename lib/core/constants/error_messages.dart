@@ -117,4 +117,6 @@ class ErrorMessages {
   static const String messageGroupForbidden =
       'Bạn không phải thành viên của nhóm chat này';
   static const String messageGroupNotFound = 'Không tìm thấy nhóm chat';
+  static const String groupMemberAlreadyExists =
+      'Người dùng đã là thành viên nhóm';
 }

@@ -5,7 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/config/app_routes.dart';
 import '../../../../core/providers/providers.dart';
+import '../../../../core/theme/icons/app_icon.dart';
+import '../../../../core/theme/icons/app_icons.dart';
 import '../../../../core/theme/text/app_text_theme.dart';
 import '../../../../core/widgets/image/user_avatar.dart';
 import '../../../../core/widgets/layout/screen_layout.dart';
@@ -113,6 +116,18 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
     final members = List<MessageGroupMember>.from(
       state.groupDetail?.members ?? const <MessageGroupMember>[],
     );
+    final detailDisplayName = state.groupDetail?.displayName?.trim();
+    final listDisplayName = widget.group.displayName?.trim();
+
+    if (!widget.group.isPrivate) {
+      if (detailDisplayName != null && detailDisplayName.isNotEmpty) {
+        return detailDisplayName;
+      }
+      if (listDisplayName != null && listDisplayName.isNotEmpty) {
+        return listDisplayName;
+      }
+    }
+
     if (members.isNotEmpty) {
       if (members.length == 2) {
         final meId = ref.read(meProfileProvider).valueOrNull?.id;
@@ -135,6 +150,10 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
     return widget.group.resolvedDisplayName;
   }
 
+  void _openGroupInfo() {
+    context.pushNamed(AppRoutes.messageGroupInfoName, extra: widget.group);
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -148,6 +167,8 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
     final isPeerOnline = widget.group.isPrivate
         ? peerPresence?.isOnline ?? false
         : null;
+    final isPrivateChat =
+        state.groupDetail?.isPrivate ?? widget.group.isPrivate;
 
     ref.listen(groupChatDetailProvider(widget.group.groupId), (prev, next) {
       if ((prev?.messages.length ?? 0) < next.messages.length) {
@@ -200,6 +221,14 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
             ),
           ],
         ),
+        actions: [
+          if (!isPrivateChat)
+            IconButton(
+              tooltip: 'Thông tin nhóm',
+              icon: const AppIcon(AppIcons.info, size: 22),
+              onPressed: _openGroupInfo,
+            ),
+        ],
       ),
       body: Column(
         children: [
@@ -217,7 +246,9 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
             onTypingChanged: (isTyping) {
               unawaited(
                 ref
-                    .read(groupChatDetailProvider(widget.group.groupId).notifier)
+                    .read(
+                      groupChatDetailProvider(widget.group.groupId).notifier,
+                    )
                     .sendTypingStatus(isTyping),
               );
             },

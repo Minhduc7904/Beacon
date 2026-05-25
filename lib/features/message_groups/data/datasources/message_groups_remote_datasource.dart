@@ -6,6 +6,10 @@ import '../models/message_group_page_model.dart';
 abstract class MessageGroupsRemoteDatasource {
   Future<MessageGroupPageModel> getMessageGroups({String? cursor, int? limit});
 
+  Future<MessageGroupDetailModel> createMessageGroup({
+    required List<String> memberUserIds,
+  });
+
   Future<GroupMessageModel> sendMessage({
     required String groupId,
     required String content,
@@ -24,6 +28,26 @@ abstract class MessageGroupsRemoteDatasource {
   });
 
   Future<MessageGroupDetailModel> getGroupDetail({required String groupId});
+
+  Future<void> addMembers({
+    required String groupId,
+    required List<String> targetUserIds,
+  });
+
+  Future<void> updateMemberCustomName({
+    required String groupId,
+    required String userId,
+    String? customName,
+  });
+
+  Future<void> deleteGroup({required String groupId});
+
+  Future<void> leaveGroup({required String groupId});
+
+  Future<void> updateRequireApprovalToAddMembers({
+    required String groupId,
+    required bool requireApprovalToAddMembers,
+  });
 
   Future<void> markSeen({
     required String groupId,

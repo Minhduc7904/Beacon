@@ -1,10 +1,10 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/icons/app_icon.dart';
 import '../../../../../core/theme/icons/app_icons.dart';
+import '../../../../../core/utils/debouncer.dart';
 import '../../../../../core/widgets/layout/screen_layout.dart';
 import '../../../../../core/widgets/input/input.dart';
 
@@ -26,8 +26,10 @@ class GroupMessageInputBar extends StatefulWidget {
 
 class _GroupMessageInputBarState extends State<GroupMessageInputBar> {
   final _controller = TextEditingController();
+  final Debouncer _typingDebouncer = Debouncer(
+    delay: const Duration(milliseconds: 1200),
+  );
   bool _hasText = false;
-  Timer? _typingDebounce;
   bool _typingSent = false;
 
   @override
@@ -44,13 +46,12 @@ class _GroupMessageInputBarState extends State<GroupMessageInputBar> {
           _typingSent = true;
           widget.onTypingChanged?.call(true);
         }
-        _typingDebounce?.cancel();
-        _typingDebounce = Timer(const Duration(milliseconds: 1200), () {
+        _typingDebouncer.run(() {
           _typingSent = false;
           widget.onTypingChanged?.call(false);
         });
       } else {
-        _typingDebounce?.cancel();
+        _typingDebouncer.cancel();
         if (_typingSent) {
           _typingSent = false;
           widget.onTypingChanged?.call(false);
@@ -61,7 +62,7 @@ class _GroupMessageInputBarState extends State<GroupMessageInputBar> {
 
   @override
   void dispose() {
-    _typingDebounce?.cancel();
+    _typingDebouncer.dispose();
     if (_typingSent) {
       widget.onTypingChanged?.call(false);
     }
@@ -75,6 +76,7 @@ class _GroupMessageInputBarState extends State<GroupMessageInputBar> {
 
     widget.onSend(text);
     _controller.clear();
+    _typingDebouncer.cancel();
     if (_typingSent) {
       _typingSent = false;
       widget.onTypingChanged?.call(false);

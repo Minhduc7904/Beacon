@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/app_routes.dart';
 import '../../../../core/providers/providers.dart';
+import '../../../../core/theme/icons/app_icon.dart';
+import '../../../../core/theme/icons/app_icons.dart';
 import '../../../../core/theme/text/app_text_theme.dart';
 import '../../../../core/widgets/layout/screen_layout.dart';
 import '../../../../core/widgets/text/text.dart';
@@ -14,6 +16,7 @@ import '../../domain/entities/group_message.dart';
 import '../../domain/entities/message_group.dart';
 import '../controllers/message_group_list_notifier.dart';
 import '../controllers/message_group_list_state.dart';
+import '../widgets/create_message_group_sheet.dart';
 import '../widgets/list/message_group_empty_state.dart';
 import '../widgets/list/message_group_tile.dart';
 
@@ -165,34 +168,40 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
           ),
         );
       case MessageGroupListStatus.loaded:
-        if (state.groups.isEmpty) {
-          return const MessageGroupEmptyState();
-        }
-
-        return ListView.separated(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          itemCount: state.groups.length + 1,
-          separatorBuilder: (_, _) => Divider(
-            height: 1,
-            indent: 82,
-            endIndent: 16,
-            color: colorScheme.outline.withValues(alpha: 0.2),
-          ),
-          itemBuilder: (context, index) {
-            if (index == 0) {
-              return _MessageGroupListHeader(count: state.groups.length);
-            }
-
-            final group = state.groups[index - 1];
-            final presence = presenceState.friendByUserId(group.peerUserId);
-            return MessageGroupTile(
-              group: group,
-              isOnline: group.isPrivate ? presence?.isOnline ?? false : null,
-              onTap: () => _openDetail(group),
-            );
-          },
+        return Column(
+          children: [
+            _MessageGroupListHeader(
+              count: state.groups.length,
+              onCreatePressed: _openCreateMessageGroupSheet,
+            ),
+            Expanded(
+              child: state.groups.isEmpty
+                  ? const MessageGroupEmptyState()
+                  : _MessageGroupListView(
+                      groups: state.groups,
+                      presenceState: presenceState,
+                      colorScheme: colorScheme,
+                      onGroupTap: _openDetail,
+                    ),
+            ),
+          ],
         );
     }
+  }
+
+  void _openCreateMessageGroupSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CreateMessageGroupSheet(
+        onCreated: (_) async {
+          await ref
+              .read(messageGroupListProvider.notifier)
+              .load(forceRefresh: true);
+        },
+      ),
+    );
   }
 
   void _openDetail(MessageGroup group) {
@@ -200,10 +209,51 @@ class _MessageGroupListPageState extends ConsumerState<MessageGroupListPage> {
   }
 }
 
+class _MessageGroupListView extends StatelessWidget {
+  const _MessageGroupListView({
+    required this.groups,
+    required this.presenceState,
+    required this.colorScheme,
+    required this.onGroupTap,
+  });
+
+  final List<MessageGroup> groups;
+  final FriendsPresenceState presenceState;
+  final ColorScheme colorScheme;
+  final ValueChanged<MessageGroup> onGroupTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: groups.length,
+      separatorBuilder: (_, _) => Divider(
+        height: 1,
+        indent: 82,
+        endIndent: 16,
+        color: colorScheme.outline.withValues(alpha: 0.2),
+      ),
+      itemBuilder: (context, index) {
+        final group = groups[index];
+        final presence = presenceState.friendByUserId(group.peerUserId);
+        return MessageGroupTile(
+          group: group,
+          isOnline: group.isPrivate ? presence?.isOnline ?? false : null,
+          onTap: () => onGroupTap(group),
+        );
+      },
+    );
+  }
+}
+
 class _MessageGroupListHeader extends StatelessWidget {
-  const _MessageGroupListHeader({required this.count});
+  const _MessageGroupListHeader({
+    required this.count,
+    required this.onCreatePressed,
+  });
 
   final int count;
+  final VoidCallback onCreatePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -233,6 +283,28 @@ class _MessageGroupListHeader extends StatelessWidget {
                   color: colorScheme.onSurface.withValues(alpha: 0.55),
                 ),
               ],
+            ),
+          ),
+          Tooltip(
+            message: 'Tạo nhóm chat',
+            child: Material(
+              color: colorScheme.primary,
+              shape: const CircleBorder(),
+              child: InkWell(
+                onTap: onCreatePressed,
+                customBorder: const CircleBorder(),
+                child: SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: Center(
+                    child: AppIcon(
+                      AppIcons.plus,
+                      size: 22,
+                      color: colorScheme.onPrimary,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ],

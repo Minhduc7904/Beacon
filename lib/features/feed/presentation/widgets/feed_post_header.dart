@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/text/app_text_theme.dart';
+import '../../../../core/utils/time_utils.dart';
 import '../../../../core/widgets/image/user_avatar.dart';
 import '../../../../core/widgets/text/text.dart';
 import '../../domain/entities/feed_post.dart';
@@ -10,14 +11,6 @@ class FeedPostHeader extends StatelessWidget {
 
   final FeedPost post;
   final Widget? trailing;
-
-  String _formatTime(DateTime dateTime) {
-    final diff = DateTime.now().difference(dateTime);
-    if (diff.inMinutes < 1) return 'Vừa xong';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} phút trước';
-    if (diff.inHours < 24) return '${diff.inHours} giờ trước';
-    return '${diff.inDays} ngày trước';
-  }
 
   String _givenNameOnly(String authorName) {
     final parts = authorName.trim().split(RegExp(r'\s+'));
@@ -62,7 +55,7 @@ class FeedPostHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   AppText(
-                    _formatTime(post.createdAt),
+                    TimeUtils.formatRelativeVietnamTime(post.createdAt),
                     size: AppTextSize.veryTiny,
                     spacing: AppTextSpacing.tight,
                     weight: AppTextWeight.regular,
