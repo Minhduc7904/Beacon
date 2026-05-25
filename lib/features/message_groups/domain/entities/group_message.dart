@@ -63,6 +63,7 @@ class GroupMessage {
   final String? postId;
   final Post? post;
   final GroupMessageType type;
+  final String? metadataJson;
 
   const GroupMessage({
     required this.id,
@@ -76,6 +77,7 @@ class GroupMessage {
     required this.postId,
     required this.post,
     this.type = GroupMessageType.normal,
+    this.metadataJson,
   });
 
   String get senderFullName {

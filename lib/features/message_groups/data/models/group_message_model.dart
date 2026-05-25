@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../domain/entities/group_message.dart';
 import '../../../posts/data/models/post_model.dart';
 
@@ -14,6 +16,7 @@ class GroupMessageModel extends GroupMessage {
     required super.postId,
     required super.post,
     super.type,
+    super.metadataJson,
   });
 
   factory GroupMessageModel.fromJson(Map<String, dynamic> json) {
@@ -36,7 +39,22 @@ class GroupMessageModel extends GroupMessage {
           ? PostModel.fromJson(postJson)
           : null,
       type: GroupMessageType.fromValue(json['type'] ?? json['messageType']),
+      metadataJson: _metadataJsonFrom(json['metadataJson'] ?? json['metadata']),
     );
+  }
+
+  static String? _metadataJsonFrom(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+    if (value is String) {
+      final trimmed = value.trim();
+      return trimmed.isEmpty ? null : trimmed;
+    }
+    if (value is Map || value is List) {
+      return jsonEncode(value);
+    }
+    return value.toString();
   }
 
   static DateTime? _toDate(dynamic value) {

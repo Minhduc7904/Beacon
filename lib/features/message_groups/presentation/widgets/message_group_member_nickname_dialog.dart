@@ -31,6 +31,11 @@ class _MessageGroupMemberNicknameDialogState
   late final TextEditingController _controller;
   bool _isSubmitting = false;
 
+  bool get _hasCurrentNickname {
+    final currentName = widget.member.customName?.trim();
+    return currentName != null && currentName.isNotEmpty;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -85,9 +90,7 @@ class _MessageGroupMemberNicknameDialogState
   Future<void> _submitNickname() async {
     final trimmed = _controller.text.trim();
     if (trimmed.isEmpty) {
-      ref
-          .read(appMessageProvider.notifier)
-          .addError('Vui lòng nhập biệt danh');
+      ref.read(appMessageProvider.notifier).addError('Vui lòng nhập biệt danh');
       return;
     }
 
@@ -98,10 +101,11 @@ class _MessageGroupMemberNicknameDialogState
   }
 
   Future<void> _removeNickname() async {
-    await _applyCustomName(
-      customName: null,
-      successMessage: 'Đã gỡ biệt danh',
-    );
+    if (!_hasCurrentNickname) {
+      return;
+    }
+
+    await _applyCustomName(customName: null, successMessage: 'Đã gỡ biệt danh');
   }
 
   @override
@@ -156,13 +160,17 @@ class _MessageGroupMemberNicknameDialogState
                 ),
                 const Spacer(),
                 TextButton(
-                  onPressed: _isSubmitting ? null : _removeNickname,
+                  onPressed: _isSubmitting || !_hasCurrentNickname
+                      ? null
+                      : _removeNickname,
                   child: AppText(
                     'Gỡ',
                     size: AppTextSize.small,
                     spacing: AppTextSpacing.tight,
                     weight: AppTextWeight.medium,
-                    color: AppColors.red500,
+                    color: _hasCurrentNickname
+                        ? AppColors.red500
+                        : colorScheme.onSurface.withValues(alpha: 0.32),
                   ),
                 ),
                 const SizedBox(width: 8),

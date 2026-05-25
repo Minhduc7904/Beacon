@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../../../core/realtime/realtime_config.dart';
 import '../../../../core/realtime/realtime_logger.dart';
 import '../../../../core/realtime/signalr_service.dart';
@@ -345,7 +347,22 @@ class MessageGroupRealtimeServiceImpl implements MessageGroupRealtimeService {
           ? PostModel.fromJson(postJson)
           : null,
       type: GroupMessageType.fromValue(json['type'] ?? json['messageType']),
+      metadataJson: _metadataJsonFrom(json['metadataJson'] ?? json['metadata']),
     );
+  }
+
+  String? _metadataJsonFrom(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+    if (value is String) {
+      final trimmed = value.trim();
+      return trimmed.isEmpty ? null : trimmed;
+    }
+    if (value is Map || value is List) {
+      return jsonEncode(value);
+    }
+    return value.toString();
   }
 
   int _toInt(dynamic value) {

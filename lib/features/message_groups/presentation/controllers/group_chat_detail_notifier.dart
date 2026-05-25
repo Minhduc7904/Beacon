@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -169,15 +170,66 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
 
     await _joinMessageGroupRealtimeUseCase.call(
       groupId: groupId,
-      onMessage: (message) {
-        final nextMessages = _upsertSorted(state.messages, message);
-        state = state.copyWith(
-          messages: nextMessages,
-          status: GroupChatDetailStatus.loaded,
-        );
-        unawaited(_markLatestSeenIfNeeded());
-      },
+      onMessage: _handleRealtimeMessage,
     );
+  }
+
+  void _handleRealtimeMessage(GroupMessage message) {
+    _applyRealtimeMessageMetadata(message);
+
+    final nextMessages = _upsertSorted(state.messages, message);
+    state = state.copyWith(
+      messages: nextMessages,
+      status: GroupChatDetailStatus.loaded,
+    );
+    unawaited(_markLatestSeenIfNeeded());
+  }
+
+  void _applyRealtimeMessageMetadata(GroupMessage message) {
+    final detail = state.groupDetail;
+    if (detail == null || !message.isSystemMessage) {
+      return;
+    }
+
+    final metadata = _metadataMap(message);
+    if (metadata == null && message.type != GroupMessageType.groupDeleted) {
+      return;
+    }
+
+    switch (message.type) {
+      case GroupMessageType.roleChanged:
+        _updateMemberRole(
+          userId: _stringValue(metadata?['userId']),
+          role: _intValue(metadata?['role']),
+        );
+      case GroupMessageType.memberAdded:
+        _upsertMembers(_membersValue(metadata?['members']));
+      case GroupMessageType.memberLeft:
+        removeMember(_stringValue(metadata?['userId']) ?? '');
+      case GroupMessageType.memberNicknameChanged:
+        _updateMemberCustomName(
+          userId: _stringValue(metadata?['userId']),
+          customName: _nullableStringValue(metadata?['customName']),
+        );
+      case GroupMessageType.groupAvatarChanged:
+        _updateGroupDetail(
+          displayAvatarUrl: _nullableStringValue(metadata?['avatarUrl']),
+        );
+      case GroupMessageType.groupDeleted:
+        _messageNotifier.addInfo('Nhóm chat đã bị xóa');
+      case GroupMessageType.memberApproved:
+        _upsertMember(_memberValue(metadata?['member']));
+      case GroupMessageType.memberDenied:
+        removeMember(_stringValue(metadata?['userId']) ?? '');
+      case GroupMessageType.groupNameChanged:
+        _updateGroupDetail(
+          displayName: _nullableStringValue(metadata?['name']),
+        );
+      case GroupMessageType.normal:
+      case GroupMessageType.nicknameChanged:
+      case GroupMessageType.groupApprovalSettingChanged:
+        return;
+    }
   }
 
   void _onSeenStatus(
@@ -256,6 +308,73 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
     _updateMembers(detail, members);
   }
 
+  void _updateMemberRole({required String? userId, required int? role}) {
+    if (userId == null || userId.trim().isEmpty || role == null) {
+      return;
+    }
+
+    final detail = state.groupDetail;
+    if (detail == null) {
+      return;
+    }
+
+    final members = List<MessageGroupMember>.from(detail.members);
+    final targetIndex = members.indexWhere((member) => member.userId == userId);
+    if (targetIndex < 0) {
+      return;
+    }
+
+    final target = members[targetIndex];
+    members[targetIndex] = MessageGroupMember(
+      userId: target.userId,
+      familyName: target.familyName,
+      givenName: target.givenName,
+      customName: target.customName,
+      avatarUrl: target.avatarUrl,
+      role: role,
+      status: target.status,
+      lastSeenMessageId: target.lastSeenMessageId,
+      lastSeenAtUtc: target.lastSeenAtUtc,
+    );
+
+    _updateMembers(detail, members);
+  }
+
+  void _updateMemberCustomName({
+    required String? userId,
+    required String? customName,
+  }) {
+    if (userId == null || userId.trim().isEmpty) {
+      return;
+    }
+
+    final detail = state.groupDetail;
+    if (detail == null) {
+      return;
+    }
+
+    final members = List<MessageGroupMember>.from(detail.members);
+    final targetIndex = members.indexWhere((member) => member.userId == userId);
+    if (targetIndex < 0) {
+      return;
+    }
+
+    final target = members[targetIndex];
+    members[targetIndex] = MessageGroupMember(
+      userId: target.userId,
+      familyName: target.familyName,
+      givenName: target.givenName,
+      customName: customName,
+      avatarUrl: target.avatarUrl,
+      role: target.role,
+      status: target.status,
+      lastSeenMessageId: target.lastSeenMessageId,
+      lastSeenAtUtc: target.lastSeenAtUtc,
+    );
+
+    _updateMembers(detail, members);
+  }
+
   void removeMember(String userId) {
     final detail = state.groupDetail;
     if (detail == null) {
@@ -280,6 +399,55 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
         displayName: detail.displayName,
         displayAvatarUrl: detail.displayAvatarUrl,
         members: members,
+        requireApprovalToAddMembers: detail.requireApprovalToAddMembers,
+        isMuted: detail.isMuted,
+      ),
+    );
+  }
+
+  void _upsertMembers(List<MessageGroupMember> incomingMembers) {
+    for (final member in incomingMembers) {
+      _upsertMember(member);
+    }
+  }
+
+  void _upsertMember(MessageGroupMember? incomingMember) {
+    if (incomingMember == null || incomingMember.userId.trim().isEmpty) {
+      return;
+    }
+
+    final detail = state.groupDetail;
+    if (detail == null) {
+      return;
+    }
+
+    final members = List<MessageGroupMember>.from(detail.members);
+    final existingIndex = members.indexWhere(
+      (member) => member.userId == incomingMember.userId,
+    );
+    if (existingIndex >= 0) {
+      members[existingIndex] = incomingMember;
+    } else {
+      members.add(incomingMember);
+    }
+
+    _updateMembers(detail, members);
+  }
+
+  void _updateGroupDetail({String? displayName, String? displayAvatarUrl}) {
+    final detail = state.groupDetail;
+    if (detail == null) {
+      return;
+    }
+
+    state = state.copyWith(
+      groupDetail: MessageGroupDetail(
+        groupId: detail.groupId,
+        isPrivate: detail.isPrivate,
+        createdAtUtc: detail.createdAtUtc,
+        displayName: displayName ?? detail.displayName,
+        displayAvatarUrl: displayAvatarUrl ?? detail.displayAvatarUrl,
+        members: detail.members,
         requireApprovalToAddMembers: detail.requireApprovalToAddMembers,
         isMuted: detail.isMuted,
       ),
@@ -334,6 +502,119 @@ class GroupChatDetailNotifier extends StateNotifier<GroupChatDetailState> {
       _lastSeenMessageId = latest.id;
     });
     _markingSeen = false;
+  }
+
+  Map<String, dynamic>? _metadataMap(GroupMessage message) {
+    final raw = message.metadataJson?.trim();
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      if (decoded is Map) {
+        return decoded.map((key, value) => MapEntry(key.toString(), value));
+      }
+    } catch (_) {}
+
+    return null;
+  }
+
+  List<MessageGroupMember> _membersValue(dynamic value) {
+    if (value is! List) {
+      return const [];
+    }
+
+    return value
+        .map(_memberValue)
+        .whereType<MessageGroupMember>()
+        .toList(growable: false);
+  }
+
+  MessageGroupMember? _memberValue(dynamic value) {
+    if (value is! Map) {
+      return null;
+    }
+
+    final json = value.map((key, item) => MapEntry(key.toString(), item));
+    final userId = _stringValue(json['userId']);
+    if (userId == null || userId.trim().isEmpty) {
+      return null;
+    }
+
+    return MessageGroupMember(
+      userId: userId,
+      familyName: _nullableStringValue(json['familyName']),
+      givenName: _nullableStringValue(json['givenName'] ?? json['username']),
+      customName: _nullableStringValue(json['customName']),
+      avatarUrl: _nullableStringValue(json['avatarUrl']),
+      role: _intValue(json['role']) ?? 0,
+      status: MessageGroupMemberStatus.fromInt(_intValue(json['status']) ?? 0),
+      lastSeenMessageId: _nullableStringValue(json['lastSeenMessageId']),
+      lastSeenAtUtc: _dateTimeValue(
+        json['lastSeenAtUtc'] ??
+            json['lastSeenAt'] ??
+            json['seenAtUtc'] ??
+            json['seenAt'],
+      ),
+    );
+  }
+
+  String? _stringValue(dynamic value) {
+    final raw = value?.toString().trim();
+    return raw == null || raw.isEmpty ? null : raw;
+  }
+
+  String? _nullableStringValue(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+    final raw = value.toString().trim();
+    return raw.isEmpty ? null : raw;
+  }
+
+  int? _intValue(dynamic value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse(value?.toString() ?? '');
+  }
+
+  DateTime? _dateTimeValue(dynamic value) {
+    final raw = value?.toString();
+    if (raw == null || raw.trim().isEmpty) {
+      return null;
+    }
+
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) {
+      return null;
+    }
+
+    final hasTimezoneSuffix =
+        raw.endsWith('Z') ||
+        raw.contains('+') ||
+        (raw.length > 10 && raw.substring(10).contains('-'));
+    if (hasTimezoneSuffix) {
+      return parsed.toUtc();
+    }
+
+    return DateTime.utc(
+      parsed.year,
+      parsed.month,
+      parsed.day,
+      parsed.hour,
+      parsed.minute,
+      parsed.second,
+      parsed.millisecond,
+      parsed.microsecond,
+    );
   }
 
   List<GroupMessage> _upsertSorted(
