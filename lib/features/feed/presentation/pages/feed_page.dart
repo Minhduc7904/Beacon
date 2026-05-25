@@ -18,6 +18,7 @@ final feedProvider = StateNotifierProvider<FeedNotifier, FeedState>((ref) {
     ref.watch(getPostReactionsUseCaseProvider),
     ref.watch(updatePostUseCaseProvider),
     ref.watch(deletePostUseCaseProvider),
+    ref.watch(subscribeNewPostsRealtimeUseCaseProvider),
     ref.watch(appMessageProvider.notifier),
   );
 });

@@ -119,7 +119,9 @@ import '../../features/post_preview/presentation/controllers/post_preview_state.
 import '../../features/posts/data/datasources/posts_remote_datasource.dart';
 import '../../features/posts/data/datasources/posts_remote_datasource_impl.dart';
 import '../../features/posts/data/repositories/posts_repository_impl.dart';
+import '../../features/posts/data/services/posts_realtime_service_impl.dart';
 import '../../features/posts/domain/repositories/posts_repository.dart';
+import '../../features/posts/domain/services/posts_realtime_service.dart';
 import '../../features/posts/domain/usecase/create_post_usecase.dart';
 import '../../features/posts/domain/usecase/delete_post_usecase.dart';
 import '../../features/posts/domain/usecase/delete_post_reaction_usecase.dart';
@@ -129,6 +131,7 @@ import '../../features/posts/domain/usecase/get_my_posts_usecase.dart';
 import '../../features/posts/domain/usecase/get_post_reactions_usecase.dart';
 import '../../features/posts/domain/usecase/set_post_reaction_usecase.dart';
 import '../../features/posts/domain/usecase/set_post_reaction_icon_usecase.dart';
+import '../../features/posts/domain/usecase/subscribe_new_posts_realtime_usecase.dart';
 import '../../features/posts/domain/usecase/update_post_usecase.dart';
 import '../../features/safety/data/datasources/safety_remote_datasource.dart';
 import '../../features/safety/data/datasources/safety_remote_datasource_impl.dart';
@@ -222,6 +225,10 @@ final messageGroupRealtimeServiceProvider =
 
 final friendsRealtimeServiceProvider = Provider<FriendsRealtimeService>((ref) {
   return FriendsRealtimeServiceImpl(ref.watch(signalRServiceProvider));
+});
+
+final postsRealtimeServiceProvider = Provider<PostsRealtimeService>((ref) {
+  return PostsRealtimeServiceImpl(ref.watch(signalRServiceProvider));
 });
 
 final dioClientProvider = Provider<DioClient>((ref) {
@@ -498,6 +505,13 @@ final getPostReactionsUseCaseProvider = Provider<GetPostReactionsUseCase>((
 ) {
   return GetPostReactionsUseCase(ref.watch(postsRepositoryProvider));
 });
+
+final subscribeNewPostsRealtimeUseCaseProvider =
+    Provider<SubscribeNewPostsRealtimeUseCase>((ref) {
+      return SubscribeNewPostsRealtimeUseCase(
+        ref.watch(postsRealtimeServiceProvider),
+      );
+    });
 
 final checkinUseCaseProvider = Provider<CheckinUseCase>((ref) {
   return CheckinUseCase(ref.watch(checkinRepositoryProvider));

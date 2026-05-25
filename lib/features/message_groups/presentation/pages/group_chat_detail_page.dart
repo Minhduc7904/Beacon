@@ -307,7 +307,10 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
               ),
             ),
           ),
-          _TypingStatusBar(isTyping: state.typingUserIds.isNotEmpty),
+          _TypingStatusBar(
+            typingUserIds: state.typingUserIds,
+            members: members,
+          ),
           GroupMessageInputBar(
             isSending: state.isSending,
             onTypingChanged: (isTyping) {
@@ -400,9 +403,32 @@ class _GroupChatDetailPageState extends ConsumerState<GroupChatDetailPage> {
 }
 
 class _TypingStatusBar extends StatelessWidget {
-  const _TypingStatusBar({required this.isTyping});
+  const _TypingStatusBar({required this.typingUserIds, required this.members});
 
-  final bool isTyping;
+  final List<String> typingUserIds;
+  final List<MessageGroupMember> members;
+
+  MessageGroupMember? get _typingMember {
+    if (typingUserIds.isEmpty) {
+      return null;
+    }
+
+    final typingUserId = typingUserIds.first;
+    for (final member in members) {
+      if (member.userId == typingUserId) {
+        return member;
+      }
+    }
+    return null;
+  }
+
+  String get _typingName {
+    final fullName = _typingMember?.fullName.trim();
+    if (fullName != null && fullName.isNotEmpty) {
+      return fullName;
+    }
+    return 'Người dùng';
+  }
 
   double _contentWidthForColumns(int columns) {
     return (AppScreenLayout.columnWidth * columns) +
@@ -411,11 +437,12 @@ class _TypingStatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!isTyping) {
+    if (typingUserIds.isEmpty) {
       return const SizedBox.shrink();
     }
 
     final colorScheme = Theme.of(context).colorScheme;
+    final typingMember = _typingMember;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -439,12 +466,23 @@ class _TypingStatusBar extends StatelessWidget {
             width: layoutWidth,
             child: Padding(
               padding: const EdgeInsets.only(bottom: 6),
-              child: AppText(
-                'Đang nhập...',
-                size: AppTextSize.tiny,
-                spacing: AppTextSpacing.tight,
-                weight: AppTextWeight.regular,
-                color: colorScheme.primary,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  UserAvatar(
+                    avatarUrl: typingMember?.avatarUrl,
+                    givenName: _typingName,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  AppText(
+                    'Đang nhập...',
+                    size: AppTextSize.tiny,
+                    spacing: AppTextSpacing.tight,
+                    weight: AppTextWeight.regular,
+                    color: colorScheme.primary,
+                  ),
+                ],
               ),
             ),
           ),

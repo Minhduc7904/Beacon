@@ -14,6 +14,8 @@ import '../../../../../core/theme/icons/app_icons.dart';
 import '../../../../../core/theme/text/app_text_theme.dart';
 import '../../../../../core/widgets/button/button.dart';
 import '../../../../../core/widgets/dropdown/dropdown.dart';
+import '../../../../../core/widgets/emoji/app_emoji.dart';
+import '../../../../../core/widgets/emoji/app_emoji_picker_sheet.dart';
 import '../../../../../core/widgets/input/input.dart';
 import '../../../../../core/widgets/layout/screen_layout.dart';
 import '../../../../../core/widgets/loading/loading.dart';
@@ -443,6 +445,15 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     );
   }
 
+  Future<void> _showEmojiReactionPicker(FeedPost post) async {
+    final emoji = await showAppEmojiPickerSheet(context);
+    if (!mounted || emoji == null || emoji.trim().isEmpty) {
+      return;
+    }
+
+    await _handleReactIcon(post, emoji);
+  }
+
   Future<void> _showPostMessageInput(FeedPost post) async {
     await showModalBottomSheet<void>(
       context: context,
@@ -687,6 +698,9 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
                       : () => unawaited(_showPostMessageInput(footerPost)),
                   onReactIcon: (icon) =>
                       unawaited(_handleReactIcon(footerPost, icon)),
+                  onMoreEmojiPressed: canManage
+                      ? null
+                      : () => unawaited(_showEmojiReactionPicker(footerPost)),
                   onMenuPressed: canManage
                       ? () => _showOwnerActionSheet(footerPost)
                       : null,
@@ -1024,6 +1038,7 @@ class _FeedPostFooter extends StatelessWidget {
     required this.onActivityPressed,
     required this.onMessagePressed,
     required this.onReactIcon,
+    required this.onMoreEmojiPressed,
     required this.onMenuPressed,
   });
 
@@ -1034,6 +1049,7 @@ class _FeedPostFooter extends StatelessWidget {
   final VoidCallback onActivityPressed;
   final VoidCallback? onMessagePressed;
   final ValueChanged<String> onReactIcon;
+  final VoidCallback? onMoreEmojiPressed;
   final VoidCallback? onMenuPressed;
 
   @override
@@ -1054,6 +1070,7 @@ class _FeedPostFooter extends StatelessWidget {
                 : _FeedMessageReactionBar(
                     onMessagePressed: onMessagePressed,
                     onReactIcon: onReactIcon,
+                    onMoreEmojiPressed: onMoreEmojiPressed,
                   ),
             const SizedBox(height: 10),
             SizedBox(
@@ -1163,12 +1180,18 @@ class _FeedMessageReactionBar extends StatelessWidget {
   const _FeedMessageReactionBar({
     required this.onMessagePressed,
     required this.onReactIcon,
+    required this.onMoreEmojiPressed,
   });
 
   final VoidCallback? onMessagePressed;
   final ValueChanged<String> onReactIcon;
+  final VoidCallback? onMoreEmojiPressed;
 
-  static const List<String> _icons = ['❤️', '🔥', '🥰'];
+  static const List<String> _icons = [
+    '\u{2764}\u{FE0F}',
+    '\u{1F525}',
+    '\u{1F970}',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -1204,6 +1227,7 @@ class _FeedMessageReactionBar extends StatelessWidget {
                   icon: icon,
                   onPressed: () => onReactIcon(icon),
                 ),
+              _MoreEmojiReactionButton(onPressed: onMoreEmojiPressed),
             ],
           ),
         ),
@@ -1393,8 +1417,40 @@ class _EmojiReactionButton extends StatelessWidget {
         child: SizedBox(
           width: 38,
           height: 38,
-          child: Center(
-            child: Text(icon, style: const TextStyle(fontSize: 22)),
+          child: Center(child: AppEmoji(emoji: icon, size: 22)),
+        ),
+      ),
+    );
+  }
+}
+
+class _MoreEmojiReactionButton extends StatelessWidget {
+  const _MoreEmojiReactionButton({required this.onPressed});
+
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Tooltip(
+      message: 'Thêm emoji',
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          onTap: onPressed,
+          customBorder: const CircleBorder(),
+          child: SizedBox(
+            width: 38,
+            height: 38,
+            child: Center(
+              child: AppIcon(
+                AppIcons.plus,
+                size: 20,
+                color: colorScheme.onInverseSurface.withValues(alpha: 0.86),
+              ),
+            ),
           ),
         ),
       ),
@@ -1696,12 +1752,15 @@ class _PostReactionUserTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          AppText(
-            icons,
-            size: AppTextSize.small,
-            spacing: AppTextSpacing.tight,
-            weight: AppTextWeight.bold,
-            color: colorScheme.onSurface,
+          AppEmojiText(
+            text: icons,
+            style: Theme.of(context).textTheme
+                .ui(
+                  size: AppTextSize.small,
+                  spacing: AppTextSpacing.tight,
+                  weight: AppTextWeight.bold,
+                )
+                .copyWith(color: colorScheme.onSurface),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/text/app_text_theme.dart';
+import '../../../../core/widgets/emoji/app_emoji.dart';
 import '../../../../core/widgets/image/user_avatar.dart';
 import '../../../../core/widgets/text/text.dart';
 import '../../domain/entities/feed_post.dart';
@@ -223,7 +224,7 @@ class _ReactionFilterChip extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (emoji != null) ...[
-                Text(emoji!, style: const TextStyle(fontSize: 15)),
+                AppEmoji(emoji: emoji!, size: 15),
                 const SizedBox(width: 5),
               ],
               if (label != null) ...[
@@ -306,10 +307,7 @@ class _ReactionUserTile extends StatelessWidget {
               width: 38,
               height: 38,
               child: Center(
-                child: Text(
-                  _reactionEmoji(item.type),
-                  style: const TextStyle(fontSize: 18),
-                ),
+                child: AppEmoji(emoji: _reactionEmoji(item.type), size: 18),
               ),
             ),
           ),

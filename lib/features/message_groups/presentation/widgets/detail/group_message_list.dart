@@ -180,6 +180,7 @@ class _GroupMessageListState extends State<GroupMessageList>
                 return _PostMessageThread(
                   thread: item.thread!,
                   seenByMessageId: seenByMessageId,
+                  members: widget.members,
                   currentUserId: widget.currentUserId,
                   isPrivateChat: widget.isPrivateChat,
                   timeRevealProgress: _timeRevealController.value,
@@ -189,6 +190,8 @@ class _GroupMessageListState extends State<GroupMessageList>
 
               return NormalMessageItem(
                 message: item.message!,
+                sender: _memberFor(item.message!.senderId),
+                showSenderAvatar: item.showSenderAvatar,
                 seenMembers: seenByMessageId[item.message!.id] ?? const [],
                 currentUserId: widget.currentUserId,
                 isPrivateChat: widget.isPrivateChat,
@@ -200,6 +203,15 @@ class _GroupMessageListState extends State<GroupMessageList>
         ],
       ),
     );
+  }
+
+  MessageGroupMember? _memberFor(String userId) {
+    for (final member in widget.members) {
+      if (member.userId == userId) {
+        return member;
+      }
+    }
+    return null;
   }
 
   Map<String, List<MessageGroupMember>> _buildSeenByMessageId() {
@@ -228,7 +240,12 @@ class _GroupMessageListState extends State<GroupMessageList>
       final postId = message.postId?.trim();
       final post = message.post;
       if (postId == null || postId.isEmpty || post == null) {
-        items.add(_GroupListItem.message(message));
+        items.add(
+          _GroupListItem.message(
+            message,
+            showSenderAvatar: _shouldShowSenderAvatar(messages, index),
+          ),
+        );
         index += 1;
         continue;
       }
@@ -253,11 +270,29 @@ class _GroupMessageListState extends State<GroupMessageList>
 
     return items;
   }
+
+  bool _shouldShowSenderAvatar(List<GroupMessage> messages, int index) {
+    final message = messages[index];
+    if (message.isSystemMessage ||
+        widget.currentUserId == message.senderId ||
+        message.senderId.trim().isEmpty) {
+      return false;
+    }
+
+    if (index == messages.length - 1) {
+      return true;
+    }
+
+    final next = messages[index + 1];
+    return next.isSystemMessage || next.senderId != message.senderId;
+  }
 }
 
 class NormalMessageItem extends StatelessWidget {
   const NormalMessageItem({
     required this.message,
+    required this.sender,
+    required this.showSenderAvatar,
     required this.seenMembers,
     required this.currentUserId,
     required this.isPrivateChat,
@@ -266,6 +301,8 @@ class NormalMessageItem extends StatelessWidget {
   });
 
   final GroupMessage message;
+  final MessageGroupMember? sender;
+  final bool showSenderAvatar;
   final List<MessageGroupMember> seenMembers;
   final String? currentUserId;
   final bool isPrivateChat;
@@ -289,6 +326,8 @@ class NormalMessageItem extends StatelessWidget {
       children: [
         GroupChatBubble(
           message: message,
+          sender: sender,
+          showSenderAvatar: showSenderAvatar,
           currentUserId: currentUserId,
           timeRevealProgress: timeRevealProgress,
           contentShift: contentShift,
@@ -412,6 +451,7 @@ class _PostMessageThread extends StatelessWidget {
   const _PostMessageThread({
     required this.thread,
     required this.seenByMessageId,
+    required this.members,
     required this.currentUserId,
     required this.isPrivateChat,
     required this.timeRevealProgress,
@@ -420,6 +460,7 @@ class _PostMessageThread extends StatelessWidget {
 
   final _PostMessageThreadData thread;
   final Map<String, List<MessageGroupMember>> seenByMessageId;
+  final List<MessageGroupMember> members;
   final String? currentUserId;
   final bool isPrivateChat;
   final double timeRevealProgress;
@@ -438,6 +479,8 @@ class _PostMessageThread extends StatelessWidget {
             if (message.isSystemMessage || message.content.trim().isNotEmpty)
               NormalMessageItem(
                 message: message,
+                sender: _memberFor(message.senderId),
+                showSenderAvatar: _shouldShowSenderAvatar(message),
                 seenMembers: seenByMessageId[message.id] ?? const [],
                 currentUserId: currentUserId,
                 isPrivateChat: isPrivateChat,
@@ -447,6 +490,32 @@ class _PostMessageThread extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  bool _shouldShowSenderAvatar(GroupMessage message) {
+    if (message.isSystemMessage ||
+        currentUserId == message.senderId ||
+        message.senderId.trim().isEmpty) {
+      return false;
+    }
+
+    final messages = thread.messages;
+    final index = messages.indexWhere((item) => item.id == message.id);
+    if (index < 0 || index == messages.length - 1) {
+      return true;
+    }
+
+    final next = messages[index + 1];
+    return next.isSystemMessage || next.senderId != message.senderId;
+  }
+
+  MessageGroupMember? _memberFor(String userId) {
+    for (final member in members) {
+      if (member.userId == userId) {
+        return member;
+      }
+    }
+    return null;
   }
 }
 
@@ -667,10 +736,11 @@ class _GroupListItem {
   final GroupMessage? message;
   final _PostMessageThreadData? thread;
   final String? headerText;
+  final bool showSenderAvatar;
 
   bool get isHeader => headerText != null;
 
-  _GroupListItem.message(GroupMessage value)
+  _GroupListItem.message(GroupMessage value, {required this.showSenderAvatar})
     : message = value,
       thread = null,
       headerText = null;
@@ -678,12 +748,14 @@ class _GroupListItem {
   _GroupListItem.thread(_PostMessageThreadData value)
     : message = null,
       thread = value,
-      headerText = null;
+      headerText = null,
+      showSenderAvatar = false;
 
   _GroupListItem.header(String value)
     : message = null,
       thread = null,
-      headerText = value;
+      headerText = value,
+      showSenderAvatar = false;
 }
 
 class _PostMessageThreadData {
