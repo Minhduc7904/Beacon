@@ -47,6 +47,7 @@ class ApiEndpoints {
   static const String postsFriendTemplate = '/posts/friends/{friendId}';
   static const String postReactionTemplate = '/posts/{postId}/reaction';
   static const String postReactionsTemplate = '/posts/{postId}/reactions';
+  static const String postReportsTemplate = '/posts/{postId}/reports';
 
   // Friend requests
   static const String friendRequests = '/friend-requests';
@@ -101,6 +102,7 @@ class ApiEndpoints {
   static String postsFriend(String friendId) => '/posts/friends/$friendId';
   static String postReaction(String postId) => '/posts/$postId/reaction';
   static String postReactions(String postId) => '/posts/$postId/reactions';
+  static String postReports(String postId) => '/posts/$postId/reports';
   static String friendRequestAccept(String id) => '/friend-requests/$id/accept';
   static String friendRequestDecline(String id) =>
       '/friend-requests/$id/decline';

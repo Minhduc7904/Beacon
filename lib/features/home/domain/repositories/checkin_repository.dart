@@ -10,5 +10,6 @@ abstract class CheckinRepository {
   Future<Either<Failure, CheckinRecord>> checkin({
     String? note,
     String? mediaId,
+    String? mood,
   });
 }
