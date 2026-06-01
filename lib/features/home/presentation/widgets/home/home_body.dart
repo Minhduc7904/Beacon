@@ -61,6 +61,13 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
   void initState() {
     super.initState();
     _pageController = PageController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      unawaited(ref.read(feedProvider.notifier).load());
+    });
     _scheduleTargetPostScroll();
   }
 
@@ -623,7 +630,10 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
             }
 
             final post = feedPosts[index - 1];
-            return FeedPostCard(post: post);
+            return FeedPostCard(
+              key: ValueKey<String>('${post.id}:${post.imageUrl}'),
+              post: post,
+            );
           },
         ),
         if (activeReactionEffectPostId != null)

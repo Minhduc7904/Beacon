@@ -23,6 +23,40 @@ class TimeUtils {
     return toVietnamTime(parsed.toUtc());
   }
 
+  static DateTime? tryParseUtc(Object? value) {
+    final raw = value?.toString().trim();
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) {
+      return null;
+    }
+
+    final tail = raw.length > 10 ? raw.substring(10) : '';
+    final hasTimezoneSuffix =
+        raw.endsWith('Z') ||
+        raw.endsWith('z') ||
+        raw.contains('+') ||
+        tail.contains('-');
+
+    if (hasTimezoneSuffix) {
+      return parsed.toUtc();
+    }
+
+    return DateTime.utc(
+      parsed.year,
+      parsed.month,
+      parsed.day,
+      parsed.hour,
+      parsed.minute,
+      parsed.second,
+      parsed.millisecond,
+      parsed.microsecond,
+    );
+  }
+
   /// Chuyển giờ Việt Nam → ISO8601 UTC string
   ///
   /// Ví dụ:

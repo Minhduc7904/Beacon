@@ -4,9 +4,13 @@ import 'package:flutter/material.dart';
 import '../../theme/text/app_text_theme.dart';
 import '../text/text.dart';
 
-Future<String?> showAppEmojiPickerSheet(BuildContext context) {
+Future<String?> showAppEmojiPickerSheet(
+  BuildContext context, {
+  bool useRootNavigator = false,
+}) {
   return showModalBottomSheet<String>(
     context: context,
+    useRootNavigator: useRootNavigator,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (context) => const AppEmojiPickerSheet(),

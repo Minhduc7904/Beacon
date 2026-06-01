@@ -1,0 +1,29 @@
+---
+description: Load local Taste Skill files before Flutter UI, UX, redesign, and animation work in Beacon App.
+alwaysApply: true
+---
+
+# Local Taste Skill Loading
+
+This repository includes Taste Skill files in `skills/`.
+
+Before UI, UX, redesign, image-to-code, mobile screen, animation, or motion tasks:
+
+1. Read `skills/llms.txt`.
+2. Choose the relevant skill.
+3. Open the matching `skills/<skill-folder>/SKILL.md`.
+4. Apply only the parts that fit the Flutter mobile task.
+5. Combine Taste Skill guidance with `.agents/instructions/ui-design.instructions.md` and `.agents/skills/ui-design-skill/SKILL.md`.
+
+Default choices:
+
+- Mobile UI concepts and visual direction: `skills/imagegen-frontend-mobile/SKILL.md`
+- Existing app screen improvements: `skills/redesign-skill/SKILL.md`
+- UI/UX animation and premium motion direction: `skills/gpt-tasteskill/SKILL.md`
+- Clean, dense product screens: `skills/minimalist-skill/SKILL.md`
+- Premium visual polish: `skills/soft-skill/SKILL.md`
+- Image-to-code work: `skills/image-to-code-skill/SKILL.md`
+- Complete unabridged code: `skills/output-skill/SKILL.md`
+- Broad full-redesign taste guidance: `skills/taste-skill/SKILL.md`
+
+Do not skip local Taste Skill loading when the task touches UI/UX/animation.

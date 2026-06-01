@@ -115,6 +115,7 @@ class _FeedGridTile extends StatelessWidget {
             onTap: onTap,
             child: Image.network(
               post.imageUrl,
+              key: ValueKey<String>('${post.id}:${post.imageUrl}'),
               fit: BoxFit.cover,
               loadingBuilder: (context, child, progress) {
                 if (progress == null) {

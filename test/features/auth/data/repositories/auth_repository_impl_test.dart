@@ -1,4 +1,6 @@
 import 'package:beacon_app/core/cache/current_user_cache_scope.dart';
+import 'package:beacon_app/core/database/app_database.dart';
+import 'package:beacon_app/core/database/database_exception.dart';
 import 'package:beacon_app/core/errors/exceptions.dart';
 import 'package:beacon_app/core/errors/failures.dart';
 import 'package:beacon_app/core/network/network_info.dart';
@@ -23,6 +25,8 @@ class MockUserProfileLocalDatasource extends Mock
     implements UserProfileLocalDatasource {}
 
 class MockCurrentUserCacheScope extends Mock implements CurrentUserCacheScope {}
+
+class MockAppDatabase extends Mock implements AppDatabase {}
 
 class MockNetworkInfo extends Mock implements NetworkInfo {}
 
@@ -148,6 +152,7 @@ void main() {
   late MockAuthLocalDatasource localDatasource;
   late MockUserProfileLocalDatasource userProfileLocalDatasource;
   late MockCurrentUserCacheScope currentUserCacheScope;
+  late MockAppDatabase appDatabase;
   late MockNetworkInfo networkInfo;
   late AuthRepositoryImpl repository;
 
@@ -160,6 +165,7 @@ void main() {
     localDatasource = MockAuthLocalDatasource();
     userProfileLocalDatasource = MockUserProfileLocalDatasource();
     currentUserCacheScope = MockCurrentUserCacheScope();
+    appDatabase = MockAppDatabase();
     networkInfo = MockNetworkInfo();
     when(
       () => currentUserCacheScope.getCurrentUserId(),
@@ -178,11 +184,13 @@ void main() {
         cacheScopeUserId: any(named: 'cacheScopeUserId'),
       ),
     ).thenAnswer((_) async {});
+    when(() => appDatabase.clearAll()).thenAnswer((_) async {});
     repository = AuthRepositoryImpl(
       remoteDatasource: remoteDatasource,
       localDatasource: localDatasource,
       userProfileLocalDatasource: userProfileLocalDatasource,
       currentUserCacheScope: currentUserCacheScope,
+      appDatabase: appDatabase,
       networkInfo: networkInfo,
       nowUtc: () => _cachedAtUtc,
     );
@@ -804,6 +812,7 @@ void main() {
           cacheScopeUserId: 'user-1',
         ),
       ).called(1);
+      verify(() => appDatabase.clearAll()).called(1);
       verify(() => currentUserCacheScope.clearCurrentUserId()).called(1);
     });
 
@@ -822,6 +831,7 @@ void main() {
         () => remoteDatasource.logout(refreshToken: 'refresh-token'),
       ).called(1);
       verify(() => localDatasource.clearTokens()).called(1);
+      verify(() => appDatabase.clearAll()).called(1);
       verify(() => currentUserCacheScope.clearCurrentUserId()).called(1);
     });
 
@@ -842,6 +852,7 @@ void main() {
           cacheScopeUserId: any(named: 'cacheScopeUserId'),
         ),
       );
+      verify(() => appDatabase.clearAll()).called(1);
       verify(() => currentUserCacheScope.clearCurrentUserId()).called(1);
     });
 
@@ -857,6 +868,7 @@ void main() {
         () => remoteDatasource.logout(refreshToken: any(named: 'refreshToken')),
       );
       verify(() => localDatasource.clearTokens()).called(1);
+      verify(() => appDatabase.clearAll()).called(1);
       verify(() => currentUserCacheScope.clearCurrentUserId()).called(1);
     });
 
@@ -874,6 +886,7 @@ void main() {
         () => remoteDatasource.logout(refreshToken: any(named: 'refreshToken')),
       );
       verify(() => localDatasource.clearTokens()).called(1);
+      verify(() => appDatabase.clearAll()).called(1);
       verify(() => currentUserCacheScope.clearCurrentUserId()).called(1);
     });
 
@@ -894,7 +907,31 @@ void main() {
           'Không xóa được token',
         ),
       );
+      verifyNever(() => appDatabase.clearAll());
       verifyNever(() => currentUserCacheScope.clearCurrentUserId());
+    });
+
+    test('clear local database lá»—i váº«n clear current user id vÃ  tráº£ CacheFailure', () async {
+      _stubLocalTokens(localDatasource);
+      _stubNetwork(networkInfo, false);
+      _stubClearTokens(localDatasource);
+      when(
+        () => appDatabase.clearAll(),
+      ).thenThrow(const DatabaseException('KhÃ´ng xÃ³a Ä‘Æ°á»£c local cache'));
+
+      final result = await repository.logout();
+
+      _expectLeft(
+        result,
+        isA<CacheFailure>().having(
+          (failure) => failure.message,
+          'message',
+          'KhÃ´ng xÃ³a Ä‘Æ°á»£c local cache',
+        ),
+      );
+      verify(() => localDatasource.clearTokens()).called(1);
+      verify(() => appDatabase.clearAll()).called(1);
+      verify(() => currentUserCacheScope.clearCurrentUserId()).called(1);
     });
   });
 

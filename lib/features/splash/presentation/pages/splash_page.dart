@@ -100,12 +100,15 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   }
 
   Future<void> _preloadHomeData() async {
+    unawaited(ref.read(feedProvider.notifier).load(forceRefresh: true));
+
     final tasks = <Future<void>>[
       _preloadProfile(),
-      ref.read(homeCheckinNotifierProvider.notifier).load(),
-      ref.read(feedProvider.notifier).load(),
-      ref.read(friendsPresenceNotifierProvider.notifier).load(),
-      ref.read(messageGroupListProvider.notifier).load(),
+      ref.read(homeCheckinNotifierProvider.notifier).load(forceRefresh: true),
+      ref
+          .read(friendsPresenceNotifierProvider.notifier)
+          .load(forceRefresh: true),
+      ref.read(messageGroupListProvider.notifier).load(forceRefresh: true),
       _preloadUnreadMessageCounts(),
       _preloadFeedFilterFriends(),
     ];

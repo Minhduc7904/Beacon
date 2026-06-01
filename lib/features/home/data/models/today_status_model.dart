@@ -1,4 +1,5 @@
 import '../../domain/entities/today_status.dart';
+import '../../../../core/utils/time_utils.dart';
 
 class TodayStatusModel extends TodayStatus {
   const TodayStatusModel({
@@ -45,7 +46,7 @@ class TodayStatusModel extends TodayStatus {
       return null;
     }
 
-    return DateTime.tryParse(raw);
+    return TimeUtils.tryParseUtc(raw);
   }
 
   static int? _toInt(dynamic value) {

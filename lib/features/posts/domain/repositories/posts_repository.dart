@@ -19,13 +19,22 @@ abstract class PostsRepository {
 
   Future<Either<Failure, PostPage>> getFeedPosts({String? cursor, int? limit});
 
+  Future<Either<Failure, PostPage>> getCachedFeedPosts({int? limit});
+
   Future<Either<Failure, PostPage>> getFriendPosts({
     required String friendId,
     String? cursor,
     int? limit,
   });
 
+  Future<Either<Failure, PostPage>> getCachedFriendPosts({
+    required String friendId,
+    int? limit,
+  });
+
   Future<Either<Failure, PostPage>> getMyPosts({String? cursor, int? limit});
+
+  Future<Either<Failure, PostPage>> getCachedMyPosts({int? limit});
 
   Future<Either<Failure, Post>> updatePost({
     required String postId,

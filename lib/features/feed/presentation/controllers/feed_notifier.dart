@@ -66,35 +66,95 @@ class FeedNotifier extends StateNotifier<FeedState> {
       return;
     }
 
-    state = state.copyWith(
-      status: FeedStatus.loading,
-      posts: const <FeedPost>[],
-      isLoadingMore: false,
-      hasMore: false,
-      clearNextCursor: true,
-      clearErrorMessage: true,
-      postReactionPages: const {},
-      loadingReactionPostIds: const {},
+    final activeFilter = state.filter;
+    var hasVisiblePosts = !forceRefresh && state.posts.isNotEmpty;
+
+    final cachedResult = await _loadCachedPage(
+      filter: activeFilter,
+      limit: _pageLimit,
+    );
+    cachedResult.fold(
+      (_) {
+        if (!hasVisiblePosts) {
+          state = state.copyWith(
+            status: FeedStatus.loading,
+            posts: const <FeedPost>[],
+            isLoadingMore: false,
+            isRefreshing: false,
+            hasMore: false,
+            clearNextCursor: true,
+            clearErrorMessage: true,
+            postReactionPages: const {},
+            loadingReactionPostIds: const {},
+          );
+        } else {
+          state = state.copyWith(
+            isLoadingMore: false,
+            isRefreshing: true,
+            clearErrorMessage: true,
+          );
+        }
+      },
+      (page) {
+        final cachedPosts = page.items.map(_mapPost).toList();
+        if (cachedPosts.isNotEmpty) {
+          hasVisiblePosts = true;
+          state = state.copyWith(
+            status: FeedStatus.loaded,
+            posts: cachedPosts,
+            nextCursor: page.nextCursor,
+            hasMore: page.hasMore,
+            isLoadingMore: false,
+            isRefreshing: true,
+            clearErrorMessage: true,
+            postReactionPages: const {},
+            loadingReactionPostIds: const {},
+          );
+        } else if (!hasVisiblePosts) {
+          state = state.copyWith(
+            status: FeedStatus.loading,
+            posts: const <FeedPost>[],
+            isLoadingMore: false,
+            isRefreshing: false,
+            hasMore: false,
+            clearNextCursor: true,
+            clearErrorMessage: true,
+            postReactionPages: const {},
+            loadingReactionPostIds: const {},
+          );
+        }
+      },
     );
 
-    final result = await _loadPage(filter: state.filter, limit: _pageLimit);
+    final result = await _loadPage(filter: activeFilter, limit: _pageLimit);
 
     result.fold(
       (failure) {
-        _messageNotifier.addError(failure.message);
+        if (!hasVisiblePosts) {
+          _messageNotifier.addError(failure.message);
+          state = state.copyWith(
+            status: FeedStatus.error,
+            errorMessage: failure.message,
+            isRefreshing: false,
+            hasMore: false,
+            clearNextCursor: true,
+          );
+          return;
+        }
+
         state = state.copyWith(
-          status: FeedStatus.error,
+          isRefreshing: false,
           errorMessage: failure.message,
-          hasMore: false,
-          clearNextCursor: true,
         );
       },
       (page) {
+        final remotePosts = page.items.map(_mapPost).toList();
         state = state.copyWith(
           status: FeedStatus.loaded,
-          posts: page.items.map(_mapPost).toList(),
+          posts: remotePosts,
           nextCursor: page.nextCursor,
           hasMore: page.hasMore,
+          isRefreshing: false,
           clearErrorMessage: true,
         );
       },
@@ -130,8 +190,9 @@ class FeedNotifier extends StateNotifier<FeedState> {
         );
       },
       (page) {
+        final nextPosts = page.items.map(_mapPost).toList();
         state = state.copyWith(
-          posts: [...state.posts, ...page.items.map(_mapPost)],
+          posts: _mergeNextPagePosts(state.posts, nextPosts),
           nextCursor: page.nextCursor,
           hasMore: page.hasMore,
           isLoadingMore: false,
@@ -340,6 +401,41 @@ class FeedNotifier extends StateNotifier<FeedState> {
           limit: limit,
         );
     }
+  }
+
+  Future<Either<Failure, PostPage>> _loadCachedPage({
+    required FeedFilter filter,
+    required int limit,
+  }) {
+    switch (filter.type) {
+      case FeedFilterType.all:
+        return _getFeedPostsUseCase.cached(limit: limit);
+      case FeedFilterType.me:
+        return _getMyPostsUseCase.cached(limit: limit);
+      case FeedFilterType.friend:
+        final friendId = filter.friendId?.trim() ?? '';
+        return _getFriendPostsUseCase.cached(
+          friendId: friendId,
+          limit: limit,
+        );
+    }
+  }
+
+  List<FeedPost> _mergeNextPagePosts(
+    List<FeedPost> existingPosts,
+    List<FeedPost> nextPosts,
+  ) {
+    final posts = List<FeedPost>.from(existingPosts);
+    for (final post in nextPosts) {
+      final index = posts.indexWhere((item) => item.id == post.id);
+      if (index >= 0) {
+        posts[index] = post;
+      } else {
+        posts.add(post);
+      }
+    }
+
+    return posts;
   }
 
   Future<void> _bindRealtime() async {

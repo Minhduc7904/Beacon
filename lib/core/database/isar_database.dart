@@ -20,7 +20,7 @@ class IsarDatabase implements AppDatabase {
       }
 
       if (isarCollections.isEmpty) {
-        throw const DatabaseException(
+        throw const DatabaseException(  
           'Isar requires at least one real collection schema.',
         );
       }
@@ -53,6 +53,23 @@ class IsarDatabase implements AppDatabase {
   @override
   Future<T> write<T>(Future<T> Function(Isar isar) action) {
     return _isar.writeTxn(() => action(_isar));
+  }
+
+  @override
+  Stream<T> watch<T>(Stream<T> Function(Isar isar) action) {
+    return action(_isar);
+  }
+
+  @override
+  Future<void> clearAll() async {
+    try {
+      await _isar.writeTxn(() => _isar.clear());
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        DatabaseException('Could not clear local database.', cause: error),
+        stackTrace,
+      );
+    }
   }
 
   @override

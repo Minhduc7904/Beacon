@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../core/config/app_routes.dart';
 import '../../../../../core/providers/providers.dart';
+import '../../../../../core/providers/user_session_provider_reset.dart';
 import '../../../../../core/widgets/layout/screen_layout.dart';
 import '../../controllers/auth_state.dart';
 
@@ -26,6 +27,7 @@ class _LogoutPageState extends ConsumerState<LogoutPage> {
   Widget build(BuildContext context) {
     ref.listen<AuthState>(authNotifierProvider, (_, state) {
       if (state is AuthInitial || state is AuthError) {
+        resetUserSessionProviders(ref);
         context.go(AppRoutes.onboarding);
       }
     });

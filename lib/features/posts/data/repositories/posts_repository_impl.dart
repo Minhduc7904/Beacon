@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 
+import '../../../../core/cache/current_user_cache_scope.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/post.dart';
@@ -9,17 +10,28 @@ import '../../domain/entities/post_reaction_page.dart';
 import '../../domain/entities/post_reaction_result.dart';
 import '../../domain/entities/post_visibility.dart';
 import '../../domain/repositories/posts_repository.dart';
+import '../datasources/posts_local_datasource.dart';
 import '../datasources/posts_remote_datasource.dart';
+import '../mappers/post_cache_mapper.dart';
 
 class PostsRepositoryImpl implements PostsRepository {
   final PostsRemoteDatasource _remoteDatasource;
+  final PostsLocalDatasource _localDatasource;
+  final CurrentUserCacheScope _currentUserCacheScope;
   final NetworkInfo _networkInfo;
+  final DateTime Function() _nowUtc;
 
   PostsRepositoryImpl({
     required PostsRemoteDatasource remoteDatasource,
+    required PostsLocalDatasource localDatasource,
+    required CurrentUserCacheScope currentUserCacheScope,
     required NetworkInfo networkInfo,
+    DateTime Function()? nowUtc,
   }) : _remoteDatasource = remoteDatasource,
-       _networkInfo = networkInfo;
+       _localDatasource = localDatasource,
+       _currentUserCacheScope = currentUserCacheScope,
+       _networkInfo = networkInfo,
+       _nowUtc = nowUtc ?? (() => DateTime.now().toUtc());
 
   @override
   Future<Either<Failure, Post>> createPost({
@@ -50,8 +62,15 @@ class PostsRepositoryImpl implements PostsRepository {
   @override
   Future<Either<Failure, PostPage>> getFeedPosts({String? cursor, int? limit}) {
     return _getPostPage(
-      () => _remoteDatasource.getFeedPosts(cursor: cursor, limit: limit),
+      feedType: 'all',
+      cursor: cursor,
+      load: () => _remoteDatasource.getFeedPosts(cursor: cursor, limit: limit),
     );
+  }
+
+  @override
+  Future<Either<Failure, PostPage>> getCachedFeedPosts({int? limit}) {
+    return _getCachedPostPage(feedType: 'all');
   }
 
   @override
@@ -61,7 +80,10 @@ class PostsRepositoryImpl implements PostsRepository {
     int? limit,
   }) {
     return _getPostPage(
-      () => _remoteDatasource.getFriendPosts(
+      feedType: 'friend',
+      friendId: friendId,
+      cursor: cursor,
+      load: () => _remoteDatasource.getFriendPosts(
         friendId: friendId,
         cursor: cursor,
         limit: limit,
@@ -70,10 +92,25 @@ class PostsRepositoryImpl implements PostsRepository {
   }
 
   @override
+  Future<Either<Failure, PostPage>> getCachedFriendPosts({
+    required String friendId,
+    int? limit,
+  }) {
+    return _getCachedPostPage(feedType: 'friend', friendId: friendId);
+  }
+
+  @override
   Future<Either<Failure, PostPage>> getMyPosts({String? cursor, int? limit}) {
     return _getPostPage(
-      () => _remoteDatasource.getMyPosts(cursor: cursor, limit: limit),
+      feedType: 'me',
+      cursor: cursor,
+      load: () => _remoteDatasource.getMyPosts(cursor: cursor, limit: limit),
     );
+  }
+
+  @override
+  Future<Either<Failure, PostPage>> getCachedMyPosts({int? limit}) {
+    return _getCachedPostPage(feedType: 'me');
   }
 
   @override
@@ -92,6 +129,7 @@ class PostsRepositoryImpl implements PostsRepository {
         caption: caption,
         visibility: visibility?.value,
       );
+      await _updatePostCacheIfScoped(post);
       return Right(post);
     } on Exception catch (e) {
       return Left(e.toFailure());
@@ -106,6 +144,7 @@ class PostsRepositoryImpl implements PostsRepository {
 
     try {
       await _remoteDatasource.deletePost(postId: postId);
+      await _deletePostCacheIfScoped(postId);
       return const Right(true);
     } on Exception catch (e) {
       return Left(e.toFailure());
@@ -178,18 +217,120 @@ class PostsRepositoryImpl implements PostsRepository {
     }
   }
 
-  Future<Either<Failure, PostPage>> _getPostPage(
-    Future<PostPage> Function() load,
-  ) async {
+  Future<Either<Failure, PostPage>> _getPostPage({
+    required String feedType,
+    String? friendId,
+    String? cursor,
+    required Future<PostPage> Function() load,
+  }) async {
     if (!await _networkInfo.isConnected) {
-      return const Left(NetworkFailure());
+      if (cursor != null && cursor.trim().isNotEmpty) {
+        return const Left(NetworkFailure());
+      }
+      return _getCachedPostPage(feedType: feedType, friendId: friendId);
     }
 
     try {
       final page = await load();
+      await _upsertPostPageCache(
+        feedType: feedType,
+        friendId: friendId,
+        cursor: cursor,
+        page: page,
+      );
       return Right(page);
     } on Exception catch (e) {
       return Left(e.toFailure());
+    }
+  }
+
+  Future<Either<Failure, PostPage>> _getCachedPostPage({
+    required String feedType,
+    String? friendId,
+  }) async {
+    try {
+      final cacheScopeUserId = await _currentUserCacheScope.getCurrentUserId();
+      if (cacheScopeUserId == null || cacheScopeUserId.trim().isEmpty) {
+        return const Left(NetworkFailure());
+      }
+
+      final page = await _localDatasource.getCachedPosts(
+        listScopeKey: postListScopeKey(
+          cacheScopeUserId: cacheScopeUserId,
+          feedType: feedType,
+          friendId: friendId,
+        ),
+      );
+      if (page == null) {
+        return const Left(NetworkFailure());
+      }
+
+      return Right(page);
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  Future<void> _upsertPostPageCache({
+    required String feedType,
+    String? friendId,
+    String? cursor,
+    required PostPage page,
+  }) async {
+    try {
+      final cacheScopeUserId = await _currentUserCacheScope.getCurrentUserId();
+      if (cacheScopeUserId == null || cacheScopeUserId.trim().isEmpty) {
+        return;
+      }
+
+      await _localDatasource.upsertPostPage(
+        listScopeKey: postListScopeKey(
+          cacheScopeUserId: cacheScopeUserId,
+          feedType: feedType,
+          friendId: friendId,
+        ),
+        cacheScopeUserId: cacheScopeUserId,
+        feedType: feedType,
+        friendId: friendId,
+        page: page,
+        isFirstPage: cursor == null || cursor.trim().isEmpty,
+        cachedAtUtc: _nowUtc(),
+      );
+    } on Exception {
+      // Cache write is best-effort; remote success remains source of truth.
+    }
+  }
+
+  Future<void> _updatePostCacheIfScoped(Post post) async {
+    try {
+      final cacheScopeUserId = await _currentUserCacheScope.getCurrentUserId();
+      if (cacheScopeUserId == null || cacheScopeUserId.trim().isEmpty) {
+        return;
+      }
+
+      await _localDatasource.updatePostInUserCaches(
+        cacheScopeUserId: cacheScopeUserId,
+        post: post,
+        cachedAtUtc: _nowUtc(),
+      );
+    } on Exception {
+      // Cache write is best-effort; remote success remains source of truth.
+    }
+  }
+
+  Future<void> _deletePostCacheIfScoped(String postId) async {
+    try {
+      final cacheScopeUserId = await _currentUserCacheScope.getCurrentUserId();
+      if (cacheScopeUserId == null || cacheScopeUserId.trim().isEmpty) {
+        return;
+      }
+
+      await _localDatasource.deletePostFromUserCaches(
+        cacheScopeUserId: cacheScopeUserId,
+        postId: postId,
+      );
+    } on Exception {
+      // Cache delete is best-effort; remote success remains source of truth.
     }
   }
 }

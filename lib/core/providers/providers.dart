@@ -125,6 +125,8 @@ import '../../features/post_reports/domain/repositories/post_reports_repository.
 import '../../features/post_reports/domain/usecase/report_post_usecase.dart';
 import '../../features/post_reports/presentation/controllers/post_report_notifier.dart';
 import '../../features/post_reports/presentation/controllers/post_report_state.dart';
+import '../../features/posts/data/datasources/posts_local_datasource.dart';
+import '../../features/posts/data/datasources/posts_local_datasource_impl.dart';
 import '../../features/posts/data/datasources/posts_remote_datasource.dart';
 import '../../features/posts/data/datasources/posts_remote_datasource_impl.dart';
 import '../../features/posts/data/repositories/posts_repository_impl.dart';
@@ -149,7 +151,10 @@ import '../../features/safety/data/datasources/safety_remote_datasource_impl.dar
 import '../../features/safety/data/repositories/safety_repository_impl.dart';
 import '../../features/safety/domain/repositories/safety_repository.dart';
 import '../../features/safety/domain/usecase/get_safety_settings_usecase.dart';
+import '../../features/safety/domain/usecase/get_monthly_checkins_usecase.dart';
 import '../../features/safety/domain/usecase/update_safety_settings_usecase.dart';
+import '../../features/safety/presentation/controllers/safety_mood_calendar_notifier.dart';
+import '../../features/safety/presentation/controllers/safety_mood_calendar_state.dart';
 import '../../features/safety/presentation/controllers/safety_settings_notifier.dart';
 import '../../features/safety/presentation/controllers/safety_settings_state.dart';
 import '../cache/current_user_cache_scope.dart';
@@ -288,6 +293,10 @@ final postsRemoteDatasourceProvider = Provider<PostsRemoteDatasource>((ref) {
   return PostsRemoteDatasourceImpl(ref.watch(dioClientProvider));
 });
 
+final postsLocalDatasourceProvider = Provider<PostsLocalDatasource>((ref) {
+  return PostsLocalDatasourceImpl(ref.watch(appDatabaseProvider));
+});
+
 final postReportsRemoteDatasourceProvider =
     Provider<PostReportsRemoteDatasource>((ref) {
       return PostReportsRemoteDatasourceImpl(ref.watch(dioClientProvider));
@@ -333,6 +342,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
     localDatasource: ref.watch(authLocalDatasourceProvider),
     userProfileLocalDatasource: ref.watch(userProfileLocalDatasourceProvider),
     currentUserCacheScope: ref.watch(currentUserCacheScopeProvider),
+    appDatabase: ref.watch(appDatabaseProvider),
     networkInfo: ref.watch(networkInfoProvider),
   );
 });
@@ -347,6 +357,8 @@ final postPreviewRepositoryProvider = Provider<PostPreviewRepository>((ref) {
 final postsRepositoryProvider = Provider<PostsRepository>((ref) {
   return PostsRepositoryImpl(
     remoteDatasource: ref.watch(postsRemoteDatasourceProvider),
+    localDatasource: ref.watch(postsLocalDatasourceProvider),
+    currentUserCacheScope: ref.watch(currentUserCacheScopeProvider),
     networkInfo: ref.watch(networkInfoProvider),
   );
 });
@@ -578,6 +590,12 @@ final getSafetySettingsUseCaseProvider = Provider<GetSafetySettingsUseCase>((
   ref,
 ) {
   return GetSafetySettingsUseCase(ref.watch(safetyRepositoryProvider));
+});
+
+final getMonthlyCheckinsUseCaseProvider = Provider<GetMonthlyCheckinsUseCase>((
+  ref,
+) {
+  return GetMonthlyCheckinsUseCase(ref.watch(safetyRepositoryProvider));
 });
 
 final updateSafetySettingsUseCaseProvider =
@@ -942,6 +960,17 @@ final safetySettingsNotifierProvider =
       return SafetySettingsNotifier(
         ref.watch(getSafetySettingsUseCaseProvider),
         ref.watch(updateSafetySettingsUseCaseProvider),
+        ref.watch(appMessageProvider.notifier),
+      );
+    });
+
+final safetyMoodCalendarNotifierProvider =
+    StateNotifierProvider.autoDispose<
+      SafetyMoodCalendarNotifier,
+      SafetyMoodCalendarState
+    >((ref) {
+      return SafetyMoodCalendarNotifier(
+        ref.watch(getMonthlyCheckinsUseCaseProvider),
         ref.watch(appMessageProvider.notifier),
       );
     });

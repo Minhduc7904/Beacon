@@ -1,5 +1,7 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/cache/current_user_cache_scope.dart';
+import '../../../../core/database/app_database.dart';
+import '../../../../core/database/database_exception.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/auth_result.dart';
@@ -15,6 +17,7 @@ class AuthRepositoryImpl implements AuthRepository {
   final AuthLocalDatasource _localDatasource;
   final UserProfileLocalDatasource _userProfileLocalDatasource;
   final CurrentUserCacheScope _currentUserCacheScope;
+  final AppDatabase _appDatabase;
   final NetworkInfo _networkInfo;
   final DateTime Function() _nowUtc;
 
@@ -23,12 +26,14 @@ class AuthRepositoryImpl implements AuthRepository {
     required AuthLocalDatasource localDatasource,
     required UserProfileLocalDatasource userProfileLocalDatasource,
     required CurrentUserCacheScope currentUserCacheScope,
+    required AppDatabase appDatabase,
     required NetworkInfo networkInfo,
     DateTime Function()? nowUtc,
   }) : _remoteDatasource = remoteDatasource,
        _localDatasource = localDatasource,
        _userProfileLocalDatasource = userProfileLocalDatasource,
        _currentUserCacheScope = currentUserCacheScope,
+       _appDatabase = appDatabase,
        _networkInfo = networkInfo,
        _nowUtc = nowUtc ?? (() => DateTime.now().toUtc());
 
@@ -166,7 +171,13 @@ class AuthRepositoryImpl implements AuthRepository {
       final cacheScopeUserId = await _getCurrentUserIdForLogout();
       await _localDatasource.clearTokens();
       await _deleteCachedProfileIfScoped(cacheScopeUserId);
-      await _currentUserCacheScope.clearCurrentUserId();
+      try {
+        await _appDatabase.clearAll();
+      } on DatabaseException catch (e) {
+        return Left(CacheFailure(message: e.message));
+      } finally {
+        await _currentUserCacheScope.clearCurrentUserId();
+      }
       return const Right('Đăng xuất thành công');
     } on Exception catch (e) {
       return Left(e.toFailure());

@@ -4,6 +4,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_handler.dart';
 import '../../../../core/network/dio_client.dart';
 import '../mappers/safety_error_code_mapper.dart';
+import '../models/monthly_checkins_model.dart';
 import '../models/safety_settings_model.dart';
 import 'safety_remote_datasource.dart';
 
@@ -30,7 +31,29 @@ class SafetyRemoteDatasourceImpl implements SafetyRemoteDatasource {
         e,
         codeMessageMapper: SafetyErrorCodeMapper.mapGetCode,
       );
-      rethrow;
+    }
+  }
+
+  @override
+  Future<MonthlyCheckinsModel> getMonthlyCheckins({
+    required int year,
+    required int month,
+  }) async {
+    try {
+      final response = await _dioClient.get(
+        ApiEndpoints.checkinsMonthly,
+        queryParameters: {'year': year, 'month': month},
+      );
+
+      final result = ApiHandler.handle<MonthlyCheckinsModel>(
+        response,
+        fromJsonT: (json) =>
+            MonthlyCheckinsModel.fromJson(json as Map<String, dynamic>),
+      );
+
+      return result.data!;
+    } on DioException catch (e) {
+      ApiHandler.rethrowDioException(e);
     }
   }
 
@@ -66,7 +89,6 @@ class SafetyRemoteDatasourceImpl implements SafetyRemoteDatasource {
         e,
         codeMessageMapper: SafetyErrorCodeMapper.mapUpdateCode,
       );
-      rethrow;
     }
   }
 }

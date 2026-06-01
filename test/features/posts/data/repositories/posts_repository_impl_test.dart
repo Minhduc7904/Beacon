@@ -1,6 +1,8 @@
+import 'package:beacon_app/core/cache/current_user_cache_scope.dart';
 import 'package:beacon_app/core/errors/exceptions.dart';
 import 'package:beacon_app/core/errors/failures.dart';
 import 'package:beacon_app/core/network/network_info.dart';
+import 'package:beacon_app/features/posts/data/datasources/posts_local_datasource.dart';
 import 'package:beacon_app/features/posts/data/datasources/posts_remote_datasource.dart';
 import 'package:beacon_app/features/posts/data/models/post_media_model.dart';
 import 'package:beacon_app/features/posts/data/models/post_model.dart';
@@ -17,22 +19,29 @@ import 'package:mocktail/mocktail.dart';
 
 class MockPostsRemoteDatasource extends Mock implements PostsRemoteDatasource {}
 
+class MockPostsLocalDatasource extends Mock implements PostsLocalDatasource {}
+
+class MockCurrentUserCacheScope extends Mock implements CurrentUserCacheScope {}
+
 class MockNetworkInfo extends Mock implements NetworkInfo {}
 
 PostModel _postModel({
   String id = 'post-1',
   String? caption = 'Caption',
   PostVisibility visibility = PostVisibility.friends,
+  String mediaUrl = 'https://example.com/media.jpg',
+  String? thumbnailUrl,
+  DateTime? updatedAtUtc,
 }) {
   return PostModel(
     id: id,
     ownerUserId: 'user-1',
     owner: null,
-    media: const PostMediaModel(
-      id: 'media-1',
-      url: 'https://example.com/media.jpg',
+    media: PostMediaModel(
+      id: 'media-$id',
+      url: mediaUrl,
       type: 'image',
-      thumbnailUrl: null,
+      thumbnailUrl: thumbnailUrl,
       durationSeconds: null,
       width: 1080,
       height: 1080,
@@ -41,7 +50,7 @@ PostModel _postModel({
     visibility: visibility,
     status: 'published',
     createdAtUtc: DateTime.utc(2026, 5, 26),
-    updatedAtUtc: null,
+    updatedAtUtc: updatedAtUtc,
     latitude: 10.5,
     longitude: 106.7,
     dailySafetyRecordId: null,
@@ -95,14 +104,28 @@ void _expectRightSame<T>(Either<Failure, T> result, T expected) {
 
 void main() {
   late MockPostsRemoteDatasource remoteDatasource;
+  late MockPostsLocalDatasource localDatasource;
+  late MockCurrentUserCacheScope currentUserCacheScope;
   late MockNetworkInfo networkInfo;
   late PostsRepositoryImpl repository;
 
+  setUpAll(() {
+    registerFallbackValue(_postPageModel());
+    registerFallbackValue(_postModel());
+  });
+
   setUp(() {
     remoteDatasource = MockPostsRemoteDatasource();
+    localDatasource = MockPostsLocalDatasource();
+    currentUserCacheScope = MockCurrentUserCacheScope();
     networkInfo = MockNetworkInfo();
+    when(
+      () => currentUserCacheScope.getCurrentUserId(),
+    ).thenAnswer((_) async => null);
     repository = PostsRepositoryImpl(
       remoteDatasource: remoteDatasource,
+      localDatasource: localDatasource,
+      currentUserCacheScope: currentUserCacheScope,
       networkInfo: networkInfo,
     );
   });
@@ -296,6 +319,75 @@ void main() {
         ),
       );
     });
+
+    test('getFeedPosts online lưu page remote vào cache theo user scope', () async {
+      _stubNetwork(networkInfo, true);
+      when(
+        () => currentUserCacheScope.getCurrentUserId(),
+      ).thenAnswer((_) async => 'user-1');
+      final page = _postPageModel(nextCursor: 'next-1');
+      when(
+        () => remoteDatasource.getFeedPosts(cursor: null, limit: 20),
+      ).thenAnswer((_) async => page);
+      when(
+        () => localDatasource.upsertPostPage(
+          listScopeKey: any(named: 'listScopeKey'),
+          cacheScopeUserId: any(named: 'cacheScopeUserId'),
+          feedType: any(named: 'feedType'),
+          friendId: any(named: 'friendId'),
+          page: any(named: 'page'),
+          isFirstPage: any(named: 'isFirstPage'),
+          cachedAtUtc: any(named: 'cachedAtUtc'),
+        ),
+      ).thenAnswer((_) async {});
+
+      final result = await repository.getFeedPosts(limit: 20);
+
+      _expectRightSame(result, page);
+      verify(
+        () => localDatasource.upsertPostPage(
+          listScopeKey: 'user-1:all',
+          cacheScopeUserId: 'user-1',
+          feedType: 'all',
+          friendId: null,
+          page: page,
+          isFirstPage: true,
+          cachedAtUtc: any(named: 'cachedAtUtc'),
+        ),
+      ).called(1);
+    });
+
+    test('getFeedPosts offline có cache thì trả cache và không gọi remote', () async {
+      _stubNetwork(networkInfo, false);
+      when(
+        () => currentUserCacheScope.getCurrentUserId(),
+      ).thenAnswer((_) async => 'user-1');
+      final cachedPage = _postPageModel(
+        items: [
+          _postModel(
+            id: 'post-1',
+            mediaUrl: 'https://example.com/cached.jpg',
+            thumbnailUrl: 'https://example.com/cached-thumb.jpg',
+          ),
+        ],
+      );
+      when(
+        () => localDatasource.getCachedPosts(listScopeKey: 'user-1:all'),
+      ).thenAnswer((_) async => cachedPage);
+
+      final result = await repository.getFeedPosts(limit: 20);
+
+      _expectRightSame(result, cachedPage);
+      verify(
+        () => localDatasource.getCachedPosts(listScopeKey: 'user-1:all'),
+      ).called(1);
+      verifyNever(
+        () => remoteDatasource.getFeedPosts(
+          cursor: any(named: 'cursor'),
+          limit: any(named: 'limit'),
+        ),
+      );
+    });
   });
 
   group('PostsRepositoryImpl createPost', () {
@@ -409,6 +501,47 @@ void main() {
         ),
       );
     });
+
+    test('updatePost online success cập nhật cache local theo user scope', () async {
+      _stubNetwork(networkInfo, true);
+      when(
+        () => currentUserCacheScope.getCurrentUserId(),
+      ).thenAnswer((_) async => 'user-1');
+      final post = _postModel(
+        caption: 'Caption mới',
+        mediaUrl: 'https://example.com/media-new.jpg',
+        thumbnailUrl: 'https://example.com/thumb-new.jpg',
+      );
+      when(
+        () => remoteDatasource.updatePost(
+          postId: 'post-1',
+          caption: 'Caption mới',
+          visibility: 'friends',
+        ),
+      ).thenAnswer((_) async => post);
+      when(
+        () => localDatasource.updatePostInUserCaches(
+          cacheScopeUserId: any(named: 'cacheScopeUserId'),
+          post: any(named: 'post'),
+          cachedAtUtc: any(named: 'cachedAtUtc'),
+        ),
+      ).thenAnswer((_) async {});
+
+      final result = await repository.updatePost(
+        postId: 'post-1',
+        caption: 'Caption mới',
+        visibility: PostVisibility.friends,
+      );
+
+      _expectRightSame(result, post);
+      verify(
+        () => localDatasource.updatePostInUserCaches(
+          cacheScopeUserId: 'user-1',
+          post: post,
+          cachedAtUtc: any(named: 'cachedAtUtc'),
+        ),
+      ).called(1);
+    });
   });
 
   group('PostsRepositoryImpl deletePost', () {
@@ -443,6 +576,35 @@ void main() {
           'Xóa bài viết thất bại',
         ),
       );
+    });
+
+    test('deletePost online success xóa post khỏi cache local theo user scope', () async {
+      _stubNetwork(networkInfo, true);
+      when(
+        () => currentUserCacheScope.getCurrentUserId(),
+      ).thenAnswer((_) async => 'user-1');
+      when(
+        () => remoteDatasource.deletePost(postId: 'post-1'),
+      ).thenAnswer((_) async {});
+      when(
+        () => localDatasource.deletePostFromUserCaches(
+          cacheScopeUserId: any(named: 'cacheScopeUserId'),
+          postId: any(named: 'postId'),
+        ),
+      ).thenAnswer((_) async {});
+
+      final result = await repository.deletePost(postId: 'post-1');
+
+      result.fold(
+        (_) => fail('Expected Right'),
+        (isDeleted) => expect(isDeleted, isTrue),
+      );
+      verify(
+        () => localDatasource.deletePostFromUserCaches(
+          cacheScopeUserId: 'user-1',
+          postId: 'post-1',
+        ),
+      ).called(1);
     });
   });
 
