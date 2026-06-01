@@ -49,6 +49,19 @@ class _HomeActionRowState extends State<HomeActionRow> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant HomeActionRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.canCheckin && widget.onCheckin != null) {
+      return;
+    }
+
+    _removeMoodPickerOverlay();
+    _isMoodPickerVisible = false;
+    _selectedMood = null;
+  }
+
   void _openMoodPicker() {
     if (_isMoodPickerVisible) {
       return;
@@ -66,6 +79,12 @@ class _HomeActionRowState extends State<HomeActionRow> {
     }
 
     _removeMoodPickerOverlay();
+    if (!mounted) {
+      _isMoodPickerVisible = false;
+      _selectedMood = null;
+      return;
+    }
+
     setState(() {
       _isMoodPickerVisible = false;
       _selectedMood = null;
@@ -74,6 +93,7 @@ class _HomeActionRowState extends State<HomeActionRow> {
 
   void _selectMood(String mood) {
     setState(() {
+      _isMoodPickerVisible = true;
       _selectedMood = mood;
     });
     _moodPickerOverlay?.markNeedsBuild();
@@ -123,30 +143,33 @@ class _HomeActionRowState extends State<HomeActionRow> {
     final overlay = Overlay.of(context);
     final entry = OverlayEntry(
       builder: (context) {
-        return Stack(
-          children: [
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: _closeMoodPicker,
-                child: const SizedBox.expand(),
-              ),
+        return Positioned.fill(
+          child: Material(
+            type: MaterialType.transparency,
+            child: Stack(
+              children: [
+                GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: _closeMoodPicker,
+                  child: const SizedBox.expand(),
+                ),
+                CompositedTransformFollower(
+                  link: _moodPickerLink,
+                  showWhenUnlinked: false,
+                  targetAnchor: Alignment.topCenter,
+                  followerAnchor: Alignment.bottomCenter,
+                  offset: const Offset(0, -10),
+                  child: _HomeMoodPicker(
+                    selectedMood: _selectedMood,
+                    suggestedMoods: _suggestedMoods,
+                    onMoodSelected: _selectMood,
+                    onClearPressed: _closeMoodPicker,
+                    onMoreMoodPressed: () => unawaited(_selectMoreMood()),
+                  ),
+                ),
+              ],
             ),
-            CompositedTransformFollower(
-              link: _moodPickerLink,
-              showWhenUnlinked: false,
-              targetAnchor: Alignment.topCenter,
-              followerAnchor: Alignment.bottomCenter,
-              offset: const Offset(0, -10),
-              child: _HomeMoodPicker(
-                selectedMood: _selectedMood,
-                suggestedMoods: _suggestedMoods,
-                onMoodSelected: _selectMood,
-                onClearPressed: _closeMoodPicker,
-                onMoreMoodPressed: () => unawaited(_selectMoreMood()),
-              ),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -172,12 +195,12 @@ class _HomeActionRowState extends State<HomeActionRow> {
           CompositedTransformTarget(
             link: _moodPickerLink,
             child: _HomeCheckinActionButton(
-                  isLoading: widget.isCheckingIn,
-                  isEnabled: widget.canCheckin,
-                  isConfirming: _isMoodPickerVisible,
-                  selectedMood: _selectedMood,
-                  onPressed: _handleCheckinPressed,
-                ),
+              isLoading: widget.isCheckingIn,
+              isEnabled: widget.canCheckin,
+              isConfirming: _isMoodPickerVisible,
+              selectedMood: _selectedMood,
+              onPressed: _handleCheckinPressed,
+            ),
           ),
           IconCircleButton(
             icon: AppIcons.camera,
