@@ -35,6 +35,7 @@ class CheckinRepositoryImpl implements CheckinRepository {
   Future<Either<Failure, CheckinRecord>> checkin({
     String? note,
     String? mediaId,
+    String? mood,
   }) async {
     if (!await _networkInfo.isConnected) {
       return const Left(NetworkFailure());
@@ -44,6 +45,7 @@ class CheckinRepositoryImpl implements CheckinRepository {
       final record = await _remoteDatasource.checkin(
         note: note,
         mediaId: mediaId,
+        mood: mood,
       );
       return Right(record);
     } on Exception catch (e) {

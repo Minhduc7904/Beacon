@@ -14,7 +14,11 @@ class CheckinRemoteDatasourceImpl implements CheckinRemoteDatasource {
   CheckinRemoteDatasourceImpl(this._dioClient);
 
   @override
-  Future<CheckinRecordModel> checkin({String? note, String? mediaId}) async {
+  Future<CheckinRecordModel> checkin({
+    String? note,
+    String? mediaId,
+    String? mood,
+  }) async {
     final body = <String, dynamic>{};
 
     if (note != null && note.trim().isNotEmpty) {
@@ -23,6 +27,10 @@ class CheckinRemoteDatasourceImpl implements CheckinRemoteDatasource {
 
     if (mediaId != null && mediaId.trim().isNotEmpty) {
       body['mediaId'] = mediaId.trim();
+    }
+
+    if (mood != null && mood.trim().isNotEmpty) {
+      body['mood'] = mood.trim();
     }
 
     try {

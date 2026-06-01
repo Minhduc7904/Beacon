@@ -116,6 +116,13 @@ import '../../features/post_preview/domain/repositories/post_preview_repository.
 import '../../features/post_preview/domain/usecase/upload_post_media_usecase.dart';
 import '../../features/post_preview/presentation/controllers/post_preview_notifier.dart';
 import '../../features/post_preview/presentation/controllers/post_preview_state.dart';
+import '../../features/post_reports/data/datasources/post_reports_remote_datasource.dart';
+import '../../features/post_reports/data/datasources/post_reports_remote_datasource_impl.dart';
+import '../../features/post_reports/data/repositories/post_reports_repository_impl.dart';
+import '../../features/post_reports/domain/repositories/post_reports_repository.dart';
+import '../../features/post_reports/domain/usecase/report_post_usecase.dart';
+import '../../features/post_reports/presentation/controllers/post_report_notifier.dart';
+import '../../features/post_reports/presentation/controllers/post_report_state.dart';
 import '../../features/posts/data/datasources/posts_remote_datasource.dart';
 import '../../features/posts/data/datasources/posts_remote_datasource_impl.dart';
 import '../../features/posts/data/repositories/posts_repository_impl.dart';
@@ -259,6 +266,11 @@ final postsRemoteDatasourceProvider = Provider<PostsRemoteDatasource>((ref) {
   return PostsRemoteDatasourceImpl(ref.watch(dioClientProvider));
 });
 
+final postReportsRemoteDatasourceProvider =
+    Provider<PostReportsRemoteDatasource>((ref) {
+      return PostReportsRemoteDatasourceImpl(ref.watch(dioClientProvider));
+    });
+
 final safetyRemoteDatasourceProvider = Provider<SafetyRemoteDatasource>((ref) {
   return SafetyRemoteDatasourceImpl(ref.watch(dioClientProvider));
 });
@@ -307,6 +319,13 @@ final postPreviewRepositoryProvider = Provider<PostPreviewRepository>((ref) {
 final postsRepositoryProvider = Provider<PostsRepository>((ref) {
   return PostsRepositoryImpl(
     remoteDatasource: ref.watch(postsRemoteDatasourceProvider),
+    networkInfo: ref.watch(networkInfoProvider),
+  );
+});
+
+final postReportsRepositoryProvider = Provider<PostReportsRepository>((ref) {
+  return PostReportsRepositoryImpl(
+    remoteDatasource: ref.watch(postReportsRemoteDatasourceProvider),
     networkInfo: ref.watch(networkInfoProvider),
   );
 });
@@ -504,6 +523,10 @@ final getPostReactionsUseCaseProvider = Provider<GetPostReactionsUseCase>((
   ref,
 ) {
   return GetPostReactionsUseCase(ref.watch(postsRepositoryProvider));
+});
+
+final reportPostUseCaseProvider = Provider<ReportPostUseCase>((ref) {
+  return ReportPostUseCase(ref.watch(postReportsRepositoryProvider));
 });
 
 final subscribeNewPostsRealtimeUseCaseProvider =
@@ -889,6 +912,16 @@ final safetySettingsNotifierProvider =
       return SafetySettingsNotifier(
         ref.watch(getSafetySettingsUseCaseProvider),
         ref.watch(updateSafetySettingsUseCaseProvider),
+        ref.watch(appMessageProvider.notifier),
+      );
+    });
+
+final postReportNotifierProvider =
+    StateNotifierProvider.autoDispose<PostReportNotifier, PostReportState>((
+      ref,
+    ) {
+      return PostReportNotifier(
+        ref.watch(reportPostUseCaseProvider),
         ref.watch(appMessageProvider.notifier),
       );
     });

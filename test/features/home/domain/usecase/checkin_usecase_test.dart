@@ -16,6 +16,7 @@ CheckinRecord _checkinRecord() {
     checkinDate: '2026-05-26',
     checkedInAtUtc: DateTime.utc(2026, 5, 26, 12),
     type: CheckinType.manual,
+    mood: '😊',
     note: 'An toàn',
     latitude: null,
     longitude: null,
@@ -28,6 +29,7 @@ void _verifyCheckinNeverCalled(MockCheckinRepository repository) {
     () => repository.checkin(
       note: any(named: 'note'),
       mediaId: any(named: 'mediaId'),
+      mood: any(named: 'mood'),
     ),
   );
 }
@@ -59,11 +61,19 @@ void main() {
       () async {
         final record = _checkinRecord();
         when(
-          () => repository.checkin(note: 'An toàn', mediaId: 'media-1'),
+          () => repository.checkin(
+            note: 'An toàn',
+            mediaId: 'media-1',
+            mood: '😊',
+          ),
         ).thenAnswer((_) async => Right(record));
 
         final result = await useCase(
-          const CheckinParams(note: '  An toàn  ', mediaId: '  media-1  '),
+          const CheckinParams(
+            note: '  An toàn  ',
+            mediaId: '  media-1  ',
+            mood: '  😊  ',
+          ),
         );
 
         result.fold(
@@ -71,7 +81,11 @@ void main() {
           (actualRecord) => expect(actualRecord, same(record)),
         );
         verify(
-          () => repository.checkin(note: 'An toàn', mediaId: 'media-1'),
+          () => repository.checkin(
+            note: 'An toàn',
+            mediaId: 'media-1',
+            mood: '😊',
+          ),
         ).called(1);
       },
     );
@@ -79,7 +93,8 @@ void main() {
     test('trả về CheckinRecord khi repository check-in thành công', () async {
       final record = _checkinRecord();
       when(
-        () => repository.checkin(note: 'An toàn', mediaId: 'media-1'),
+        () =>
+            repository.checkin(note: 'An toàn', mediaId: 'media-1', mood: null),
       ).thenAnswer((_) async => Right(record));
 
       final result = await useCase(
@@ -95,7 +110,7 @@ void main() {
     test('pass-through failure từ repository', () async {
       const failure = ServerFailure(message: 'Check-in thất bại');
       when(
-        () => repository.checkin(note: 'An toàn', mediaId: null),
+        () => repository.checkin(note: 'An toàn', mediaId: null, mood: null),
       ).thenAnswer((_) async => const Left(failure));
 
       final result = await useCase(const CheckinParams(note: 'An toàn'));

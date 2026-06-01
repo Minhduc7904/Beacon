@@ -72,19 +72,20 @@ class HomeCheckinNotifier extends StateNotifier<HomeCheckinState> {
     _startTickerIfNeeded();
   }
 
-  Future<void> checkin() async {
+  Future<bool> checkin({String? mood}) async {
     if (state.isCheckingIn) {
-      return;
+      return false;
     }
 
     if (state.phase == HomeCheckinPhase.checkedIn ||
         state.phase == HomeCheckinPhase.emergency) {
-      return;
+      return false;
     }
 
     state = state.copyWith(isCheckingIn: true, clearErrorMessage: true);
 
-    final result = await _checkinUseCase.call(const CheckinParams());
+    final result = await _checkinUseCase.call(CheckinParams(mood: mood));
+    var didCheckin = false;
     result.fold(
       (failure) {
         _messageNotifier.addError(failure.message);
@@ -94,6 +95,7 @@ class HomeCheckinNotifier extends StateNotifier<HomeCheckinState> {
         );
       },
       (record) {
+        didCheckin = true;
         _messageNotifier.addSuccess('Check-in thành công');
         final updatedStatus = _buildStatusAfterCheckin(record);
         state = state.copyWith(
@@ -106,6 +108,8 @@ class HomeCheckinNotifier extends StateNotifier<HomeCheckinState> {
         _startTickerIfNeeded();
       },
     );
+
+    return didCheckin;
   }
 
   void _startTickerIfNeeded() {

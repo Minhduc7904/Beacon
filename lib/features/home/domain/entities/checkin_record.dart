@@ -7,6 +7,7 @@ class CheckinRecord {
   final DateTime? checkedInAtUtc;
   final CheckinType type;
   final String? note;
+  final String? mood;
   final double? latitude;
   final double? longitude;
   final String? mediaObjectId;
@@ -18,6 +19,7 @@ class CheckinRecord {
     required this.checkedInAtUtc,
     required this.type,
     required this.note,
+    required this.mood,
     required this.latitude,
     required this.longitude,
     required this.mediaObjectId,
