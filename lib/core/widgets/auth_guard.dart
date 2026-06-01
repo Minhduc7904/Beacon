@@ -23,16 +23,12 @@ class _AuthGuardState extends ConsumerState<AuthGuard> {
   }
 
   Future<void> _checkAuth() async {
-    final localDatasource = ref.read(authLocalDatasourceProvider);
-    final accessToken = await localDatasource.getAccessToken();
-    final refreshToken = await localDatasource.getRefreshToken();
+    final result = await ref.read(hasLocalAuthSessionUseCaseProvider).call();
 
     if (!mounted) return;
 
-    if (accessToken == null ||
-        accessToken.isEmpty ||
-        refreshToken == null ||
-        refreshToken.isEmpty) {
+    final isAuthenticated = result.getOrElse(() => false);
+    if (!isAuthenticated) {
       context.go(AppRoutes.login);
       return;
     }
