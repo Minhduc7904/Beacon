@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import '../../../../core/cache/current_user_cache_scope.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/auth_result.dart';
@@ -6,19 +7,30 @@ import '../../domain/entities/user_profile.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_local_datasource.dart';
 import '../datasources/auth_remote_datasource.dart';
+import '../datasources/user_profile_local_datasource.dart';
+import '../mappers/user_profile_cache_mapper.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDatasource _remoteDatasource;
   final AuthLocalDatasource _localDatasource;
+  final UserProfileLocalDatasource _userProfileLocalDatasource;
+  final CurrentUserCacheScope _currentUserCacheScope;
   final NetworkInfo _networkInfo;
+  final DateTime Function() _nowUtc;
 
   AuthRepositoryImpl({
     required AuthRemoteDatasource remoteDatasource,
     required AuthLocalDatasource localDatasource,
+    required UserProfileLocalDatasource userProfileLocalDatasource,
+    required CurrentUserCacheScope currentUserCacheScope,
     required NetworkInfo networkInfo,
+    DateTime Function()? nowUtc,
   }) : _remoteDatasource = remoteDatasource,
        _localDatasource = localDatasource,
-       _networkInfo = networkInfo;
+       _userProfileLocalDatasource = userProfileLocalDatasource,
+       _currentUserCacheScope = currentUserCacheScope,
+       _networkInfo = networkInfo,
+       _nowUtc = nowUtc ?? (() => DateTime.now().toUtc());
 
   @override
   Future<Either<Failure, bool>> checkEmailAvailable({
@@ -76,6 +88,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await _localDatasource.saveAccessTokenExpiresAt(
         authResponse.tokens.accessTokenExpiresAt,
       );
+      await _saveCurrentUserIdIfPresent(authResponse.user.userId);
 
       final result = AuthResult(
         message: authResponse.message,
@@ -119,6 +132,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await _localDatasource.saveAccessTokenExpiresAt(
         authResponse.tokens.accessTokenExpiresAt,
       );
+      await _saveCurrentUserIdIfPresent(authResponse.user.userId);
 
       final result = AuthResult(
         message: authResponse.message,
@@ -149,7 +163,10 @@ class AuthRepositoryImpl implements AuthRepository {
         }
       }
 
+      final cacheScopeUserId = await _getCurrentUserIdForLogout();
       await _localDatasource.clearTokens();
+      await _deleteCachedProfileIfScoped(cacheScopeUserId);
+      await _currentUserCacheScope.clearCurrentUserId();
       return const Right('Đăng xuất thành công');
     } on Exception catch (e) {
       return Left(e.toFailure());
@@ -159,11 +176,13 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, UserProfile>> getMe() async {
     if (!await _networkInfo.isConnected) {
-      return const Left(NetworkFailure());
+      return _getCachedProfile();
     }
 
     try {
       final profile = await _remoteDatasource.getMe();
+      await _saveCurrentUserIdIfPresent(profile.id);
+      await _upsertProfileCacheIfScoped(profile);
       return Right(profile);
     } on Exception catch (e) {
       return Left(e.toFailure());
@@ -188,6 +207,8 @@ class AuthRepositoryImpl implements AuthRepository {
         email: email,
         phoneNumber: phoneNumber,
       );
+      await _saveCurrentUserIdIfPresent(profile.id);
+      await _upsertProfileCacheIfScoped(profile);
       return Right(profile);
     } on Exception catch (e) {
       return Left(e.toFailure());
@@ -206,6 +227,8 @@ class AuthRepositoryImpl implements AuthRepository {
       final profile = await _remoteDatasource.updateMyAvatar(
         filePath: filePath,
       );
+      await _saveCurrentUserIdIfPresent(profile.id);
+      await _upsertProfileCacheIfScoped(profile);
       return Right(profile);
     } on Exception catch (e) {
       return Left(e.toFailure());
@@ -240,6 +263,77 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Right(null);
     } on Exception catch (e) {
       return Left(e.toFailure());
+    }
+  }
+
+  Future<void> _saveCurrentUserIdIfPresent(String userId) async {
+    final normalized = userId.trim();
+    if (normalized.isEmpty) {
+      return;
+    }
+
+    await _currentUserCacheScope.saveCurrentUserId(normalized);
+  }
+
+  Future<String?> _getCurrentUserIdForLogout() async {
+    try {
+      return await _currentUserCacheScope.getCurrentUserId();
+    } on Exception {
+      // Profile cache cleanup is best-effort during logout.
+      return null;
+    }
+  }
+
+  Future<Either<Failure, UserProfile>> _getCachedProfile() async {
+    try {
+      final cacheScopeUserId = await _currentUserCacheScope.getCurrentUserId();
+      if (cacheScopeUserId == null || cacheScopeUserId.trim().isEmpty) {
+        return const Left(NetworkFailure());
+      }
+
+      final cache = await _userProfileLocalDatasource.getProfile(
+        cacheScopeUserId: cacheScopeUserId,
+      );
+      if (cache == null) {
+        return const Left(NetworkFailure());
+      }
+
+      return Right(cache.toDomain());
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  Future<void> _upsertProfileCacheIfScoped(UserProfile profile) async {
+    try {
+      final cacheScopeUserId = profile.id.trim();
+      if (cacheScopeUserId.isEmpty) {
+        return;
+      }
+
+      await _userProfileLocalDatasource.upsertProfile(
+        profile.toCache(
+          cacheScopeUserId: cacheScopeUserId,
+          cachedAtUtc: _nowUtc(),
+        ),
+      );
+    } on Exception {
+      // Profile cache write is best-effort; remote success remains canonical.
+    }
+  }
+
+  Future<void> _deleteCachedProfileIfScoped(String? cacheScopeUserId) async {
+    final scope = cacheScopeUserId?.trim();
+    if (scope == null || scope.isEmpty) {
+      return;
+    }
+
+    try {
+      await _userProfileLocalDatasource.deleteProfile(
+        cacheScopeUserId: scope,
+      );
+    } on Exception {
+      // Profile cache cleanup must not block logout session cleanup.
     }
   }
 }

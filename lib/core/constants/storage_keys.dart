@@ -5,6 +5,7 @@ class StorageKeys {
   static const String accessToken = 'access_token';
   static const String refreshToken = 'refresh_token';
   static const String accessTokenExpiresAt = 'access_token_expires_at';
+  static const String currentUserId = 'current_user_id';
 
   // Preferences
   static const String isDarkMode = 'is_dark_mode';

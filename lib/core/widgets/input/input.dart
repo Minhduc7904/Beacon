@@ -228,7 +228,7 @@ class Input extends m.StatelessWidget {
                   weight: AppTextWeight.bold,
                 ),
               ),
-              ?labelRightIcon,
+              if (labelRightIcon != null) labelRightIcon!,
             ],
           );
 

@@ -1,29 +1,42 @@
 import 'package:dartz/dartz.dart';
 
+import '../../../../core/cache/current_user_cache_scope.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/safety_settings.dart';
 import '../../domain/repositories/safety_repository.dart';
+import '../datasources/safety_local_datasource.dart';
 import '../datasources/safety_remote_datasource.dart';
+import '../mappers/safety_settings_cache_mapper.dart';
 
 class SafetyRepositoryImpl implements SafetyRepository {
   final SafetyRemoteDatasource _remoteDatasource;
+  final SafetyLocalDatasource _localDatasource;
+  final CurrentUserCacheScope _currentUserCacheScope;
   final NetworkInfo _networkInfo;
+  final DateTime Function() _nowUtc;
 
   SafetyRepositoryImpl({
     required SafetyRemoteDatasource remoteDatasource,
+    required SafetyLocalDatasource localDatasource,
+    required CurrentUserCacheScope currentUserCacheScope,
     required NetworkInfo networkInfo,
+    DateTime Function()? nowUtc,
   }) : _remoteDatasource = remoteDatasource,
-       _networkInfo = networkInfo;
+       _localDatasource = localDatasource,
+       _currentUserCacheScope = currentUserCacheScope,
+       _networkInfo = networkInfo,
+       _nowUtc = nowUtc ?? (() => DateTime.now().toUtc());
 
   @override
   Future<Either<Failure, SafetySettings>> getSafetySettings() async {
     if (!await _networkInfo.isConnected) {
-      return const Left(NetworkFailure());
+      return _getCachedSafetySettings();
     }
 
     try {
       final settings = await _remoteDatasource.getSafetySettings();
+      await _upsertCacheIfScoped(settings);
       return Right(settings);
     } on Exception catch (e) {
       return Left(e.toFailure());
@@ -76,9 +89,48 @@ class SafetyRepositoryImpl implements SafetyRepository {
       final settings = await _remoteDatasource.updateSafetySettings(
         body: body, // 🔥 truyền map xuống datasource
       );
+      await _upsertCacheIfScoped(settings);
       return Right(settings);
     } on Exception catch (e) {
       return Left(e.toFailure());
+    }
+  }
+
+  Future<Either<Failure, SafetySettings>> _getCachedSafetySettings() async {
+    try {
+      final cacheScopeUserId = await _currentUserCacheScope.getCurrentUserId();
+      if (cacheScopeUserId == null || cacheScopeUserId.trim().isEmpty) {
+        return const Left(NetworkFailure());
+      }
+
+      final cache = await _localDatasource.getSettings(
+        cacheScopeUserId: cacheScopeUserId,
+      );
+      if (cache == null) {
+        return const Left(NetworkFailure());
+      }
+
+      return Right(cache.toDomain());
+    } on Exception catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  Future<void> _upsertCacheIfScoped(SafetySettings settings) async {
+    try {
+      final cacheScopeUserId = await _currentUserCacheScope.getCurrentUserId();
+      if (cacheScopeUserId == null || cacheScopeUserId.trim().isEmpty) {
+        return;
+      }
+
+      await _localDatasource.upsertSettings(
+        settings.toCache(
+          cacheScopeUserId: cacheScopeUserId,
+          cachedAtUtc: _nowUtc(),
+        ),
+      );
+    } on Exception {
+      // Cache write is best-effort; remote success remains the source of truth.
     }
   }
 }
