@@ -23,4 +23,13 @@ class RegisterLoginTestUser {
     givenName: 'An',
     username: 'beacon_integration_an',
   );
+
+  static const seededLoginUser = RegisterLoginTestUser(
+    email: 'beacon.n2n.seed@example.com',
+    phoneNumber: '+84987654321',
+    password: 'Beacon@123',
+    familyName: 'Beacon',
+    givenName: 'Seed',
+    username: 'beacon_n2n_seed',
+  );
 }

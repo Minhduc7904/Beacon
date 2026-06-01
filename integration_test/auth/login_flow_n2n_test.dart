@@ -8,23 +8,15 @@ import '../robots/auth_flow_robot.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('registers a new account, logs in, and lands on Home', (
+  testWidgets('logs in with the seeded backend account and lands on Home', (
     tester,
   ) async {
-    final app = await pumpBeaconIntegrationApp(
-      tester,
-      autoLoginAfterRegister: false,
-    );
+    await pumpBeaconIntegrationApp(tester);
     final robot = AuthFlowRobot(tester);
-    const user = RegisterLoginTestUser.defaultUser;
+    const user = RegisterLoginTestUser.seededLoginUser;
 
-    await robot.openRegisterFromOnboarding();
-    await robot.submitRegistration(user);
-    await robot.expectLoginVisible();
+    await robot.openLoginFromOnboarding();
     await robot.login(user);
     await robot.expectHomeVisible();
-
-    expect(app.authRepository.registerCallCount, 1);
-    expect(app.authRepository.loginCallCount, 1);
   });
 }

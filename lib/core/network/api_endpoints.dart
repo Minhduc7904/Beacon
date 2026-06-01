@@ -3,9 +3,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class ApiEndpoints {
   ApiEndpoints._();
 
+  static const String _baseUrlOverride = String.fromEnvironment('BASE_URL');
+
   // Base URL
-  static final String baseUrl =
-      dotenv.env['BASE_URL'] ?? 'http://localhost:5000/api/v1';
+  static final String baseUrl = _baseUrlOverride.trim().isNotEmpty
+      ? _baseUrlOverride.trim()
+      : dotenv.env['BASE_URL'] ?? 'http://localhost:5000/api/v1';
 
   // Auth
   static const String login = '/auth/login';
