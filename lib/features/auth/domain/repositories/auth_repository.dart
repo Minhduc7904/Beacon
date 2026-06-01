@@ -26,6 +26,8 @@ abstract class AuthRepository {
 
   Future<Either<Failure, String>> logout();
 
+  Future<Either<Failure, bool>> hasLocalSession();
+
   Future<Either<Failure, UserProfile>> getMe();
 
   Future<Either<Failure, UserProfile>> updateMe({

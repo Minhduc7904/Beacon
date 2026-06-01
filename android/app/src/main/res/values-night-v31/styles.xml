@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="LaunchTheme" parent="Theme.SplashScreen.IconBackground">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="windowSplashScreenBackground">@color/beacon_primary</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/launch_logo</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/beacon_primary</item>
+        <item name="postSplashScreenTheme">@style/NormalTheme</item>
+    </style>
+
+    <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@color/beacon_primary</item>
+    </style>
+</resources>

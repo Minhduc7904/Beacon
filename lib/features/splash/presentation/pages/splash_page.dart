@@ -6,10 +6,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/app_routes.dart';
 import '../../../../core/providers/providers.dart';
-import '../../../../core/widgets/image/logo_image.dart';
-import '../../../../core/widgets/layout/screen_layout.dart';
+import '../../../../core/theme/color/app_colors.dart';
 import '../../../feed/presentation/pages/feed_page.dart';
 import '../../../message_groups/presentation/pages/message_group_list_page.dart';
+import '../../domain/entities/startup_destination.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
@@ -26,77 +26,52 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   }
 
   Future<void> _bootstrap() async {
-    final shouldShowOnboarding = await ref
-        .read(shouldShowOnboardingUseCaseProvider)
-        .call();
+    final result = await ref.read(resolveStartupDestinationUseCaseProvider)();
 
     if (!mounted) {
       return;
     }
 
-    if (shouldShowOnboarding) {
-      context.pushReplacement(AppRoutes.onboarding);
-      return;
-    }
-
-    final localDatasource = ref.read(authLocalDatasourceProvider);
-
-    final accessToken = await localDatasource.getAccessToken();
-    final refreshToken = await localDatasource.getRefreshToken();
-
-    if (!mounted) {
-      return;
-    }
-
-    final isAuthenticated =
-        accessToken != null &&
-        accessToken.isNotEmpty &&
-        refreshToken != null &&
-        refreshToken.isNotEmpty;
-
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!mounted) {
-      return;
-    }
-
-    if (isAuthenticated) {
-      await Future.wait([
-        _connectSignalR(),
-        _preloadHomeData(),
-        ref
-            .read(pushNotificationServiceProvider)
-            .syncCurrentDeviceTokenIfAuthorized(),
-      ]);
-
-      if (!mounted) {
-        return;
-      }
-
-      final targetPostId = ref
-          .read(pushNotificationServiceProvider)
-          .consumePendingPostReactionPostId();
-      if (targetPostId != null && targetPostId.trim().isNotEmpty) {
-        context.go(
-          AppRoutes.home,
-          extra: <String, dynamic>{'targetPostId': targetPostId.trim()},
-        );
-        return;
-      }
-
-      context.go(AppRoutes.home);
-      return;
-    }
-
-    if (!mounted) {
-      return;
-    }
-
-    context.go(AppRoutes.onboarding);
+    final destination = result.getOrElse(() => StartupDestination.login);
+    _goToDestination(destination);
   }
 
-  Future<void> _connectSignalR() async {
-    await ref.read(signalRServiceProvider).connect();
+  void _goToDestination(StartupDestination destination) {
+    switch (destination) {
+      case StartupDestination.onboarding:
+        context.go(AppRoutes.onboarding);
+        return;
+      case StartupDestination.login:
+        context.go(AppRoutes.login);
+        return;
+      case StartupDestination.home:
+        _startAuthenticatedBackgroundTasks();
+        final targetPostId = ref
+            .read(pushNotificationServiceProvider)
+            .consumePendingPostReactionPostId();
+        if (targetPostId != null && targetPostId.trim().isNotEmpty) {
+          context.go(
+            AppRoutes.home,
+            extra: <String, dynamic>{'targetPostId': targetPostId.trim()},
+          );
+          return;
+        }
+
+        context.go(AppRoutes.home);
+        return;
+    }
+  }
+
+  void _startAuthenticatedBackgroundTasks() {
+    unawaited(ref.read(signalRServiceProvider).connect());
+    unawaited(_syncCurrentDeviceTokenIfAuthorized());
+    unawaited(_preloadProfile());
+    unawaited(ref.read(homeCheckinNotifierProvider.notifier).load());
+    unawaited(ref.read(feedProvider.notifier).load());
+    unawaited(ref.read(friendsPresenceNotifierProvider.notifier).load());
+    unawaited(ref.read(messageGroupListProvider.notifier).load());
+    unawaited(_preloadUnreadMessageCounts());
+    unawaited(_preloadFeedFilterFriends());
   }
 
   Future<void> _preloadHomeData() async {
@@ -105,15 +80,23 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     final tasks = <Future<void>>[
       _preloadProfile(),
       ref.read(homeCheckinNotifierProvider.notifier).load(forceRefresh: true),
-      ref
-          .read(friendsPresenceNotifierProvider.notifier)
-          .load(forceRefresh: true),
+      ref.read(friendsPresenceNotifierProvider.notifier).load(forceRefresh: true),
       ref.read(messageGroupListProvider.notifier).load(forceRefresh: true),
       _preloadUnreadMessageCounts(),
       _preloadFeedFilterFriends(),
     ];
 
     await Future.wait(tasks);
+  }
+
+  Future<void> _syncCurrentDeviceTokenIfAuthorized() async {
+    try {
+      await ref
+          .read(pushNotificationServiceProvider)
+          .syncCurrentDeviceTokenIfAuthorized();
+    } catch (_) {
+      // Token sync is a background startup task and must not block navigation.
+    }
   }
 
   Future<void> _preloadProfile() async {
@@ -146,26 +129,9 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
-    return Scaffold(
-      backgroundColor: colors.primary,
-      body: SafeArea(
-        child: AppScreenLayout(
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const AppLogoImage(
-                  width: 359,
-                  height: 380,
-                  fit: BoxFit.contain,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return const Scaffold(
+      backgroundColor: AppColors.primary,
+      body: SizedBox.expand(),
     );
   }
 }

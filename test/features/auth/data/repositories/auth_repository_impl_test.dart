@@ -788,6 +788,55 @@ void main() {
     });
   });
 
+  group('AuthRepositoryImpl local session', () {
+    test('thiếu access token -> false', () async {
+      when(() => localDatasource.getAccessToken()).thenAnswer((_) async => '');
+      when(
+        () => localDatasource.getRefreshToken(),
+      ).thenAnswer((_) async => 'refresh-token');
+
+      final result = await repository.hasLocalSession();
+
+      expect(result, const Right<Failure, bool>(false));
+      verify(() => localDatasource.getAccessToken()).called(1);
+      verify(() => localDatasource.getRefreshToken()).called(1);
+    });
+
+    test('thiếu refresh token -> false', () async {
+      when(
+        () => localDatasource.getAccessToken(),
+      ).thenAnswer((_) async => 'access-token');
+      when(() => localDatasource.getRefreshToken()).thenAnswer((_) async => '');
+
+      final result = await repository.hasLocalSession();
+
+      expect(result, const Right<Failure, bool>(false));
+      verify(() => localDatasource.getAccessToken()).called(1);
+      verify(() => localDatasource.getRefreshToken()).called(1);
+    });
+
+    test('đủ access token và refresh token -> true', () async {
+      _stubLocalTokens(localDatasource);
+
+      final result = await repository.hasLocalSession();
+
+      expect(result, const Right<Failure, bool>(true));
+      verify(() => localDatasource.getAccessToken()).called(1);
+      verify(() => localDatasource.getRefreshToken()).called(1);
+    });
+
+    test('storage exception -> false và không crash', () async {
+      when(
+        () => localDatasource.getAccessToken(),
+      ).thenThrow(const CacheException(message: 'Không đọc được token'));
+
+      final result = await repository.hasLocalSession();
+
+      expect(result, const Right<Failure, bool>(false));
+      verify(() => localDatasource.getAccessToken()).called(1);
+    });
+  });
+
   group('AuthRepositoryImpl logout', () {
     test('online có token thì gọi remote logout, clear local và trả success', () async {
       _stubLocalTokens(localDatasource);
