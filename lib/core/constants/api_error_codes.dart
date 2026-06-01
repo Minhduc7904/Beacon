@@ -40,6 +40,8 @@ class ApiErrorCodes {
   static const String postUpdateDenied = 'POST_UPDATE_DENIED';
   static const String postDeleteDenied = 'POST_DELETE_DENIED';
   static const String invalidReactionIcon = 'INVALID_REACTION_ICON';
+  static const String selfPostReportNotAllowed = 'SELF_POST_REPORT_NOT_ALLOWED';
+  static const String postReportAlreadyExists = 'POST_REPORT_ALREADY_EXISTS';
 
   // Friend requests
   static const String selfFriendRequest = 'SELF_FRIEND_REQUEST';

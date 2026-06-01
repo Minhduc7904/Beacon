@@ -68,6 +68,7 @@ CheckinRecord _checkinRecord({
     checkedInAtUtc: checkedInAtUtc ?? DateTime.utc(2026, 5, 26, 12),
     type: type,
     note: null,
+    mood: null,
     latitude: null,
     longitude: null,
     mediaObjectId: null,
@@ -237,6 +238,7 @@ void main() {
               as CheckinParams;
       expect(captured.note, isNull);
       expect(captured.mediaId, isNull);
+      expect(captured.mood, isNull);
       verify(() => messageNotifier.addSuccess('Check-in thành công')).called(1);
       expect(notifier.state.isCheckingIn, isFalse);
       expect(notifier.state.lastCheckinType, CheckinType.manual);

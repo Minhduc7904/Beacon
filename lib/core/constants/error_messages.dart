@@ -75,6 +75,17 @@ class ErrorMessages {
   static const String postInvalidReactionIcon = 'Cảm xúc không được hỗ trợ';
   static const String postCaptionTooLong =
       'Caption không được vượt quá 2000 ký tự';
+  static const String postReportValidationError = 'Lý do báo cáo không hợp lệ';
+  static const String postReportReasonRequired =
+      'Lý do báo cáo không được để trống';
+  static const String postReportReasonTooLong =
+      'Lý do báo cáo không được vượt quá 200 ký tự';
+  static const String postReportDescriptionTooLong =
+      'Mô tả báo cáo không được vượt quá 1000 ký tự';
+  static const String selfPostReportNotAllowed =
+      'Không thể báo cáo bài đăng của chính mình';
+  static const String postReportAlreadyExists =
+      'Bạn đã báo cáo bài đăng này rồi';
 
   static const String checkinValidationError = 'Dữ liệu check-in không hợp lệ';
   static const String checkinMediaNotFound = 'Không tìm thấy ảnh đính kèm';
