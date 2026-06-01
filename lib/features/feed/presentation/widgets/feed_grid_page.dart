@@ -7,6 +7,7 @@ import '../../../../core/widgets/layout/screen_layout.dart';
 import '../../../../core/widgets/loading/loading.dart';
 import '../../domain/entities/feed_post.dart';
 import 'feed_media_radius.dart';
+import 'post_cached_image.dart';
 
 class FeedGridPage extends StatelessWidget {
   const FeedGridPage({
@@ -113,15 +114,16 @@ class _FeedGridTile extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
-            child: Image.network(
-              post.imageUrl,
-              key: ValueKey<String>('${post.id}:${post.imageUrl}'),
+            child: PostCachedImage(
+              key: ValueKey<String>(
+                '${post.id}:${post.localThumbnailPath}:${post.localImagePath}:${post.imageUrl}',
+              ),
+              localThumbnailPath: post.localThumbnailPath,
+              localImagePath: post.localImagePath,
+              remoteThumbnailUrl: post.remoteThumbnailUrl,
+              remoteImageUrl: post.remoteImageUrl ?? post.imageUrl,
               fit: BoxFit.cover,
-              loadingBuilder: (context, child, progress) {
-                if (progress == null) {
-                  return child;
-                }
-
+              loadingBuilder: (context) {
                 return Center(
                   child: AppLoadingIndicator(
                     color: AppColors.sky100.withValues(alpha: 0.8),
@@ -130,7 +132,7 @@ class _FeedGridTile extends StatelessWidget {
                   ),
                 );
               },
-              errorBuilder: (context, error, stackTrace) {
+              errorBuilder: (context) {
                 return Center(
                   child: AppIcon(
                     AppIcons.warning,

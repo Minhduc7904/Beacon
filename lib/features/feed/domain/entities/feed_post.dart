@@ -7,6 +7,10 @@ class FeedPost {
   final String authorName;
   final String? authorAvatarUrl;
   final String imageUrl;
+  final String? remoteThumbnailUrl;
+  final String? remoteImageUrl;
+  final String? localThumbnailPath;
+  final String? localImagePath;
   final String? caption;
   final PostVisibility visibility;
   final DateTime createdAt;
@@ -23,6 +27,10 @@ class FeedPost {
     required this.authorName,
     this.authorAvatarUrl,
     required this.imageUrl,
+    this.remoteThumbnailUrl,
+    this.remoteImageUrl,
+    this.localThumbnailPath,
+    this.localImagePath,
     this.caption,
     this.visibility = PostVisibility.friends,
     required this.createdAt,
@@ -40,6 +48,14 @@ class FeedPost {
     String? authorName,
     String? authorAvatarUrl,
     String? imageUrl,
+    String? remoteThumbnailUrl,
+    bool clearRemoteThumbnailUrl = false,
+    String? remoteImageUrl,
+    bool clearRemoteImageUrl = false,
+    String? localThumbnailPath,
+    bool clearLocalThumbnailPath = false,
+    String? localImagePath,
+    bool clearLocalImagePath = false,
     String? caption,
     PostVisibility? visibility,
     DateTime? createdAt,
@@ -59,6 +75,18 @@ class FeedPost {
       authorName: authorName ?? this.authorName,
       authorAvatarUrl: authorAvatarUrl ?? this.authorAvatarUrl,
       imageUrl: imageUrl ?? this.imageUrl,
+      remoteThumbnailUrl: clearRemoteThumbnailUrl
+          ? null
+          : (remoteThumbnailUrl ?? this.remoteThumbnailUrl),
+      remoteImageUrl: clearRemoteImageUrl
+          ? null
+          : (remoteImageUrl ?? this.remoteImageUrl),
+      localThumbnailPath: clearLocalThumbnailPath
+          ? null
+          : (localThumbnailPath ?? this.localThumbnailPath),
+      localImagePath: clearLocalImagePath
+          ? null
+          : (localImagePath ?? this.localImagePath),
       caption: caption ?? this.caption,
       visibility: visibility ?? this.visibility,
       createdAt: createdAt ?? this.createdAt,

@@ -43,6 +43,10 @@ extension PostToCacheMapper on Post {
       ..postId = id
       ..sortOrder = sortOrder
       ..postJson = jsonEncode(toCacheJson())
+      ..localImagePath = media.localImagePath
+      ..localThumbnailPath = media.localThumbnailPath
+      ..mediaCacheKey = media.mediaCacheKey
+      ..mediaCachedAtUtc = media.mediaCachedAtUtc?.toUtc()
       ..cachedAtUtc = cachedAtUtc.toUtc();
   }
 
@@ -73,7 +77,22 @@ extension PostCacheToDomainMapper on PostCache {
     final json = decoded is Map<String, dynamic>
         ? decoded
         : const <String, dynamic>{};
-    return PostModel.fromJson(json);
+    final post = PostModel.fromJson(json);
+    if (localImagePath == null &&
+        localThumbnailPath == null &&
+        mediaCacheKey == null &&
+        mediaCachedAtUtc == null) {
+      return post;
+    }
+
+    return post.copyWith(
+      media: post.media.copyWith(
+        localImagePath: localImagePath,
+        localThumbnailPath: localThumbnailPath,
+        mediaCacheKey: mediaCacheKey,
+        mediaCachedAtUtc: mediaCachedAtUtc,
+      ),
+    );
   }
 }
 
@@ -104,6 +123,10 @@ extension _PostMediaCacheJson on PostMedia {
       'url': url,
       'type': type,
       'thumbnailUrl': thumbnailUrl,
+      'localImagePath': localImagePath,
+      'localThumbnailPath': localThumbnailPath,
+      'mediaCacheKey': mediaCacheKey,
+      'mediaCachedAtUtc': mediaCachedAtUtc?.toUtc().toIso8601String(),
       'durationSeconds': durationSeconds,
       'width': width,
       'height': height,

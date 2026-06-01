@@ -69,14 +69,33 @@ class PostFlowRobot {
   }
 
   Future<void> submitPost() async {
-    await pumpUntilFound(find.byType(PostPreviewSendButton));
-    await tester.tap(find.byType(PostPreviewSendButton));
+    final sendButton = find.byType(PostPreviewSendButton);
+
+    await pumpUntilFound(sendButton);
+
+    // Đóng keyboard trước, vì keyboard đang che nút gửi.
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    tester.binding.focusManager.primaryFocus?.unfocus();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.ensureVisible(sendButton);
+    await tester.pumpAndSettle();
+
+    final hittableSendButton = sendButton.hitTestable();
+
+    await pumpUntilFound(
+      hittableSendButton,
+      timeout: const Duration(seconds: 10),
+    );
+
+    await tester.tap(hittableSendButton);
     await tester.pump(const Duration(milliseconds: 100));
 
     await pumpUntilNotFound(
       find.byType(PostPreviewPage),
       timeout: const Duration(seconds: 60),
     );
+
     await pumpUntilFound(find.byType(CameraScreen));
   }
 

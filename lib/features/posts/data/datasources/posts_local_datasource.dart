@@ -25,6 +25,21 @@ abstract class PostsLocalDatasource {
     required DateTime cachedAtUtc,
   });
 
+  Future<void> updatePostMediaCacheInUserCaches({
+    required String cacheScopeUserId,
+    required String postId,
+    required String? mediaCacheKey,
+    required String? localImagePath,
+    required String? localThumbnailPath,
+    required DateTime mediaCachedAtUtc,
+  });
+
+  Future<void> clearDeletedMediaPaths({
+    required String cacheScopeUserId,
+    required Set<String> deletedPaths,
+    required DateTime cachedAtUtc,
+  });
+
   Future<void> deletePostFromUserCaches({
     required String cacheScopeUserId,
     required String postId,

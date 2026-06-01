@@ -37,18 +37,38 @@ const PostCacheSchema = CollectionSchema(
       name: r'listScopeKey',
       type: IsarType.string,
     ),
-    r'postId': PropertySchema(
+    r'localImagePath': PropertySchema(
       id: 4,
+      name: r'localImagePath',
+      type: IsarType.string,
+    ),
+    r'localThumbnailPath': PropertySchema(
+      id: 5,
+      name: r'localThumbnailPath',
+      type: IsarType.string,
+    ),
+    r'mediaCacheKey': PropertySchema(
+      id: 6,
+      name: r'mediaCacheKey',
+      type: IsarType.string,
+    ),
+    r'mediaCachedAtUtc': PropertySchema(
+      id: 7,
+      name: r'mediaCachedAtUtc',
+      type: IsarType.dateTime,
+    ),
+    r'postId': PropertySchema(
+      id: 8,
       name: r'postId',
       type: IsarType.string,
     ),
     r'postJson': PropertySchema(
-      id: 5,
+      id: 9,
       name: r'postJson',
       type: IsarType.string,
     ),
     r'sortOrder': PropertySchema(
-      id: 6,
+      id: 10,
       name: r'sortOrder',
       type: IsarType.long,
     )
@@ -103,6 +123,24 @@ int _postCacheEstimateSize(
   bytesCount += 3 + object.cacheKey.length * 3;
   bytesCount += 3 + object.cacheScopeUserId.length * 3;
   bytesCount += 3 + object.listScopeKey.length * 3;
+  {
+    final value = object.localImagePath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.localThumbnailPath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.mediaCacheKey;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.postId.length * 3;
   bytesCount += 3 + object.postJson.length * 3;
   return bytesCount;
@@ -118,9 +156,13 @@ void _postCacheSerialize(
   writer.writeString(offsets[1], object.cacheScopeUserId);
   writer.writeDateTime(offsets[2], object.cachedAtUtc);
   writer.writeString(offsets[3], object.listScopeKey);
-  writer.writeString(offsets[4], object.postId);
-  writer.writeString(offsets[5], object.postJson);
-  writer.writeLong(offsets[6], object.sortOrder);
+  writer.writeString(offsets[4], object.localImagePath);
+  writer.writeString(offsets[5], object.localThumbnailPath);
+  writer.writeString(offsets[6], object.mediaCacheKey);
+  writer.writeDateTime(offsets[7], object.mediaCachedAtUtc);
+  writer.writeString(offsets[8], object.postId);
+  writer.writeString(offsets[9], object.postJson);
+  writer.writeLong(offsets[10], object.sortOrder);
 }
 
 PostCache _postCacheDeserialize(
@@ -135,9 +177,13 @@ PostCache _postCacheDeserialize(
   object.cachedAtUtc = reader.readDateTime(offsets[2]);
   object.id = id;
   object.listScopeKey = reader.readString(offsets[3]);
-  object.postId = reader.readString(offsets[4]);
-  object.postJson = reader.readString(offsets[5]);
-  object.sortOrder = reader.readLong(offsets[6]);
+  object.localImagePath = reader.readStringOrNull(offsets[4]);
+  object.localThumbnailPath = reader.readStringOrNull(offsets[5]);
+  object.mediaCacheKey = reader.readStringOrNull(offsets[6]);
+  object.mediaCachedAtUtc = reader.readDateTimeOrNull(offsets[7]);
+  object.postId = reader.readString(offsets[8]);
+  object.postJson = reader.readString(offsets[9]);
+  object.sortOrder = reader.readLong(offsets[10]);
   return object;
 }
 
@@ -157,10 +203,18 @@ P _postCacheDeserializeProp<P>(
     case 3:
       return (reader.readString(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 5:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 6:
+      return (reader.readStringOrNull(offset)) as P;
+    case 7:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 8:
+      return (reader.readString(offset)) as P;
+    case 9:
+      return (reader.readString(offset)) as P;
+    case 10:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1111,6 +1165,542 @@ extension PostCacheQueryFilter
     });
   }
 
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localImagePathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'localImagePath',
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localImagePathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'localImagePath',
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localImagePathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'localImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localImagePathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'localImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localImagePathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'localImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localImagePathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'localImagePath',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localImagePathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'localImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localImagePathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'localImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localImagePathContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'localImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localImagePathMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'localImagePath',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localImagePathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'localImagePath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localImagePathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'localImagePath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localThumbnailPathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'localThumbnailPath',
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localThumbnailPathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'localThumbnailPath',
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localThumbnailPathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'localThumbnailPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localThumbnailPathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'localThumbnailPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localThumbnailPathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'localThumbnailPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localThumbnailPathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'localThumbnailPath',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localThumbnailPathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'localThumbnailPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localThumbnailPathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'localThumbnailPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localThumbnailPathContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'localThumbnailPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localThumbnailPathMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'localThumbnailPath',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localThumbnailPathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'localThumbnailPath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      localThumbnailPathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'localThumbnailPath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCacheKeyIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'mediaCacheKey',
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCacheKeyIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'mediaCacheKey',
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCacheKeyEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'mediaCacheKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCacheKeyGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'mediaCacheKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCacheKeyLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'mediaCacheKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCacheKeyBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'mediaCacheKey',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCacheKeyStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'mediaCacheKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCacheKeyEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'mediaCacheKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCacheKeyContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'mediaCacheKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCacheKeyMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'mediaCacheKey',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCacheKeyIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'mediaCacheKey',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCacheKeyIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'mediaCacheKey',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCachedAtUtcIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'mediaCachedAtUtc',
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCachedAtUtcIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'mediaCachedAtUtc',
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCachedAtUtcEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'mediaCachedAtUtc',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCachedAtUtcGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'mediaCachedAtUtc',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCachedAtUtcLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'mediaCachedAtUtc',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterFilterCondition>
+      mediaCachedAtUtcBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'mediaCachedAtUtc',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<PostCache, PostCache, QAfterFilterCondition> postIdEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1483,6 +2073,56 @@ extension PostCacheQuerySortBy on QueryBuilder<PostCache, PostCache, QSortBy> {
     });
   }
 
+  QueryBuilder<PostCache, PostCache, QAfterSortBy> sortByLocalImagePath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'localImagePath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterSortBy> sortByLocalImagePathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'localImagePath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterSortBy> sortByLocalThumbnailPath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'localThumbnailPath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterSortBy>
+      sortByLocalThumbnailPathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'localThumbnailPath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterSortBy> sortByMediaCacheKey() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaCacheKey', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterSortBy> sortByMediaCacheKeyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaCacheKey', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterSortBy> sortByMediaCachedAtUtc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaCachedAtUtc', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterSortBy>
+      sortByMediaCachedAtUtcDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaCachedAtUtc', Sort.desc);
+    });
+  }
+
   QueryBuilder<PostCache, PostCache, QAfterSortBy> sortByPostId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'postId', Sort.asc);
@@ -1583,6 +2223,56 @@ extension PostCacheQuerySortThenBy
     });
   }
 
+  QueryBuilder<PostCache, PostCache, QAfterSortBy> thenByLocalImagePath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'localImagePath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterSortBy> thenByLocalImagePathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'localImagePath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterSortBy> thenByLocalThumbnailPath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'localThumbnailPath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterSortBy>
+      thenByLocalThumbnailPathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'localThumbnailPath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterSortBy> thenByMediaCacheKey() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaCacheKey', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterSortBy> thenByMediaCacheKeyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaCacheKey', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterSortBy> thenByMediaCachedAtUtc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaCachedAtUtc', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QAfterSortBy>
+      thenByMediaCachedAtUtcDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaCachedAtUtc', Sort.desc);
+    });
+  }
+
   QueryBuilder<PostCache, PostCache, QAfterSortBy> thenByPostId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'postId', Sort.asc);
@@ -1650,6 +2340,36 @@ extension PostCacheQueryWhereDistinct
     });
   }
 
+  QueryBuilder<PostCache, PostCache, QDistinct> distinctByLocalImagePath(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'localImagePath',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QDistinct> distinctByLocalThumbnailPath(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'localThumbnailPath',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QDistinct> distinctByMediaCacheKey(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'mediaCacheKey',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<PostCache, PostCache, QDistinct> distinctByMediaCachedAtUtc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'mediaCachedAtUtc');
+    });
+  }
+
   QueryBuilder<PostCache, PostCache, QDistinct> distinctByPostId(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1700,6 +2420,32 @@ extension PostCacheQueryProperty
   QueryBuilder<PostCache, String, QQueryOperations> listScopeKeyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'listScopeKey');
+    });
+  }
+
+  QueryBuilder<PostCache, String?, QQueryOperations> localImagePathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'localImagePath');
+    });
+  }
+
+  QueryBuilder<PostCache, String?, QQueryOperations>
+      localThumbnailPathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'localThumbnailPath');
+    });
+  }
+
+  QueryBuilder<PostCache, String?, QQueryOperations> mediaCacheKeyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'mediaCacheKey');
+    });
+  }
+
+  QueryBuilder<PostCache, DateTime?, QQueryOperations>
+      mediaCachedAtUtcProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'mediaCachedAtUtc');
     });
   }
 

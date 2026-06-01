@@ -120,6 +120,39 @@ void main() {
       );
       expect(database.writeCount, 0);
     });
+
+    test('khÃ´ng ghi media cache path khi user rá»—ng', () async {
+      final database = FakeAppDatabase();
+      final datasource = PostsLocalDatasourceImpl(database);
+
+      await expectLater(
+        datasource.updatePostMediaCacheInUserCaches(
+          cacheScopeUserId: ' ',
+          postId: 'post-1',
+          mediaCacheKey: 'media-1',
+          localImagePath: null,
+          localThumbnailPath: 'C:\\cache\\thumb.jpg',
+          mediaCachedAtUtc: DateTime.utc(2026, 6, 1),
+        ),
+        throwsA(isA<CacheException>()),
+      );
+      expect(database.writeCount, 0);
+    });
+
+    test('khÃ´ng clear media path khi user rá»—ng', () async {
+      final database = FakeAppDatabase();
+      final datasource = PostsLocalDatasourceImpl(database);
+
+      await expectLater(
+        datasource.clearDeletedMediaPaths(
+          cacheScopeUserId: '',
+          deletedPaths: {'C:\\cache\\thumb.jpg'},
+          cachedAtUtc: DateTime.utc(2026, 6, 1),
+        ),
+        throwsA(isA<CacheException>()),
+      );
+      expect(database.writeCount, 0);
+    });
   });
 }
 

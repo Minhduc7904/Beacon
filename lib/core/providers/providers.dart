@@ -159,6 +159,7 @@ import '../../features/safety/presentation/controllers/safety_settings_notifier.
 import '../../features/safety/presentation/controllers/safety_settings_state.dart';
 import '../cache/current_user_cache_scope.dart';
 import '../cache/current_user_cache_scope_impl.dart';
+import '../cache/media_file_cache_service.dart';
 import '../database/app_database.dart';
 import '../observers/app_provider_observer.dart';
 import '../messages/app_message.dart';
@@ -204,6 +205,10 @@ final currentUserCacheScopeProvider = Provider<CurrentUserCacheScope>((ref) {
 
 final appPreferencesProvider = Provider<AppPreferences>((ref) {
   return AppPreferencesImpl(ref.watch(localStorageProvider));
+});
+
+final mediaFileCacheServiceProvider = Provider<MediaFileCacheService>((ref) {
+  return MediaFileCacheService(dio: ref.watch(dioClientProvider).dio);
 });
 
 final isDarkModeProvider = FutureProvider<bool>((ref) async {
@@ -359,6 +364,7 @@ final postsRepositoryProvider = Provider<PostsRepository>((ref) {
     remoteDatasource: ref.watch(postsRemoteDatasourceProvider),
     localDatasource: ref.watch(postsLocalDatasourceProvider),
     currentUserCacheScope: ref.watch(currentUserCacheScopeProvider),
+    mediaFileCacheService: ref.watch(mediaFileCacheServiceProvider),
     networkInfo: ref.watch(networkInfoProvider),
   );
 });

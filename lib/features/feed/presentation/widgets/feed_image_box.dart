@@ -8,6 +8,7 @@ import '../../../../core/widgets/text/text.dart';
 import '../../../posts/presentation/widgets/post_location_map_button.dart';
 import '../../domain/entities/feed_post.dart';
 import 'feed_media_radius.dart';
+import 'post_cached_image.dart';
 
 const _feedImageHorizontalInset = 48.0;
 const _feedImageMinSize = 240.0;
@@ -50,24 +51,24 @@ class FeedImageBox extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(
-            post.imageUrl,
-            key: ValueKey<String>('${post.id}:${post.imageUrl}'),
+          PostCachedImage(
+            key: ValueKey<String>(
+              '${post.id}:${post.localThumbnailPath}:${post.localImagePath}:${post.imageUrl}',
+            ),
+            localThumbnailPath: post.localThumbnailPath,
+            localImagePath: post.localImagePath,
+            remoteThumbnailUrl: post.remoteThumbnailUrl,
+            remoteImageUrl: post.remoteImageUrl ?? post.imageUrl,
             fit: BoxFit.cover,
-            loadingBuilder: (context, child, progress) {
-              if (progress == null) return child;
-              return Center(
+            loadingBuilder: (context) {
+              return const Center(
                 child: CircularProgressIndicator(
-                  value: progress.expectedTotalBytes != null
-                      ? progress.cumulativeBytesLoaded /
-                            progress.expectedTotalBytes!
-                      : null,
                   strokeWidth: 2,
                   color: Colors.white54,
                 ),
               );
             },
-            errorBuilder: (context, error, stackTrace) {
+            errorBuilder: (context) {
               return const Center(
                 child: Text(
                   'Không thể tải ảnh',

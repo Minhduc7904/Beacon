@@ -6,6 +6,10 @@ class PostMediaModel extends PostMedia {
     required super.url,
     required super.type,
     required super.thumbnailUrl,
+    super.localImagePath,
+    super.localThumbnailPath,
+    super.mediaCacheKey,
+    super.mediaCachedAtUtc,
     required super.durationSeconds,
     required super.width,
     required super.height,
@@ -17,6 +21,10 @@ class PostMediaModel extends PostMedia {
       url: json['url']?.toString() ?? '',
       type: json['type']?.toString() ?? '',
       thumbnailUrl: json['thumbnailUrl']?.toString(),
+      localImagePath: json['localImagePath']?.toString(),
+      localThumbnailPath: json['localThumbnailPath']?.toString(),
+      mediaCacheKey: json['mediaCacheKey']?.toString(),
+      mediaCachedAtUtc: _toNullableDate(json['mediaCachedAtUtc']),
       durationSeconds: _toNullableInt(json['durationSeconds']),
       width: _toNullableInt(json['width']),
       height: _toNullableInt(json['height']),
@@ -34,5 +42,13 @@ class PostMediaModel extends PostMedia {
       return value.toInt();
     }
     return int.tryParse(value.toString());
+  }
+
+  static DateTime? _toNullableDate(dynamic value) {
+    final raw = value?.toString();
+    if (raw == null || raw.trim().isEmpty) {
+      return null;
+    }
+    return DateTime.tryParse(raw)?.toUtc();
   }
 }

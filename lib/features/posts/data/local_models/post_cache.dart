@@ -16,5 +16,9 @@ class PostCache {
   late String postId;
   late int sortOrder;
   late String postJson;
+  String? localImagePath;
+  String? localThumbnailPath;
+  String? mediaCacheKey;
+  DateTime? mediaCachedAtUtc;
   late DateTime cachedAtUtc;
 }

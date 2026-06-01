@@ -1,4 +1,5 @@
 import 'package:beacon_app/core/cache/current_user_cache_scope.dart';
+import 'package:beacon_app/core/cache/media_file_cache_service.dart';
 import 'package:beacon_app/core/errors/exceptions.dart';
 import 'package:beacon_app/core/errors/failures.dart';
 import 'package:beacon_app/core/network/network_info.dart';
@@ -22,6 +23,8 @@ class MockPostsRemoteDatasource extends Mock implements PostsRemoteDatasource {}
 class MockPostsLocalDatasource extends Mock implements PostsLocalDatasource {}
 
 class MockCurrentUserCacheScope extends Mock implements CurrentUserCacheScope {}
+
+class MockMediaFileCacheService extends Mock implements MediaFileCacheService {}
 
 class MockNetworkInfo extends Mock implements NetworkInfo {}
 
@@ -112,6 +115,8 @@ void main() {
   setUpAll(() {
     registerFallbackValue(_postPageModel());
     registerFallbackValue(_postModel());
+    registerFallbackValue(MediaFileCacheVariant.thumbnail);
+    registerFallbackValue(<String>{});
   });
 
   setUp(() {
@@ -353,6 +358,105 @@ void main() {
           page: page,
           isFirstPage: true,
           cachedAtUtc: any(named: 'cachedAtUtc'),
+        ),
+      ).called(1);
+    });
+
+    test('getFeedPosts online cache thumbnail background và update local path', () async {
+      final mediaFileCacheService = MockMediaFileCacheService();
+      repository = PostsRepositoryImpl(
+        remoteDatasource: remoteDatasource,
+        localDatasource: localDatasource,
+        currentUserCacheScope: currentUserCacheScope,
+        mediaFileCacheService: mediaFileCacheService,
+        networkInfo: networkInfo,
+      );
+      _stubNetwork(networkInfo, true);
+      when(
+        () => currentUserCacheScope.getCurrentUserId(),
+      ).thenAnswer((_) async => 'user-1');
+      final page = _postPageModel(
+        items: [
+          _postModel(
+            id: 'post-1',
+            thumbnailUrl: 'https://example.com/thumb.jpg',
+          ),
+        ],
+      );
+      when(
+        () => remoteDatasource.getFeedPosts(cursor: null, limit: 20),
+      ).thenAnswer((_) async => page);
+      when(
+        () => localDatasource.upsertPostPage(
+          listScopeKey: any(named: 'listScopeKey'),
+          cacheScopeUserId: any(named: 'cacheScopeUserId'),
+          feedType: any(named: 'feedType'),
+          friendId: any(named: 'friendId'),
+          page: any(named: 'page'),
+          isFirstPage: any(named: 'isFirstPage'),
+          cachedAtUtc: any(named: 'cachedAtUtc'),
+        ),
+      ).thenAnswer((_) async {});
+      when(
+        () => mediaFileCacheService.cachePostMedia(
+          remoteUrl: any(named: 'remoteUrl'),
+          mediaId: any(named: 'mediaId'),
+          objectKey: null,
+          variant: any(named: 'variant'),
+        ),
+      ).thenAnswer((_) async => 'C:\\cache\\post-1-thumb.jpg');
+      when(
+        () => mediaFileCacheService.cacheKeyFor(
+          mediaId: any(named: 'mediaId'),
+          objectKey: null,
+          remoteUrl: any(named: 'remoteUrl'),
+        ),
+      ).thenReturn('media-post-1');
+      when(
+        () => localDatasource.updatePostMediaCacheInUserCaches(
+          cacheScopeUserId: any(named: 'cacheScopeUserId'),
+          postId: any(named: 'postId'),
+          mediaCacheKey: any(named: 'mediaCacheKey'),
+          localImagePath: any(named: 'localImagePath'),
+          localThumbnailPath: any(named: 'localThumbnailPath'),
+          mediaCachedAtUtc: any(named: 'mediaCachedAtUtc'),
+        ),
+      ).thenAnswer((_) async {});
+      when(
+        () => mediaFileCacheService.cleanupPostMedia(
+          protectedPaths: any(named: 'protectedPaths'),
+        ),
+      ).thenAnswer((_) async => const <String>{});
+
+      final result = await repository.getFeedPosts(limit: 20);
+
+      _expectRightSame(result, page);
+      await untilCalled(
+        () => localDatasource.updatePostMediaCacheInUserCaches(
+          cacheScopeUserId: any(named: 'cacheScopeUserId'),
+          postId: any(named: 'postId'),
+          mediaCacheKey: any(named: 'mediaCacheKey'),
+          localImagePath: any(named: 'localImagePath'),
+          localThumbnailPath: any(named: 'localThumbnailPath'),
+          mediaCachedAtUtc: any(named: 'mediaCachedAtUtc'),
+        ),
+      );
+      verify(
+        () => mediaFileCacheService.cachePostMedia(
+          remoteUrl: 'https://example.com/thumb.jpg',
+          mediaId: 'media-post-1',
+          objectKey: null,
+          variant: MediaFileCacheVariant.thumbnail,
+        ),
+      ).called(1);
+      verify(
+        () => localDatasource.updatePostMediaCacheInUserCaches(
+          cacheScopeUserId: 'user-1',
+          postId: 'post-1',
+          mediaCacheKey: 'media-post-1',
+          localImagePath: null,
+          localThumbnailPath: 'C:\\cache\\post-1-thumb.jpg',
+          mediaCachedAtUtc: any(named: 'mediaCachedAtUtc'),
         ),
       ).called(1);
     });

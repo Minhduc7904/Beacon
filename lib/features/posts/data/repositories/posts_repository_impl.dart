@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/cache/current_user_cache_scope.dart';
+import '../../../../core/cache/media_file_cache_service.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/post.dart';
@@ -18,6 +21,7 @@ class PostsRepositoryImpl implements PostsRepository {
   final PostsRemoteDatasource _remoteDatasource;
   final PostsLocalDatasource _localDatasource;
   final CurrentUserCacheScope _currentUserCacheScope;
+  final MediaFileCacheService? _mediaFileCacheService;
   final NetworkInfo _networkInfo;
   final DateTime Function() _nowUtc;
 
@@ -25,11 +29,13 @@ class PostsRepositoryImpl implements PostsRepository {
     required PostsRemoteDatasource remoteDatasource,
     required PostsLocalDatasource localDatasource,
     required CurrentUserCacheScope currentUserCacheScope,
+    MediaFileCacheService? mediaFileCacheService,
     required NetworkInfo networkInfo,
     DateTime Function()? nowUtc,
   }) : _remoteDatasource = remoteDatasource,
        _localDatasource = localDatasource,
        _currentUserCacheScope = currentUserCacheScope,
+       _mediaFileCacheService = mediaFileCacheService,
        _networkInfo = networkInfo,
        _nowUtc = nowUtc ?? (() => DateTime.now().toUtc());
 
@@ -238,6 +244,7 @@ class PostsRepositoryImpl implements PostsRepository {
         cursor: cursor,
         page: page,
       );
+      unawaited(_cachePostPageMediaIfScoped(page));
       return Right(page);
     } on Exception catch (e) {
       return Left(e.toFailure());
@@ -315,6 +322,82 @@ class PostsRepositoryImpl implements PostsRepository {
       );
     } on Exception {
       // Cache write is best-effort; remote success remains source of truth.
+    }
+  }
+
+  Future<void> _cachePostPageMediaIfScoped(PostPage page) async {
+    final mediaFileCacheService = _mediaFileCacheService;
+    if (mediaFileCacheService == null || page.items.isEmpty) {
+      return;
+    }
+
+    try {
+      final cacheScopeUserId = await _currentUserCacheScope.getCurrentUserId();
+      if (cacheScopeUserId == null || cacheScopeUserId.trim().isEmpty) {
+        return;
+      }
+
+      final protectedPaths = <String>{};
+      for (final post in page.items) {
+        final thumbnailUrl = post.media.thumbnailUrl?.trim();
+        final originalUrl = post.media.url.trim();
+        String? localThumbnailPath;
+        String? localImagePath;
+
+        if (thumbnailUrl != null && thumbnailUrl.isNotEmpty) {
+          localThumbnailPath = await mediaFileCacheService.cachePostMedia(
+            remoteUrl: thumbnailUrl,
+            mediaId: post.media.id,
+            objectKey: null,
+            variant: MediaFileCacheVariant.thumbnail,
+          );
+        }
+
+        if ((thumbnailUrl == null || thumbnailUrl.isEmpty) &&
+            originalUrl.isNotEmpty) {
+          localImagePath = await mediaFileCacheService.cachePostMedia(
+            remoteUrl: originalUrl,
+            mediaId: post.media.id,
+            objectKey: null,
+            variant: MediaFileCacheVariant.original,
+          );
+        }
+
+        if (localThumbnailPath == null && localImagePath == null) {
+          continue;
+        }
+
+        protectedPaths.addAll([
+          if (localThumbnailPath != null) localThumbnailPath,
+          if (localImagePath != null) localImagePath,
+        ]);
+
+        await _localDatasource.updatePostMediaCacheInUserCaches(
+          cacheScopeUserId: cacheScopeUserId,
+          postId: post.id,
+          mediaCacheKey: mediaFileCacheService.cacheKeyFor(
+            mediaId: post.media.id,
+            objectKey: null,
+            remoteUrl: post.media.url,
+          ),
+          localImagePath: localImagePath,
+          localThumbnailPath: localThumbnailPath,
+          mediaCachedAtUtc: _nowUtc(),
+        );
+      }
+
+      final deletedPaths = await mediaFileCacheService.cleanupPostMedia(
+        protectedPaths: protectedPaths,
+      );
+      if (deletedPaths.isNotEmpty) {
+        await _localDatasource.clearDeletedMediaPaths(
+          cacheScopeUserId: cacheScopeUserId,
+          deletedPaths: deletedPaths,
+          cachedAtUtc: _nowUtc(),
+        );
+      }
+    } on Exception {
+      // Media file cache is best-effort; post metadata stays usable offline.
     }
   }
 

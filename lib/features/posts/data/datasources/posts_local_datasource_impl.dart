@@ -161,7 +161,10 @@ class PostsLocalDatasourceImpl implements PostsLocalDatasource {
 
         final updated = [
           for (final cache in caches)
-            post.toCache(
+            _postWithPreservedMediaCache(
+              post: post,
+              existingCache: cache,
+            ).toCache(
               listScopeKey: cache.listScopeKey,
               cacheScopeUserId: userId,
               sortOrder: cache.sortOrder,
@@ -169,6 +172,126 @@ class PostsLocalDatasourceImpl implements PostsLocalDatasource {
             )..id = cache.id,
         ];
         await isar.collection<PostCache>().putAllByCacheKey(updated);
+      });
+    } on CacheException {
+      rethrow;
+    } catch (error) {
+      throw CacheException(message: error.toString());
+    }
+  }
+
+  @override
+  Future<void> updatePostMediaCacheInUserCaches({
+    required String cacheScopeUserId,
+    required String postId,
+    required String? mediaCacheKey,
+    required String? localImagePath,
+    required String? localThumbnailPath,
+    required DateTime mediaCachedAtUtc,
+  }) async {
+    try {
+      final userId = _requireCacheScopeUserId(cacheScopeUserId);
+      final normalizedPostId = _requireCacheKey(postId);
+      await _database.write<void>((isar) async {
+        final caches = await isar
+            .collection<PostCache>()
+            .filter()
+            .cacheScopeUserIdEqualTo(userId)
+            .postIdEqualTo(normalizedPostId)
+            .findAll();
+        if (caches.isEmpty) {
+          return;
+        }
+
+        final updated = <PostCache>[];
+        for (final cache in caches) {
+          final post = cache.toDomain();
+          final media = post.media.copyWith(
+            mediaCacheKey: mediaCacheKey,
+            localImagePath: localImagePath,
+            localThumbnailPath: localThumbnailPath,
+            mediaCachedAtUtc: mediaCachedAtUtc.toUtc(),
+          );
+          updated.add(
+            post
+                .copyWith(media: media)
+                .toCache(
+                  listScopeKey: cache.listScopeKey,
+                  cacheScopeUserId: userId,
+                  sortOrder: cache.sortOrder,
+                  cachedAtUtc: cache.cachedAtUtc,
+                )
+              ..id = cache.id,
+          );
+        }
+
+        await isar.collection<PostCache>().putAllByCacheKey(updated);
+      });
+    } on CacheException {
+      rethrow;
+    } catch (error) {
+      throw CacheException(message: error.toString());
+    }
+  }
+
+  @override
+  Future<void> clearDeletedMediaPaths({
+    required String cacheScopeUserId,
+    required Set<String> deletedPaths,
+    required DateTime cachedAtUtc,
+  }) async {
+    try {
+      final userId = _requireCacheScopeUserId(cacheScopeUserId);
+      if (deletedPaths.isEmpty) {
+        return;
+      }
+
+      await _database.write<void>((isar) async {
+        final caches = await isar
+            .collection<PostCache>()
+            .filter()
+            .cacheScopeUserIdEqualTo(userId)
+            .findAll();
+        if (caches.isEmpty) {
+          return;
+        }
+
+        final updated = <PostCache>[];
+        for (final cache in caches) {
+          final post = cache.toDomain();
+          final media = post.media;
+          final hasDeletedImage =
+              media.localImagePath != null &&
+              deletedPaths.contains(media.localImagePath);
+          final hasDeletedThumbnail =
+              media.localThumbnailPath != null &&
+              deletedPaths.contains(media.localThumbnailPath);
+          if (!hasDeletedImage && !hasDeletedThumbnail) {
+            continue;
+          }
+
+          updated.add(
+            post
+                .copyWith(
+                  media: media.copyWith(
+                    clearLocalImagePath: hasDeletedImage,
+                    clearLocalThumbnailPath: hasDeletedThumbnail,
+                    clearMediaCachedAtUtc: hasDeletedImage && hasDeletedThumbnail,
+                  ),
+                )
+                .toCache(
+                  listScopeKey: cache.listScopeKey,
+                  cacheScopeUserId: userId,
+                  sortOrder: cache.sortOrder,
+                  cachedAtUtc: cachedAtUtc,
+                )
+              ..id = cache.id,
+          );
+        }
+
+        if (updated.isNotEmpty) {
+          await isar.collection<PostCache>().putAllByCacheKey(updated);
+        }
       });
     } on CacheException {
       rethrow;
@@ -215,9 +338,15 @@ class PostsLocalDatasourceImpl implements PostsLocalDatasource {
     required bool isFirstPage,
     required DateTime cachedAtUtc,
   }) {
+    final existingByPostId = {
+      for (final cache in existing) cache.postId: cache,
+    };
     final pageCaches = [
       for (var index = 0; index < page.items.length; index += 1)
-        page.items[index].toCache(
+        _postWithPreservedMediaCache(
+          post: page.items[index],
+          existingCache: existingByPostId[page.items[index].id],
+        ).toCache(
           listScopeKey: listScopeKey,
           cacheScopeUserId: cacheScopeUserId,
           sortOrder: index,
@@ -248,6 +377,31 @@ class PostsLocalDatasourceImpl implements PostsLocalDatasource {
     }
 
     return merged;
+  }
+
+  Post _postWithPreservedMediaCache({
+    required Post post,
+    required PostCache? existingCache,
+  }) {
+    if (existingCache == null) {
+      return post;
+    }
+
+    final cachedMedia = existingCache.toDomain().media;
+    if (cachedMedia.id.trim().isNotEmpty &&
+        post.media.id.trim().isNotEmpty &&
+        cachedMedia.id.trim() != post.media.id.trim()) {
+      return post;
+    }
+
+    return post.copyWith(
+      media: post.media.copyWith(
+        localImagePath: cachedMedia.localImagePath,
+        localThumbnailPath: cachedMedia.localThumbnailPath,
+        mediaCacheKey: cachedMedia.mediaCacheKey,
+        mediaCachedAtUtc: cachedMedia.mediaCachedAtUtc,
+      ),
+    );
   }
 
   bool _sameCachedPage({

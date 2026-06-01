@@ -1,4 +1,6 @@
 import 'package:beacon_app/core/config/app_env.dart';
+import 'package:beacon_app/core/database/app_database.dart';
+import 'package:beacon_app/core/database/isar_database.dart';
 import 'package:beacon_app/core/network/api_endpoints.dart';
 import 'package:beacon_app/core/network/network_info.dart';
 import 'package:beacon_app/core/providers/providers.dart';
@@ -25,11 +27,13 @@ class BeaconIntegrationTestApp {
     required this.prefs,
     required this.authLocalDatasource,
     required this.pushNotificationService,
+    required this.appDatabase,
   });
 
   final SharedPreferences prefs;
   final IntegrationAuthLocalDatasource authLocalDatasource;
   final FakePushNotificationService pushNotificationService;
+  final AppDatabase appDatabase;
 
   static Future<BeaconIntegrationTestApp> create({
     bool resetBackend = true,
@@ -43,11 +47,15 @@ class BeaconIntegrationTestApp {
 
     final prefs = await SharedPreferences.getInstance();
     final authLocalDatasource = IntegrationAuthLocalDatasource();
+    final appDatabase = await IsarDatabase.open();
+
+    await appDatabase.clearAll();
 
     return BeaconIntegrationTestApp._(
       prefs: prefs,
       authLocalDatasource: authLocalDatasource,
       pushNotificationService: FakePushNotificationService(),
+      appDatabase: appDatabase,
     );
   }
 
@@ -56,6 +64,7 @@ class BeaconIntegrationTestApp {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         authLocalDatasourceProvider.overrideWithValue(authLocalDatasource),
+        appDatabaseProvider.overrideWithValue(appDatabase),
         networkInfoProvider.overrideWithValue(
           const AlwaysConnectedNetworkInfo(),
         ),
@@ -65,6 +74,10 @@ class BeaconIntegrationTestApp {
       ],
       child: const MyApp(),
     );
+  }
+
+  Future<void> dispose() async {
+    await appDatabase.close();
   }
 }
 
@@ -76,6 +89,8 @@ Future<BeaconIntegrationTestApp> pumpBeaconIntegrationApp(
 
   await tester.pumpWidget(app.build());
   await tester.pump(const Duration(milliseconds: 100));
+
+  addTearDown(app.dispose);
 
   return app;
 }
@@ -122,16 +137,19 @@ Future<void> _loadIntegrationEnv() async {
     overrideValue: _appEnvOverride,
     defaultValue: 'production',
   );
+
   final baseUrl = _resolveEnvValue(
     key: 'BASE_URL',
     overrideValue: _baseUrlOverride,
     defaultValue: 'http://localhost:5000/api/v1',
   );
+
   final signalRHubUrl = _resolveEnvValue(
     key: 'SIGNALR_HUB_URL',
     overrideValue: _signalRHubUrlOverride,
     defaultValue: '',
   );
+
   final devSeedResetToken = _resolveEnvValue(
     key: 'DEV_SEED_RESET_TOKEN',
     overrideValue: _devSeedResetTokenOverride,

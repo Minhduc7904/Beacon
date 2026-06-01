@@ -66,6 +66,8 @@ Post _post({
   String? ownerAvatarUrl = 'https://example.com/avatar.jpg',
   String mediaUrl = 'https://example.com/image.jpg',
   String? thumbnailUrl = ' https://example.com/thumb.jpg ',
+  String? localThumbnailPath,
+  String? localImagePath,
   String? caption = 'Caption gốc',
   PostVisibility visibility = PostVisibility.friends,
   DateTime? createdAtUtc,
@@ -85,6 +87,8 @@ Post _post({
       url: mediaUrl,
       type: 'image',
       thumbnailUrl: thumbnailUrl,
+      localThumbnailPath: localThumbnailPath,
+      localImagePath: localImagePath,
       durationSeconds: null,
       width: 1080,
       height: 1080,
@@ -273,6 +277,8 @@ void main() {
             PostReactionIcon.like: 0,
           }),
           myReaction: const MyReaction(icon: PostReactionIcon.heart),
+          localThumbnailPath: 'C:\\cache\\thumb.jpg',
+          localImagePath: 'C:\\cache\\image.jpg',
         );
         when(
           () => getFeedPostsUseCase(
@@ -302,6 +308,10 @@ void main() {
         expect(feedPost.id, post.id);
         expect(feedPost.authorName, 'Mai Nguyen');
         expect(feedPost.imageUrl, 'https://example.com/thumb.jpg');
+        expect(feedPost.remoteThumbnailUrl, 'https://example.com/thumb.jpg');
+        expect(feedPost.remoteImageUrl, 'https://example.com/image.jpg');
+        expect(feedPost.localThumbnailPath, 'C:\\cache\\thumb.jpg');
+        expect(feedPost.localImagePath, 'C:\\cache\\image.jpg');
         expect(feedPost.caption, post.caption);
         expect(feedPost.createdAt, DateTime.utc(2026, 5, 26, 15));
         expect(feedPost.reactionCounts, equals({ReactionType.heart: 2}));

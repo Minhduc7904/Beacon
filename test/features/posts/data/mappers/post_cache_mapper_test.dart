@@ -27,11 +27,15 @@ void main() {
         id: 'post-1',
         ownerUserId: 'user-1',
         owner: null,
-        media: const PostMediaModel(
+        media: PostMediaModel(
           id: 'media-1',
           url: 'https://example.com/media-new.jpg',
           type: 'image',
           thumbnailUrl: 'https://example.com/thumb-new.jpg',
+          localImagePath: 'C:\\cache\\media_original.jpg',
+          localThumbnailPath: 'C:\\cache\\media_thumb.jpg',
+          mediaCacheKey: 'media-1',
+          mediaCachedAtUtc: DateTime.utc(2026, 6, 1, 4),
           durationSeconds: null,
           width: 1080,
           height: 1080,
@@ -59,9 +63,17 @@ void main() {
 
       expect(cache.cacheKey, 'user-1:all:post-1');
       expect(cache.sortOrder, 2);
+      expect(cache.localImagePath, 'C:\\cache\\media_original.jpg');
+      expect(cache.localThumbnailPath, 'C:\\cache\\media_thumb.jpg');
+      expect(cache.mediaCacheKey, 'media-1');
+      expect(cache.mediaCachedAtUtc, DateTime.utc(2026, 6, 1, 4));
       expect(restored.id, post.id);
       expect(restored.media.url, 'https://example.com/media-new.jpg');
       expect(restored.media.thumbnailUrl, 'https://example.com/thumb-new.jpg');
+      expect(restored.media.localImagePath, 'C:\\cache\\media_original.jpg');
+      expect(restored.media.localThumbnailPath, 'C:\\cache\\media_thumb.jpg');
+      expect(restored.media.mediaCacheKey, 'media-1');
+      expect(restored.media.mediaCachedAtUtc, DateTime.utc(2026, 6, 1, 4));
       expect(restored.updatedAtUtc, DateTime.utc(2026, 6, 1, 2));
     });
   });

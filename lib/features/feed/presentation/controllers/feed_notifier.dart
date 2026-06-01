@@ -41,7 +41,9 @@ class FeedNotifier extends StateNotifier<FeedState> {
   final DeletePostUseCase _deletePostUseCase;
   final SubscribeNewPostsRealtimeUseCase _subscribeNewPostsRealtimeUseCase;
   final AppMessageNotifier _messageNotifier;
+
   final Set<String> _reactingPostIds = <String>{};
+
   void Function()? _unsubscribeNewPosts;
   bool _isBindingRealtime = false;
 
@@ -60,7 +62,15 @@ class FeedNotifier extends StateNotifier<FeedState> {
   ) : super(const FeedState());
 
   Future<void> load({bool forceRefresh = false}) async {
+    if (!mounted) {
+      return;
+    }
+
     unawaited(_bindRealtime());
+
+    if (!mounted) {
+      return;
+    }
 
     if (state.status == FeedStatus.loading && !forceRefresh) {
       return;
@@ -73,8 +83,17 @@ class FeedNotifier extends StateNotifier<FeedState> {
       filter: activeFilter,
       limit: _pageLimit,
     );
+
+    if (!mounted) {
+      return;
+    }
+
     cachedResult.fold(
       (_) {
+        if (!mounted) {
+          return;
+        }
+
         if (!hasVisiblePosts) {
           state = state.copyWith(
             status: FeedStatus.loading,
@@ -96,7 +115,12 @@ class FeedNotifier extends StateNotifier<FeedState> {
         }
       },
       (page) {
+        if (!mounted) {
+          return;
+        }
+
         final cachedPosts = page.items.map(_mapPost).toList();
+
         if (cachedPosts.isNotEmpty) {
           hasVisiblePosts = true;
           state = state.copyWith(
@@ -128,8 +152,16 @@ class FeedNotifier extends StateNotifier<FeedState> {
 
     final result = await _loadPage(filter: activeFilter, limit: _pageLimit);
 
+    if (!mounted) {
+      return;
+    }
+
     result.fold(
       (failure) {
+        if (!mounted) {
+          return;
+        }
+
         if (!hasVisiblePosts) {
           _messageNotifier.addError(failure.message);
           state = state.copyWith(
@@ -148,7 +180,12 @@ class FeedNotifier extends StateNotifier<FeedState> {
         );
       },
       (page) {
+        if (!mounted) {
+          return;
+        }
+
         final remotePosts = page.items.map(_mapPost).toList();
+
         state = state.copyWith(
           status: FeedStatus.loaded,
           posts: remotePosts,
@@ -162,6 +199,10 @@ class FeedNotifier extends StateNotifier<FeedState> {
   }
 
   Future<void> loadMore() async {
+    if (!mounted) {
+      return;
+    }
+
     if (state.status != FeedStatus.loaded ||
         state.isLoadingMore ||
         !state.hasMore) {
@@ -181,8 +222,16 @@ class FeedNotifier extends StateNotifier<FeedState> {
       limit: _pageLimit,
     );
 
+    if (!mounted) {
+      return;
+    }
+
     result.fold(
       (failure) {
+        if (!mounted) {
+          return;
+        }
+
         _messageNotifier.addError(failure.message);
         state = state.copyWith(
           isLoadingMore: false,
@@ -190,7 +239,12 @@ class FeedNotifier extends StateNotifier<FeedState> {
         );
       },
       (page) {
+        if (!mounted) {
+          return;
+        }
+
         final nextPosts = page.items.map(_mapPost).toList();
+
         state = state.copyWith(
           posts: _mergeNextPagePosts(state.posts, nextPosts),
           nextCursor: page.nextCursor,
@@ -203,6 +257,10 @@ class FeedNotifier extends StateNotifier<FeedState> {
   }
 
   Future<void> updateFilter(FeedFilter filter) async {
+    if (!mounted) {
+      return;
+    }
+
     if (state.filter == filter) {
       return;
     }
@@ -212,6 +270,10 @@ class FeedNotifier extends StateNotifier<FeedState> {
   }
 
   void updateViewMode(FeedViewMode viewMode) {
+    if (!mounted) {
+      return;
+    }
+
     if (state.viewMode == viewMode) {
       return;
     }
@@ -220,6 +282,10 @@ class FeedNotifier extends StateNotifier<FeedState> {
   }
 
   void applyIncomingPost(Post post) {
+    if (!mounted) {
+      return;
+    }
+
     if (!_shouldIncludeIncomingPost(post)) {
       return;
     }
@@ -227,6 +293,7 @@ class FeedNotifier extends StateNotifier<FeedState> {
     final posts = List<FeedPost>.from(state.posts);
     final incoming = _mapPost(post);
     final existingIndex = posts.indexWhere((item) => item.id == incoming.id);
+
     if (existingIndex >= 0) {
       posts[existingIndex] = incoming;
     } else {
@@ -234,6 +301,11 @@ class FeedNotifier extends StateNotifier<FeedState> {
     }
 
     posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    if (!mounted) {
+      return;
+    }
+
     state = state.copyWith(
       status: FeedStatus.loaded,
       posts: posts,
@@ -254,13 +326,26 @@ class FeedNotifier extends StateNotifier<FeedState> {
       ),
     );
 
+    if (!mounted) {
+      return;
+    }
+
     result.fold(
       (failure) {
+        if (!mounted) {
+          return;
+        }
+
         _messageNotifier.addError(failure.message);
       },
       (post) {
+        if (!mounted) {
+          return;
+        }
+
         final posts = List<FeedPost>.from(state.posts);
         final idx = posts.indexWhere((item) => item.id == post.id);
+
         if (idx == -1) {
           return;
         }
@@ -269,6 +354,7 @@ class FeedNotifier extends StateNotifier<FeedState> {
           caption: post.caption,
           visibility: post.visibility,
         );
+
         state = state.copyWith(posts: posts);
         _messageNotifier.addSuccess('Đã cập nhật bài đăng');
       },
@@ -278,14 +364,27 @@ class FeedNotifier extends StateNotifier<FeedState> {
   Future<void> deletePost(String postId) async {
     final result = await _deletePostUseCase(DeletePostParams(postId: postId));
 
+    if (!mounted) {
+      return;
+    }
+
     result.fold(
       (failure) {
+        if (!mounted) {
+          return;
+        }
+
         _messageNotifier.addError(failure.message);
       },
       (_) {
+        if (!mounted) {
+          return;
+        }
+
         final posts = state.posts
             .where((post) => post.id != postId)
             .toList(growable: false);
+
         state = state.copyWith(posts: posts);
         _messageNotifier.addSuccess('Đã xóa bài đăng');
       },
@@ -293,21 +392,30 @@ class FeedNotifier extends StateNotifier<FeedState> {
   }
 
   Future<void> toggleReaction(String postId, ReactionType type) async {
+    if (!mounted) {
+      return;
+    }
+
     if (_reactingPostIds.contains(postId)) {
       return;
     }
 
     final posts = List<FeedPost>.from(state.posts);
     final idx = posts.indexWhere((p) => p.id == postId);
-    if (idx == -1) return;
+
+    if (idx == -1) {
+      return;
+    }
 
     final post = posts[idx];
     final icon = _mapFeedReactionType(type);
+
     if (icon == null) {
       return;
     }
 
     _reactingPostIds.add(postId);
+
     final result = post.myReaction == type
         ? await _deletePostReactionUseCase(
             DeletePostReactionParams(postId: postId),
@@ -315,38 +423,72 @@ class FeedNotifier extends StateNotifier<FeedState> {
         : await _setPostReactionUseCase(
             SetPostReactionParams(postId: postId, icon: icon),
           );
+
     _reactingPostIds.remove(postId);
+
+    if (!mounted) {
+      return;
+    }
 
     result.fold(
       (failure) {
+        if (!mounted) {
+          return;
+        }
+
         _messageNotifier.addError(failure.message);
       },
       (reactionResult) {
+        if (!mounted) {
+          return;
+        }
+
         _applyReactionResult(reactionResult);
       },
     );
   }
 
   Future<bool> setReactionIcon(String postId, String icon) async {
+    if (!mounted) {
+      return false;
+    }
+
     if (_reactingPostIds.contains(postId)) {
       return false;
     }
 
     final posts = List<FeedPost>.from(state.posts);
     final idx = posts.indexWhere((p) => p.id == postId);
-    if (idx == -1) return false;
+
+    if (idx == -1) {
+      return false;
+    }
 
     _reactingPostIds.add(postId);
+
     final result = await _setPostReactionIconUseCase(
       SetPostReactionIconParams(postId: postId, icon: icon),
     );
+
     _reactingPostIds.remove(postId);
+
+    if (!mounted) {
+      return false;
+    }
 
     result.fold(
       (failure) {
+        if (!mounted) {
+          return;
+        }
+
         _messageNotifier.addError(failure.message);
       },
       (reactionResult) {
+        if (!mounted) {
+          return;
+        }
+
         _applyReactionResult(reactionResult);
       },
     );
@@ -355,6 +497,10 @@ class FeedNotifier extends StateNotifier<FeedState> {
   }
 
   Future<void> loadPostReactions(String postId) async {
+    if (!mounted) {
+      return;
+    }
+
     if (state.loadingReactionPostIds.contains(postId)) {
       return;
     }
@@ -367,14 +513,26 @@ class FeedNotifier extends StateNotifier<FeedState> {
       GetPostReactionsParams(postId: postId, limit: 20),
     );
 
+    if (!mounted) {
+      return;
+    }
+
     final loadingIds = Set<String>.from(state.loadingReactionPostIds)
       ..remove(postId);
 
     result.fold(
-      (failure) {
+      (_) {
+        if (!mounted) {
+          return;
+        }
+
         state = state.copyWith(loadingReactionPostIds: loadingIds);
       },
       (page) {
+        if (!mounted) {
+          return;
+        }
+
         state = state.copyWith(
           postReactionPages: {...state.postReactionPages, postId: page},
           loadingReactionPostIds: loadingIds,
@@ -391,8 +549,10 @@ class FeedNotifier extends StateNotifier<FeedState> {
     switch (filter.type) {
       case FeedFilterType.all:
         return _getFeedPostsUseCase(cursor: cursor, limit: limit);
+
       case FeedFilterType.me:
         return _getMyPostsUseCase(cursor: cursor, limit: limit);
+
       case FeedFilterType.friend:
         final friendId = filter.friendId?.trim() ?? '';
         return _getFriendPostsUseCase(
@@ -410,14 +570,13 @@ class FeedNotifier extends StateNotifier<FeedState> {
     switch (filter.type) {
       case FeedFilterType.all:
         return _getFeedPostsUseCase.cached(limit: limit);
+
       case FeedFilterType.me:
         return _getMyPostsUseCase.cached(limit: limit);
+
       case FeedFilterType.friend:
         final friendId = filter.friendId?.trim() ?? '';
-        return _getFriendPostsUseCase.cached(
-          friendId: friendId,
-          limit: limit,
-        );
+        return _getFriendPostsUseCase.cached(friendId: friendId, limit: limit);
     }
   }
 
@@ -426,8 +585,10 @@ class FeedNotifier extends StateNotifier<FeedState> {
     List<FeedPost> nextPosts,
   ) {
     final posts = List<FeedPost>.from(existingPosts);
+
     for (final post in nextPosts) {
       final index = posts.indexWhere((item) => item.id == post.id);
+
       if (index >= 0) {
         posts[index] = post;
       } else {
@@ -439,25 +600,43 @@ class FeedNotifier extends StateNotifier<FeedState> {
   }
 
   Future<void> _bindRealtime() async {
+    if (!mounted) {
+      return;
+    }
+
     if (_isBindingRealtime || _unsubscribeNewPosts != null) {
       return;
     }
 
     _isBindingRealtime = true;
+
     try {
       await _subscribeNewPostsRealtimeUseCase.call(onPost: applyIncomingPost);
+
+      if (!mounted) {
+        return;
+      }
+
       _unsubscribeNewPosts = _subscribeNewPostsRealtimeUseCase.unsubscribe();
     } finally {
-      _isBindingRealtime = false;
+      if (mounted) {
+        _isBindingRealtime = false;
+      }
     }
   }
 
   bool _shouldIncludeIncomingPost(Post post) {
+    if (!mounted) {
+      return false;
+    }
+
     switch (state.filter.type) {
       case FeedFilterType.all:
         return true;
+
       case FeedFilterType.friend:
         return state.filter.friendId == post.ownerUserId;
+
       case FeedFilterType.me:
         return false;
     }
@@ -465,9 +644,12 @@ class FeedNotifier extends StateNotifier<FeedState> {
 
   FeedPost _mapPost(Post post) {
     final ownerName = post.owner?.displayName.trim();
-    final imageUrl = post.media.thumbnailUrl?.trim().isNotEmpty == true
-        ? post.media.thumbnailUrl!.trim()
-        : post.media.url.trim();
+    final remoteThumbnailUrl = post.media.thumbnailUrl?.trim();
+    final remoteImageUrl = post.media.url.trim();
+    final imageUrl =
+        remoteThumbnailUrl != null && remoteThumbnailUrl.isNotEmpty
+        ? remoteThumbnailUrl
+        : remoteImageUrl;
 
     return FeedPost(
       id: post.id,
@@ -477,6 +659,13 @@ class FeedNotifier extends StateNotifier<FeedState> {
           : ownerName,
       authorAvatarUrl: post.owner?.avatarUrl,
       imageUrl: imageUrl,
+      remoteThumbnailUrl: remoteThumbnailUrl == null ||
+              remoteThumbnailUrl.isEmpty
+          ? null
+          : remoteThumbnailUrl,
+      remoteImageUrl: remoteImageUrl,
+      localThumbnailPath: post.media.localThumbnailPath,
+      localImagePath: post.media.localImagePath,
       caption: post.caption,
       visibility: post.visibility,
       createdAt: TimeUtils.toVietnamTime(post.createdAtUtc),
@@ -489,8 +678,13 @@ class FeedNotifier extends StateNotifier<FeedState> {
   }
 
   void _applyReactionResult(PostReactionResult result) {
+    if (!mounted) {
+      return;
+    }
+
     final posts = List<FeedPost>.from(state.posts);
     final idx = posts.indexWhere((post) => post.id == result.postId);
+
     if (idx == -1) {
       return;
     }
@@ -501,17 +695,24 @@ class FeedNotifier extends StateNotifier<FeedState> {
       clearMyReaction: result.myReaction == null,
     );
 
+    if (!mounted) {
+      return;
+    }
+
     state = state.copyWith(posts: posts);
   }
 
   Map<ReactionType, int> _mapReactionSummary(ReactionSummary summary) {
     final counts = <ReactionType, int>{};
+
     for (final entry in summary.icons.entries) {
       final reactionType = _mapReactionIcon(entry.key);
+
       if (reactionType != null && entry.value > 0) {
         counts[reactionType] = entry.value;
       }
     }
+
     return counts;
   }
 
@@ -519,12 +720,16 @@ class FeedNotifier extends StateNotifier<FeedState> {
     switch (type) {
       case ReactionType.heart:
         return PostReactionIcon.heart;
+
       case ReactionType.haha:
         return PostReactionIcon.haha;
+
       case ReactionType.like:
         return PostReactionIcon.like;
+
       case ReactionType.sad:
         return PostReactionIcon.sad;
+
       case ReactionType.wow:
         return PostReactionIcon.wow;
     }
@@ -534,14 +739,19 @@ class FeedNotifier extends StateNotifier<FeedState> {
     switch (icon) {
       case PostReactionIcon.heart:
         return ReactionType.heart;
+
       case PostReactionIcon.haha:
         return ReactionType.haha;
+
       case PostReactionIcon.like:
         return ReactionType.like;
+
       case PostReactionIcon.sad:
         return ReactionType.sad;
+
       case PostReactionIcon.wow:
         return ReactionType.wow;
+
       case null:
         return null;
     }
@@ -551,6 +761,7 @@ class FeedNotifier extends StateNotifier<FeedState> {
   void dispose() {
     _unsubscribeNewPosts?.call();
     _unsubscribeNewPosts = null;
+    _reactingPostIds.clear();
     super.dispose();
   }
 }
