@@ -43,6 +43,11 @@ dependencies:
   # Storage
   shared_preferences: ^2.3.4
   flutter_secure_storage: ^9.2.2
+  path_provider: ^2.1.5
+
+  # Local database compatibility check
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
 
   # Functional programming
   dartz: ^0.10.1
@@ -74,6 +79,8 @@ dev_dependencies:
   integration_test:
     sdk: flutter
   mocktail: ^1.0.4
+  isar_generator: ^3.1.0+1
+  build_runner: ^2.4.13
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

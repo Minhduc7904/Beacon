@@ -1,8 +1,11 @@
+import 'package:beacon_app/core/cache/current_user_cache_scope.dart';
 import 'package:beacon_app/core/errors/exceptions.dart';
 import 'package:beacon_app/core/errors/failures.dart';
 import 'package:beacon_app/core/network/network_info.dart';
 import 'package:beacon_app/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:beacon_app/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:beacon_app/features/auth/data/datasources/user_profile_local_datasource.dart';
+import 'package:beacon_app/features/auth/data/local_models/user_profile_cache.dart';
 import 'package:beacon_app/features/auth/data/models/auth_response_model.dart';
 import 'package:beacon_app/features/auth/data/models/tokens_model.dart';
 import 'package:beacon_app/features/auth/data/models/user_model.dart';
@@ -16,9 +19,15 @@ class MockAuthRemoteDatasource extends Mock implements AuthRemoteDatasource {}
 
 class MockAuthLocalDatasource extends Mock implements AuthLocalDatasource {}
 
+class MockUserProfileLocalDatasource extends Mock
+    implements UserProfileLocalDatasource {}
+
+class MockCurrentUserCacheScope extends Mock implements CurrentUserCacheScope {}
+
 class MockNetworkInfo extends Mock implements NetworkInfo {}
 
 final _expiresAt = DateTime.utc(2026, 5, 26, 12);
+final _cachedAtUtc = DateTime.utc(2026, 6, 1, 8, 30);
 
 TokensModel _tokens() {
   return TokensModel(
@@ -42,9 +51,12 @@ AuthResponseModel _authResponse({String message = 'Thành công'}) {
   return AuthResponseModel(message: message, tokens: _tokens(), user: _user());
 }
 
-UserProfileModel _profile({String givenName = 'Mai'}) {
+UserProfileModel _profile({
+  String id = 'user-1',
+  String givenName = 'Mai',
+}) {
   return UserProfileModel(
-    id: 'user-1',
+    id: id,
     username: 'mai',
     email: 'mai@example.com',
     familyName: 'Nguyen',
@@ -58,6 +70,29 @@ UserProfileModel _profile({String givenName = 'Mai'}) {
     avatarMediaObjectId: 'avatar-media-1',
     avatarUrl: 'https://example.com/avatar.jpg',
   );
+}
+
+UserProfileCache _profileCache({
+  String cacheScopeUserId = 'user-1',
+  String userId = 'user-1',
+  String givenName = 'Mai',
+}) {
+  return UserProfileCache()
+    ..cacheScopeUserId = cacheScopeUserId
+    ..cachedAtUtc = _cachedAtUtc
+    ..userId = userId
+    ..username = 'mai'
+    ..email = 'mai@example.com'
+    ..familyName = 'Nguyen'
+    ..givenName = givenName
+    ..phoneNumber = '+84912345678'
+    ..timeZone = 'Asia/Ho_Chi_Minh'
+    ..isActive = true
+    ..isEmailVerified = true
+    ..lastLoginAtUtc = DateTime.utc(2026, 5, 26, 10)
+    ..createdAtUtc = DateTime.utc(2025, 1, 1)
+    ..avatarMediaObjectId = 'avatar-media-1'
+    ..avatarUrl = 'https://example.com/avatar.jpg';
 }
 
 void _expectLeft<T>(Either<Failure, T> result, Matcher matcher) {
@@ -111,17 +146,45 @@ void _stubClearTokens(MockAuthLocalDatasource localDatasource) {
 void main() {
   late MockAuthRemoteDatasource remoteDatasource;
   late MockAuthLocalDatasource localDatasource;
+  late MockUserProfileLocalDatasource userProfileLocalDatasource;
+  late MockCurrentUserCacheScope currentUserCacheScope;
   late MockNetworkInfo networkInfo;
   late AuthRepositoryImpl repository;
+
+  setUpAll(() {
+    registerFallbackValue(_profileCache());
+  });
 
   setUp(() {
     remoteDatasource = MockAuthRemoteDatasource();
     localDatasource = MockAuthLocalDatasource();
+    userProfileLocalDatasource = MockUserProfileLocalDatasource();
+    currentUserCacheScope = MockCurrentUserCacheScope();
     networkInfo = MockNetworkInfo();
+    when(
+      () => currentUserCacheScope.getCurrentUserId(),
+    ).thenAnswer((_) async => null);
+    when(
+      () => currentUserCacheScope.saveCurrentUserId(any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => currentUserCacheScope.clearCurrentUserId(),
+    ).thenAnswer((_) async {});
+    when(
+      () => userProfileLocalDatasource.upsertProfile(any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => userProfileLocalDatasource.deleteProfile(
+        cacheScopeUserId: any(named: 'cacheScopeUserId'),
+      ),
+    ).thenAnswer((_) async {});
     repository = AuthRepositoryImpl(
       remoteDatasource: remoteDatasource,
       localDatasource: localDatasource,
+      userProfileLocalDatasource: userProfileLocalDatasource,
+      currentUserCacheScope: currentUserCacheScope,
       networkInfo: networkInfo,
+      nowUtc: () => _cachedAtUtc,
     );
   });
 
@@ -225,6 +288,7 @@ void main() {
       verifyNever(
         () => localDatasource.saveRefreshToken(any()),
       );
+      verifyNever(() => currentUserCacheScope.saveCurrentUserId(any()));
     });
   });
 
@@ -323,6 +387,7 @@ void main() {
       verify(
         () => localDatasource.saveAccessTokenExpiresAt(_expiresAt),
       ).called(1);
+      verify(() => currentUserCacheScope.saveCurrentUserId('user-1')).called(1);
     });
 
     test('remote exception được map thành Failure', () async {
@@ -349,6 +414,7 @@ void main() {
       );
       verifyNever(() => localDatasource.saveAccessToken(any()));
       verifyNever(() => localDatasource.saveRefreshToken(any()));
+      verifyNever(() => currentUserCacheScope.saveCurrentUserId(any()));
     });
 
     test('local save token lỗi được map thành Failure', () async {
@@ -377,6 +443,7 @@ void main() {
           'Không lưu được token',
         ),
       );
+      verifyNever(() => currentUserCacheScope.saveCurrentUserId(any()));
     });
   });
 
@@ -421,6 +488,7 @@ void main() {
       verify(
         () => localDatasource.saveAccessTokenExpiresAt(_expiresAt),
       ).called(1);
+      verify(() => currentUserCacheScope.saveCurrentUserId('user-1')).called(1);
     });
 
     test('remote exception được map thành Failure', () async {
@@ -455,11 +523,12 @@ void main() {
           'Đăng ký thất bại',
         ),
       );
+      verifyNever(() => currentUserCacheScope.saveCurrentUserId(any()));
     });
   });
 
   group('AuthRepositoryImpl profile', () {
-    test('getMe online gọi remote và trả profile', () async {
+    test('getMe online gọi remote, lưu user id và upsert profile cache', () async {
       _stubNetwork(networkInfo, true);
       final profile = _profile();
       when(() => remoteDatasource.getMe()).thenAnswer((_) async => profile);
@@ -468,9 +537,139 @@ void main() {
 
       _expectRightSame(result, profile);
       verify(() => remoteDatasource.getMe()).called(1);
+      verify(() => currentUserCacheScope.saveCurrentUserId('user-1')).called(1);
+      final captured = verify(
+        () => userProfileLocalDatasource.upsertProfile(captureAny()),
+      ).captured.single as UserProfileCache;
+      expect(captured.cacheScopeUserId, 'user-1');
+      expect(captured.cachedAtUtc, _cachedAtUtc);
+      expect(captured.userId, profile.id);
+      expect(captured.givenName, profile.givenName);
     });
 
-    test('updateMe online gọi remote với params đúng và trả profile', () async {
+    test(
+      'getMe online vẫn cache theo profile id khi current user id chưa có',
+      () async {
+        _stubNetwork(networkInfo, true);
+        when(
+          () => currentUserCacheScope.getCurrentUserId(),
+        ).thenAnswer((_) async => null);
+        final profile = _profile();
+        when(() => remoteDatasource.getMe()).thenAnswer((_) async => profile);
+
+        final result = await repository.getMe();
+
+        _expectRightSame(result, profile);
+        final captured = verify(
+          () => userProfileLocalDatasource.upsertProfile(captureAny()),
+        ).captured.single as UserProfileCache;
+        expect(captured.cacheScopeUserId, 'user-1');
+      },
+    );
+
+    test('getMe online profile id rỗng thì không upsert cache', () async {
+      _stubNetwork(networkInfo, true);
+      final profile = _profile(id: '');
+      when(() => remoteDatasource.getMe()).thenAnswer((_) async => profile);
+
+      final result = await repository.getMe();
+
+      _expectRightSame(result, profile);
+      verifyNever(() => currentUserCacheScope.saveCurrentUserId(any()));
+      verifyNever(() => userProfileLocalDatasource.upsertProfile(any()));
+    });
+
+    test('getMe offline có current user id và cache thì trả cached profile', () async {
+      _stubNetwork(networkInfo, false);
+      when(
+        () => currentUserCacheScope.getCurrentUserId(),
+      ).thenAnswer((_) async => 'user-1');
+      final cache = _profileCache(givenName: 'Cached');
+      when(
+        () => userProfileLocalDatasource.getProfile(
+          cacheScopeUserId: 'user-1',
+        ),
+      ).thenAnswer((_) async => cache);
+
+      final result = await repository.getMe();
+
+      result.fold((_) => fail('Expected Right'), (profile) {
+        expect(profile.id, cache.userId);
+        expect(profile.givenName, 'Cached');
+        expect(profile.email, cache.email);
+      });
+      verifyNever(() => remoteDatasource.getMe());
+    });
+
+    test('getMe offline không có current user id thì trả NetworkFailure', () async {
+      _stubNetwork(networkInfo, false);
+      when(
+        () => currentUserCacheScope.getCurrentUserId(),
+      ).thenAnswer((_) async => null);
+
+      final result = await repository.getMe();
+
+      _expectLeft(result, isA<NetworkFailure>());
+      verifyNever(
+        () => userProfileLocalDatasource.getProfile(
+          cacheScopeUserId: any(named: 'cacheScopeUserId'),
+        ),
+      );
+      verifyNever(() => remoteDatasource.getMe());
+    });
+
+    test('getMe offline có current user id nhưng không có cache thì trả NetworkFailure', () async {
+      _stubNetwork(networkInfo, false);
+      when(
+        () => currentUserCacheScope.getCurrentUserId(),
+      ).thenAnswer((_) async => 'user-1');
+      when(
+        () => userProfileLocalDatasource.getProfile(
+          cacheScopeUserId: 'user-1',
+        ),
+      ).thenAnswer((_) async => null);
+
+      final result = await repository.getMe();
+
+      _expectLeft(result, isA<NetworkFailure>());
+      verifyNever(() => remoteDatasource.getMe());
+    });
+
+    test('getMe remote unauthorized không fallback cache', () async {
+      _stubNetwork(networkInfo, true);
+      when(
+        () => remoteDatasource.getMe(),
+      ).thenThrow(const UnauthorizedException(message: 'Unauthorized'));
+
+      final result = await repository.getMe();
+
+      _expectLeft(result, isA<UnauthorizedFailure>());
+      verifyNever(
+        () => userProfileLocalDatasource.getProfile(
+          cacheScopeUserId: any(named: 'cacheScopeUserId'),
+        ),
+      );
+      verifyNever(() => userProfileLocalDatasource.upsertProfile(any()));
+    });
+
+    test('getMe remote server failure không fallback cache', () async {
+      _stubNetwork(networkInfo, true);
+      when(
+        () => remoteDatasource.getMe(),
+      ).thenThrow(const ServerException(message: 'Get profile failed'));
+
+      final result = await repository.getMe();
+
+      _expectLeft(result, isA<ServerFailure>());
+      verifyNever(
+        () => userProfileLocalDatasource.getProfile(
+          cacheScopeUserId: any(named: 'cacheScopeUserId'),
+        ),
+      );
+      verifyNever(() => userProfileLocalDatasource.upsertProfile(any()));
+    });
+
+    test('updateMe online gọi remote, trả profile và upsert cache', () async {
       _stubNetwork(networkInfo, true);
       final profile = _profile(givenName: 'Minh');
       when(
@@ -498,6 +697,12 @@ void main() {
           phoneNumber: '+84987654321',
         ),
       ).called(1);
+      verify(() => currentUserCacheScope.saveCurrentUserId('user-1')).called(1);
+      final captured = verify(
+        () => userProfileLocalDatasource.upsertProfile(captureAny()),
+      ).captured.single as UserProfileCache;
+      expect(captured.cacheScopeUserId, 'user-1');
+      expect(captured.givenName, 'Minh');
     });
 
     test('updateMe remote exception được map thành Failure', () async {
@@ -521,9 +726,27 @@ void main() {
           'Cập nhật thất bại',
         ),
       );
+      verifyNever(() => userProfileLocalDatasource.upsertProfile(any()));
     });
 
-    test('updateMyAvatar online gọi remote và trả profile', () async {
+    test('updateMe offline trả NetworkFailure và không update cache', () async {
+      _stubNetwork(networkInfo, false);
+
+      final result = await repository.updateMe(givenName: 'Minh');
+
+      _expectLeft(result, isA<NetworkFailure>());
+      verifyNever(
+        () => remoteDatasource.updateMe(
+          familyName: any(named: 'familyName'),
+          givenName: any(named: 'givenName'),
+          email: any(named: 'email'),
+          phoneNumber: any(named: 'phoneNumber'),
+        ),
+      );
+      verifyNever(() => userProfileLocalDatasource.upsertProfile(any()));
+    });
+
+    test('updateMyAvatar online gọi remote, trả profile và upsert cache', () async {
       _stubNetwork(networkInfo, true);
       final profile = _profile();
       when(
@@ -536,6 +759,24 @@ void main() {
       verify(
         () => remoteDatasource.updateMyAvatar(filePath: 'avatar.jpg'),
       ).called(1);
+      verify(() => currentUserCacheScope.saveCurrentUserId('user-1')).called(1);
+      final captured = verify(
+        () => userProfileLocalDatasource.upsertProfile(captureAny()),
+      ).captured.single as UserProfileCache;
+      expect(captured.cacheScopeUserId, 'user-1');
+      expect(captured.avatarUrl, profile.avatarUrl);
+    });
+
+    test('updateMyAvatar failure không update cache', () async {
+      _stubNetwork(networkInfo, true);
+      when(
+        () => remoteDatasource.updateMyAvatar(filePath: 'avatar.jpg'),
+      ).thenThrow(const ServerException(message: 'Upload avatar failed'));
+
+      final result = await repository.updateMyAvatar(filePath: 'avatar.jpg');
+
+      _expectLeft(result, isA<ServerFailure>());
+      verifyNever(() => userProfileLocalDatasource.upsertProfile(any()));
     });
   });
 
@@ -543,6 +784,9 @@ void main() {
     test('online có token thì gọi remote logout, clear local và trả success', () async {
       _stubLocalTokens(localDatasource);
       _stubNetwork(networkInfo, true);
+      when(
+        () => currentUserCacheScope.getCurrentUserId(),
+      ).thenAnswer((_) async => 'user-1');
       when(
         () => remoteDatasource.logout(refreshToken: 'refresh-token'),
       ).thenAnswer((_) async {});
@@ -555,6 +799,12 @@ void main() {
         () => remoteDatasource.logout(refreshToken: 'refresh-token'),
       ).called(1);
       verify(() => localDatasource.clearTokens()).called(1);
+      verify(
+        () => userProfileLocalDatasource.deleteProfile(
+          cacheScopeUserId: 'user-1',
+        ),
+      ).called(1);
+      verify(() => currentUserCacheScope.clearCurrentUserId()).called(1);
     });
 
     test('remote logout lỗi vẫn clear local và trả success', () async {
@@ -572,6 +822,27 @@ void main() {
         () => remoteDatasource.logout(refreshToken: 'refresh-token'),
       ).called(1);
       verify(() => localDatasource.clearTokens()).called(1);
+      verify(() => currentUserCacheScope.clearCurrentUserId()).called(1);
+    });
+
+    test('đọc scope lỗi vẫn clear local và clear current user id', () async {
+      _stubLocalTokens(localDatasource);
+      _stubNetwork(networkInfo, false);
+      when(
+        () => currentUserCacheScope.getCurrentUserId(),
+      ).thenThrow(const CacheException(message: 'Không đọc được scope'));
+      _stubClearTokens(localDatasource);
+
+      final result = await repository.logout();
+
+      expect(result, const Right<Failure, String>('Đăng xuất thành công'));
+      verify(() => localDatasource.clearTokens()).called(1);
+      verifyNever(
+        () => userProfileLocalDatasource.deleteProfile(
+          cacheScopeUserId: any(named: 'cacheScopeUserId'),
+        ),
+      );
+      verify(() => currentUserCacheScope.clearCurrentUserId()).called(1);
     });
 
     test('offline vẫn clear local và không gọi remote logout', () async {
@@ -586,6 +857,7 @@ void main() {
         () => remoteDatasource.logout(refreshToken: any(named: 'refreshToken')),
       );
       verify(() => localDatasource.clearTokens()).called(1);
+      verify(() => currentUserCacheScope.clearCurrentUserId()).called(1);
     });
 
     test('không có token thì không gọi remote logout nhưng vẫn clear local', () async {
@@ -602,6 +874,7 @@ void main() {
         () => remoteDatasource.logout(refreshToken: any(named: 'refreshToken')),
       );
       verify(() => localDatasource.clearTokens()).called(1);
+      verify(() => currentUserCacheScope.clearCurrentUserId()).called(1);
     });
 
     test('local clearTokens lỗi được map thành Failure', () async {
@@ -621,6 +894,7 @@ void main() {
           'Không xóa được token',
         ),
       );
+      verifyNever(() => currentUserCacheScope.clearCurrentUserId());
     });
   });
 

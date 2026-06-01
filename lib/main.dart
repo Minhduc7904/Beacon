@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/config/app_env.dart';
 import 'core/config/app_router.dart';
+import 'core/database/isar_database.dart';
 import 'core/notifications/push_notification_service.dart';
 import 'core/observers/app_provider_observer.dart';
 import 'core/providers/providers.dart';
@@ -24,10 +25,19 @@ void main() async {
   }
   await dotenv.load(fileName: '.env');
   final prefs = await SharedPreferences.getInstance();
+  final database = await IsarDatabase.open();
   runApp(
     ProviderScope(
       observers: const [AppProviderObserver()],
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        appDatabaseProvider.overrideWith((ref) {
+          ref.onDispose(() {
+            unawaited(database.close());
+          });
+          return database;
+        }),
+      ],
       child: const MyApp(),
     ),
   );

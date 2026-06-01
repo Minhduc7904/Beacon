@@ -11,6 +11,8 @@ import '../../features/auth/data/datasources/auth_local_datasource.dart';
 import '../../features/auth/data/datasources/auth_local_datasource_impl.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource_impl.dart';
+import '../../features/auth/data/datasources/user_profile_local_datasource.dart';
+import '../../features/auth/data/datasources/user_profile_local_datasource_impl.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/usecase/login_usecase.dart';
@@ -140,6 +142,8 @@ import '../../features/posts/domain/usecase/set_post_reaction_usecase.dart';
 import '../../features/posts/domain/usecase/set_post_reaction_icon_usecase.dart';
 import '../../features/posts/domain/usecase/subscribe_new_posts_realtime_usecase.dart';
 import '../../features/posts/domain/usecase/update_post_usecase.dart';
+import '../../features/safety/data/datasources/safety_local_datasource.dart';
+import '../../features/safety/data/datasources/safety_local_datasource_impl.dart';
 import '../../features/safety/data/datasources/safety_remote_datasource.dart';
 import '../../features/safety/data/datasources/safety_remote_datasource_impl.dart';
 import '../../features/safety/data/repositories/safety_repository_impl.dart';
@@ -148,6 +152,9 @@ import '../../features/safety/domain/usecase/get_safety_settings_usecase.dart';
 import '../../features/safety/domain/usecase/update_safety_settings_usecase.dart';
 import '../../features/safety/presentation/controllers/safety_settings_notifier.dart';
 import '../../features/safety/presentation/controllers/safety_settings_state.dart';
+import '../cache/current_user_cache_scope.dart';
+import '../cache/current_user_cache_scope_impl.dart';
+import '../database/app_database.dart';
 import '../observers/app_provider_observer.dart';
 import '../messages/app_message.dart';
 import '../messages/app_message_notifier.dart';
@@ -186,12 +193,22 @@ final secureStorageProvider = Provider<SecureStorage>((ref) {
   return FlutterSecureStorageImpl(ref.watch(flutterSecureStorageProvider));
 });
 
+final currentUserCacheScopeProvider = Provider<CurrentUserCacheScope>((ref) {
+  return CurrentUserCacheScopeImpl(ref.watch(secureStorageProvider));
+});
+
 final appPreferencesProvider = Provider<AppPreferences>((ref) {
   return AppPreferencesImpl(ref.watch(localStorageProvider));
 });
 
 final isDarkModeProvider = FutureProvider<bool>((ref) async {
   return ref.watch(appPreferencesProvider).isDarkMode();
+});
+
+// ─── Database ────────────────────────────────────────────────────────────────
+
+final appDatabaseProvider = Provider<AppDatabase>((ref) {
+  throw UnimplementedError('appDatabaseProvider must be overridden in main()');
 });
 
 // ─── Push Notifications ─────────────────────────────────────────────────────
@@ -218,6 +235,11 @@ final networkInfoProvider = Provider<NetworkInfo>((ref) {
 final authLocalDatasourceProvider = Provider<AuthLocalDatasource>((ref) {
   return AuthLocalDatasourceImpl(ref.watch(secureStorageProvider));
 });
+
+final userProfileLocalDatasourceProvider =
+    Provider<UserProfileLocalDatasource>((ref) {
+      return UserProfileLocalDatasourceImpl(ref.watch(appDatabaseProvider));
+    });
 
 // ─── Realtime ───────────────────────────────────────────────────────────────
 
@@ -275,6 +297,10 @@ final safetyRemoteDatasourceProvider = Provider<SafetyRemoteDatasource>((ref) {
   return SafetyRemoteDatasourceImpl(ref.watch(dioClientProvider));
 });
 
+final safetyLocalDatasourceProvider = Provider<SafetyLocalDatasource>((ref) {
+  return SafetyLocalDatasourceImpl(ref.watch(appDatabaseProvider));
+});
+
 final friendRequestRemoteDatasourceProvider =
     Provider<FriendRequestRemoteDatasource>((ref) {
       return FriendRequestRemoteDatasourceImpl(ref.watch(dioClientProvider));
@@ -305,6 +331,8 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepositoryImpl(
     remoteDatasource: ref.watch(authRemoteDatasourceProvider),
     localDatasource: ref.watch(authLocalDatasourceProvider),
+    userProfileLocalDatasource: ref.watch(userProfileLocalDatasourceProvider),
+    currentUserCacheScope: ref.watch(currentUserCacheScopeProvider),
     networkInfo: ref.watch(networkInfoProvider),
   );
 });
@@ -340,6 +368,8 @@ final checkinRepositoryProvider = Provider<CheckinRepository>((ref) {
 final safetyRepositoryProvider = Provider<SafetyRepository>((ref) {
   return SafetyRepositoryImpl(
     remoteDatasource: ref.watch(safetyRemoteDatasourceProvider),
+    localDatasource: ref.watch(safetyLocalDatasourceProvider),
+    currentUserCacheScope: ref.watch(currentUserCacheScopeProvider),
     networkInfo: ref.watch(networkInfoProvider),
   );
 });
