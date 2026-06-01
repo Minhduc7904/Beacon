@@ -174,6 +174,24 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, bool>> hasLocalSession() async {
+    try {
+      final accessToken = (await _localDatasource.getAccessToken())?.trim();
+      final refreshToken = (await _localDatasource.getRefreshToken())?.trim();
+
+      return Right(
+        accessToken != null &&
+            accessToken.isNotEmpty &&
+            refreshToken != null &&
+            refreshToken.isNotEmpty,
+      );
+    } on Exception {
+      // Startup/auth guards fail closed when local token storage is unreadable.
+      return const Right(false);
+    }
+  }
+
+  @override
   Future<Either<Failure, UserProfile>> getMe() async {
     if (!await _networkInfo.isConnected) {
       return _getCachedProfile();

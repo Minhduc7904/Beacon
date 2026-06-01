@@ -15,6 +15,7 @@ import '../../features/auth/data/datasources/user_profile_local_datasource.dart'
 import '../../features/auth/data/datasources/user_profile_local_datasource_impl.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/auth/domain/usecase/has_local_auth_session_usecase.dart';
 import '../../features/auth/domain/usecase/login_usecase.dart';
 import '../../features/auth/domain/usecase/logout_usecase.dart';
 import '../../features/auth/domain/usecase/register_usecase.dart';
@@ -152,6 +153,7 @@ import '../../features/safety/domain/usecase/get_safety_settings_usecase.dart';
 import '../../features/safety/domain/usecase/update_safety_settings_usecase.dart';
 import '../../features/safety/presentation/controllers/safety_settings_notifier.dart';
 import '../../features/safety/presentation/controllers/safety_settings_state.dart';
+import '../../features/splash/domain/usecase/resolve_startup_destination_usecase.dart';
 import '../cache/current_user_cache_scope.dart';
 import '../cache/current_user_cache_scope_impl.dart';
 import '../database/app_database.dart';
@@ -426,6 +428,11 @@ final logoutUseCaseProvider = Provider<LogoutUseCase>((ref) {
   return LogoutUseCase(ref.watch(authRepositoryProvider));
 });
 
+final hasLocalAuthSessionUseCaseProvider =
+    Provider<HasLocalAuthSessionUseCase>((ref) {
+      return HasLocalAuthSessionUseCase(ref.watch(authRepositoryProvider));
+    });
+
 final registerUseCaseProvider = Provider<RegisterUseCase>((ref) {
   return RegisterUseCase(ref.watch(authRepositoryProvider));
 });
@@ -487,6 +494,14 @@ final completeOnboardingUseCaseProvider = Provider<CompleteOnboardingUseCase>((
 ) {
   return CompleteOnboardingUseCase(ref.watch(onboardingRepositoryProvider));
 });
+
+final resolveStartupDestinationUseCaseProvider =
+    Provider<ResolveStartupDestinationUseCase>((ref) {
+      return ResolveStartupDestinationUseCase(
+        ref.watch(shouldShowOnboardingUseCaseProvider),
+        ref.watch(hasLocalAuthSessionUseCaseProvider),
+      );
+    });
 
 final meProfileProvider =
     StateNotifierProvider<MeProfileNotifier, AsyncValue<UserProfile?>>((ref) {
