@@ -15,6 +15,10 @@ class GetFeedPostsUseCase {
       limit: _normalizeLimit(limit),
     );
   }
+
+  Future<Either<Failure, PostPage>> cached({int? limit}) {
+    return _repository.getCachedFeedPosts(limit: _normalizeLimit(limit));
+  }
 }
 
 String? _normalizeCursor(String? cursor) {

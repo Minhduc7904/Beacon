@@ -1,4 +1,5 @@
 import '../../domain/entities/daily_safety_record.dart';
+import '../../../../core/utils/time_utils.dart';
 
 class DailySafetyRecordModel extends DailySafetyRecord {
   const DailySafetyRecordModel({
@@ -34,6 +35,6 @@ class DailySafetyRecordModel extends DailySafetyRecord {
     if (raw == null || raw.trim().isEmpty) {
       return null;
     }
-    return DateTime.tryParse(raw);
+    return TimeUtils.tryParseUtc(raw);
   }
 }

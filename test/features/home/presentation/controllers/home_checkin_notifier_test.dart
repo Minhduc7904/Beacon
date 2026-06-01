@@ -212,6 +212,39 @@ void main() {
       expect(notifier.state.safetySettings, isNull);
       expect(notifier.state.errorMessage, isNull);
     });
+
+    test(
+      'load forceRefresh calls usecase again when todayStatus is cached',
+      () async {
+        final cachedStatus = _todayStatus(
+          hasCheckedIn: true,
+          status: TodayStatusType.checkedIn,
+          checkedInAtUtc: DateTime.utc(2026, 5, 26, 9),
+        );
+        await seedLoadedStatus(cachedStatus);
+
+        final freshStatus = _todayStatus(
+          hasCheckedIn: false,
+          status: TodayStatusType.pending,
+          streak: 0,
+        );
+        final freshSettings = _settings(autoAlertDelayMinutes: 8);
+        when(
+          () => getTodayStatusUseCase.call(),
+        ).thenAnswer((_) async => Right(freshStatus));
+        when(
+          () => getSafetySettingsUseCase.call(),
+        ).thenAnswer((_) async => Right(freshSettings));
+
+        await notifier.load(forceRefresh: true);
+
+        verify(() => getTodayStatusUseCase.call()).called(1);
+        verify(() => getSafetySettingsUseCase.call()).called(1);
+        expect(notifier.state.todayStatus, same(freshStatus));
+        expect(notifier.state.safetySettings, same(freshSettings));
+        expect(notifier.state.phase, HomeCheckinPhase.pending);
+      },
+    );
   });
 
   group('HomeCheckinNotifier checkin', () {

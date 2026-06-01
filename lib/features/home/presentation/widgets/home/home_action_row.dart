@@ -8,6 +8,7 @@ import '../../../../../core/theme/icons/app_icons.dart';
 import '../../../../../core/widgets/button/icon_circle_button.dart';
 import '../../../../../core/widgets/emoji/app_emoji.dart';
 import '../../../../../core/widgets/emoji/app_emoji_picker_sheet.dart';
+import '../../../../safety/presentation/widgets/safety_mood_calendar_button.dart';
 
 typedef HomeCheckinCallback = Future<bool> Function(String? mood);
 
@@ -41,6 +42,7 @@ class _HomeActionRowState extends State<HomeActionRow> {
   final LayerLink _moodPickerLink = LayerLink();
   OverlayEntry? _moodPickerOverlay;
   bool _isMoodPickerVisible = false;
+  bool _isEmojiPickerOpen = false;
   String? _selectedMood;
 
   @override
@@ -100,15 +102,39 @@ class _HomeActionRowState extends State<HomeActionRow> {
   }
 
   Future<void> _selectMoreMood() async {
-    final emoji = await showAppEmojiPickerSheet(context);
-    if (!mounted || emoji == null || emoji.trim().isEmpty) {
+    if (_isEmojiPickerOpen) {
       return;
     }
 
     setState(() {
-      _isMoodPickerVisible = true;
-      _selectedMood = emoji.trim();
+      _isEmojiPickerOpen = true;
     });
+    _moodPickerOverlay?.markNeedsBuild();
+
+    final emoji = await showAppEmojiPickerSheet(
+      context,
+      useRootNavigator: true,
+    );
+    if (!mounted) {
+      _isEmojiPickerOpen = false;
+      return;
+    }
+
+    final trimmedEmoji = emoji?.trim();
+    if (trimmedEmoji == null || trimmedEmoji.isEmpty) {
+      setState(() {
+        _isEmojiPickerOpen = false;
+      });
+      _moodPickerOverlay?.markNeedsBuild();
+      return;
+    }
+
+    setState(() {
+      _isEmojiPickerOpen = false;
+      _isMoodPickerVisible = true;
+      _selectedMood = trimmedEmoji;
+    });
+    _moodPickerOverlay?.markNeedsBuild();
     if (_moodPickerOverlay == null) {
       _insertMoodPickerOverlay();
     } else {
@@ -140,41 +166,36 @@ class _HomeActionRowState extends State<HomeActionRow> {
       return;
     }
 
-    final overlay = Overlay.of(context);
     final entry = OverlayEntry(
       builder: (context) {
+        if (_isEmojiPickerOpen) {
+          return const SizedBox.shrink();
+        }
+
         return Positioned.fill(
-          child: Material(
-            type: MaterialType.transparency,
-            child: Stack(
-              children: [
-                GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onTap: _closeMoodPicker,
-                  child: const SizedBox.expand(),
+          child: Stack(
+            children: [
+              CompositedTransformFollower(
+                link: _moodPickerLink,
+                showWhenUnlinked: false,
+                targetAnchor: Alignment.topCenter,
+                followerAnchor: Alignment.bottomCenter,
+                offset: const Offset(0, -10),
+                child: _HomeMoodPicker(
+                  selectedMood: _selectedMood,
+                  suggestedMoods: _suggestedMoods,
+                  onMoodSelected: _selectMood,
+                  onClearPressed: _closeMoodPicker,
+                  onMoreMoodPressed: () => unawaited(_selectMoreMood()),
                 ),
-                CompositedTransformFollower(
-                  link: _moodPickerLink,
-                  showWhenUnlinked: false,
-                  targetAnchor: Alignment.topCenter,
-                  followerAnchor: Alignment.bottomCenter,
-                  offset: const Offset(0, -10),
-                  child: _HomeMoodPicker(
-                    selectedMood: _selectedMood,
-                    suggestedMoods: _suggestedMoods,
-                    onMoodSelected: _selectMood,
-                    onClearPressed: _closeMoodPicker,
-                    onMoreMoodPressed: () => unawaited(_selectMoreMood()),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
     );
 
-    overlay.insert(entry);
+    Overlay.of(context).insert(entry);
     _moodPickerOverlay = entry;
   }
 
@@ -191,7 +212,7 @@ class _HomeActionRowState extends State<HomeActionRow> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const SizedBox(width: 60, height: 60),
+          SafetyMoodCalendarButton(enabled: !widget.isCheckingIn),
           CompositedTransformTarget(
             link: _moodPickerLink,
             child: _HomeCheckinActionButton(

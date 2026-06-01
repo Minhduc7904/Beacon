@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/providers.dart';
 import '../../../auth/presentation/pages/profile/profile_page.dart';
+import '../../../feed/presentation/pages/feed_page.dart';
 import '../../../message_groups/presentation/pages/message_group_list_page.dart';
 import '../widgets/home/home_center_scaffold.dart';
 import '../widgets/home/home_keep_alive_page.dart';
@@ -70,6 +71,7 @@ class _HomePageState extends ConsumerState<HomePage>
       ref
           .read(friendsPresenceNotifierProvider.notifier)
           .load(forceRefresh: true);
+      unawaited(ref.read(feedProvider.notifier).load(forceRefresh: true));
       unawaited(_seedUnreadMessageCount());
     }
     _lastLifecycleState = state;

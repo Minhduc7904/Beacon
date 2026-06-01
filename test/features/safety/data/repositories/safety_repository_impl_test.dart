@@ -4,7 +4,11 @@ import 'package:beacon_app/core/errors/failures.dart';
 import 'package:beacon_app/core/network/network_info.dart';
 import 'package:beacon_app/features/safety/data/datasources/safety_local_datasource.dart';
 import 'package:beacon_app/features/safety/data/datasources/safety_remote_datasource.dart';
+import 'package:beacon_app/features/safety/data/local_models/monthly_checkins_cache.dart';
 import 'package:beacon_app/features/safety/data/local_models/safety_settings_cache.dart';
+import 'package:beacon_app/features/safety/data/mappers/monthly_checkins_cache_mapper.dart';
+import 'package:beacon_app/features/safety/data/models/monthly_checkin_model.dart';
+import 'package:beacon_app/features/safety/data/models/monthly_checkins_model.dart';
 import 'package:beacon_app/features/safety/data/models/safety_settings_model.dart';
 import 'package:beacon_app/features/safety/data/repositories/safety_repository_impl.dart';
 import 'package:dartz/dartz.dart';
@@ -58,6 +62,34 @@ SafetySettingsCache _cache({
     ..isDefault = true;
 }
 
+MonthlyCheckinsModel _monthlyCheckins({
+  String mood = '😊',
+  int totalCount = 1,
+}) {
+  return MonthlyCheckinsModel(
+    year: 2026,
+    month: 6,
+    fromDate: DateTime(2026, 6),
+    toDate: DateTime(2026, 6, 30),
+    totalCount: totalCount,
+    items: totalCount == 0
+        ? const []
+        : [
+            MonthlyCheckinModel(
+              id: 'checkin-1',
+              dailySafetyRecordId: 'record-1',
+              checkinDate: DateTime(2026, 6, 2),
+              checkedInAtUtc: DateTime.utc(2026, 6, 2, 12),
+              type: 'manual',
+              note: null,
+              mood: mood,
+              latitude: null,
+              longitude: null,
+            ),
+          ],
+  );
+}
+
 void _stubNetwork(MockNetworkInfo networkInfo, bool isConnected) {
   when(() => networkInfo.isConnected).thenAnswer((_) async => isConnected);
 }
@@ -85,6 +117,12 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(_cache());
+    registerFallbackValue(
+      _monthlyCheckins().toCache(
+        cacheScopeUserId: 'user-1',
+        cachedAtUtc: _cachedAtUtc,
+      ),
+    );
     registerFallbackValue(<String, dynamic>{});
   });
 
@@ -221,6 +259,104 @@ void main() {
         ),
       );
       verifyNever(() => localDatasource.upsertSettings(any()));
+    });
+  });
+
+  group('SafetyRepositoryImpl getMonthlyCheckins', () {
+    test('online success ghi cache khi remote khác local', () async {
+      _stubNetwork(networkInfo, true);
+      final cached = _monthlyCheckins(mood: '🙂').toCache(
+        cacheScopeUserId: 'user-1',
+        cachedAtUtc: _cachedAtUtc,
+      );
+      final remote = _monthlyCheckins(mood: '😊');
+      when(
+        () => remoteDatasource.getMonthlyCheckins(year: 2026, month: 6),
+      ).thenAnswer((_) async => remote);
+      when(
+        () => localDatasource.getMonthlyCheckins(
+          cacheScopeMonthKey: 'user-1:2026:06',
+        ),
+      ).thenAnswer((_) async => cached);
+      when(
+        () => localDatasource.upsertMonthlyCheckins(any()),
+      ).thenAnswer((_) async {});
+
+      final result = await repository.getMonthlyCheckins(year: 2026, month: 6);
+
+      _expectRightSame(result, remote);
+      final captured = verify(
+        () => localDatasource.upsertMonthlyCheckins(captureAny()),
+      ).captured.single as MonthlyCheckinsCache;
+      expect(captured.cacheScopeMonthKey, 'user-1:2026:06');
+      expect(captured.itemsJson, contains('😊'));
+    });
+
+    test('online success không ghi cache khi remote đã khớp local', () async {
+      _stubNetwork(networkInfo, true);
+      final remote = _monthlyCheckins(mood: '😊');
+      final cached = remote.toCache(
+        cacheScopeUserId: 'user-1',
+        cachedAtUtc: _cachedAtUtc,
+      );
+      when(
+        () => remoteDatasource.getMonthlyCheckins(year: 2026, month: 6),
+      ).thenAnswer((_) async => remote);
+      when(
+        () => localDatasource.getMonthlyCheckins(
+          cacheScopeMonthKey: 'user-1:2026:06',
+        ),
+      ).thenAnswer((_) async => cached);
+
+      final result = await repository.getMonthlyCheckins(year: 2026, month: 6);
+
+      _expectRightSame(result, remote);
+      verifyNever(() => localDatasource.upsertMonthlyCheckins(any()));
+    });
+
+    test('offline có cache thì trả cached monthly checkins', () async {
+      _stubNetwork(networkInfo, false);
+      final cached = _monthlyCheckins(mood: '😊').toCache(
+        cacheScopeUserId: 'user-1',
+        cachedAtUtc: _cachedAtUtc,
+      );
+      when(
+        () => localDatasource.getMonthlyCheckins(
+          cacheScopeMonthKey: 'user-1:2026:06',
+        ),
+      ).thenAnswer((_) async => cached);
+
+      final result = await repository.getMonthlyCheckins(year: 2026, month: 6);
+
+      result.fold((_) => fail('Expected Right'), (monthly) {
+        expect(monthly.year, 2026);
+        expect(monthly.month, 6);
+        expect(monthly.items.single.mood, '😊');
+      });
+      verifyNever(
+        () => remoteDatasource.getMonthlyCheckins(
+          year: any(named: 'year'),
+          month: any(named: 'month'),
+        ),
+      );
+    });
+
+    test('cached query không có current user id thì trả NetworkFailure', () async {
+      when(
+        () => currentUserCacheScope.getCurrentUserId(),
+      ).thenAnswer((_) async => null);
+
+      final result = await repository.getCachedMonthlyCheckins(
+        year: 2026,
+        month: 6,
+      );
+
+      _expectLeft(result, isA<NetworkFailure>());
+      verifyNever(
+        () => localDatasource.getMonthlyCheckins(
+          cacheScopeMonthKey: any(named: 'cacheScopeMonthKey'),
+        ),
+      );
     });
   });
 

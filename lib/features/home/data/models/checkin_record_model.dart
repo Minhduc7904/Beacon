@@ -1,4 +1,5 @@
 import '../../domain/entities/checkin_record.dart';
+import '../../../../core/utils/time_utils.dart';
 
 class CheckinRecordModel extends CheckinRecord {
   const CheckinRecordModel({
@@ -35,7 +36,7 @@ class CheckinRecordModel extends CheckinRecord {
       return null;
     }
 
-    return DateTime.tryParse(raw);
+    return TimeUtils.tryParseUtc(raw);
   }
 
   static CheckinType _parseType(dynamic value) {

@@ -14,6 +14,7 @@ class FeedState {
   final String? nextCursor;
   final bool hasMore;
   final bool isLoadingMore;
+  final bool isRefreshing;
   final String? errorMessage;
   final Map<String, PostReactionPage> postReactionPages;
   final Set<String> loadingReactionPostIds;
@@ -26,6 +27,7 @@ class FeedState {
     this.nextCursor,
     this.hasMore = false,
     this.isLoadingMore = false,
+    this.isRefreshing = false,
     this.errorMessage,
     this.postReactionPages = const {},
     this.loadingReactionPostIds = const {},
@@ -40,6 +42,7 @@ class FeedState {
     bool clearNextCursor = false,
     bool? hasMore,
     bool? isLoadingMore,
+    bool? isRefreshing,
     String? errorMessage,
     bool clearErrorMessage = false,
     Map<String, PostReactionPage>? postReactionPages,
@@ -53,6 +56,7 @@ class FeedState {
       nextCursor: clearNextCursor ? null : (nextCursor ?? this.nextCursor),
       hasMore: hasMore ?? this.hasMore,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      isRefreshing: isRefreshing ?? this.isRefreshing,
       errorMessage: clearErrorMessage
           ? null
           : (errorMessage ?? this.errorMessage),

@@ -26,6 +26,7 @@ class ApiEndpoints {
   // Check-in
   static const String checkins = '/checkins';
   static const String todayStatus = '/checkins/today-status';
+  static const String checkinsMonthly = '/checkins/monthly';
 
   // Health
   static const String health = '/health';

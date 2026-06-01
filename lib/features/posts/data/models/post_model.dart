@@ -1,3 +1,4 @@
+import '../../../../core/utils/time_utils.dart';
 import '../../domain/entities/post.dart';
 import '../../domain/entities/post_visibility.dart';
 import '../../domain/entities/reaction_summary.dart';
@@ -77,7 +78,7 @@ class PostModel extends Post {
     if (raw == null || raw.trim().isEmpty) {
       return null;
     }
-    return DateTime.tryParse(raw);
+    return TimeUtils.tryParseUtc(raw);
   }
 
   static double? _toDouble(dynamic value) {

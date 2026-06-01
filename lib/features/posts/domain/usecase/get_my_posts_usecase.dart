@@ -15,6 +15,10 @@ class GetMyPostsUseCase {
       limit: _normalizeLimit(limit),
     );
   }
+
+  Future<Either<Failure, PostPage>> cached({int? limit}) {
+    return _repository.getCachedMyPosts(limit: _normalizeLimit(limit));
+  }
 }
 
 String? _normalizeCursor(String? cursor) {

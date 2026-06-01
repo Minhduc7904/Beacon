@@ -52,6 +52,7 @@ class FeedImageBox extends StatelessWidget {
         children: [
           Image.network(
             post.imageUrl,
+            key: ValueKey<String>('${post.id}:${post.imageUrl}'),
             fit: BoxFit.cover,
             loadingBuilder: (context, child, progress) {
               if (progress == null) return child;

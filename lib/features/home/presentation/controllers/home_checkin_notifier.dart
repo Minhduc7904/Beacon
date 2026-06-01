@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/messages/app_message_notifier.dart';
+import '../../../../core/utils/time_utils.dart';
 import '../../../safety/domain/entities/safety_settings.dart';
 import '../../../safety/domain/usecase/get_safety_settings_usecase.dart';
 import '../../domain/entities/checkin_record.dart';
@@ -167,7 +168,8 @@ class HomeCheckinNotifier extends StateNotifier<HomeCheckinState> {
       return status.remainingSeconds;
     }
 
-    return deadline.toUtc().difference(DateTime.now().toUtc()).inSeconds;
+    final deadlineVietnam = TimeUtils.toVietnamTime(deadline);
+    return deadlineVietnam.difference(TimeUtils.nowVietnam()).inSeconds;
   }
 
   TodayStatus _buildStatusAfterCheckin(CheckinRecord record) {

@@ -201,6 +201,18 @@ void main() {
     when(
       () => subscribeNewPostsRealtimeUseCase.unsubscribe(),
     ).thenReturn(() {});
+    when(
+      () => getFeedPostsUseCase.cached(limit: any(named: 'limit')),
+    ).thenAnswer((_) async => const Left(NetworkFailure()));
+    when(
+      () => getMyPostsUseCase.cached(limit: any(named: 'limit')),
+    ).thenAnswer((_) async => const Left(NetworkFailure()));
+    when(
+      () => getFriendPostsUseCase.cached(
+        friendId: any(named: 'friendId'),
+        limit: any(named: 'limit'),
+      ),
+    ).thenAnswer((_) async => const Left(NetworkFailure()));
 
     notifier = FeedNotifier(
       getFeedPostsUseCase,
@@ -271,6 +283,7 @@ void main() {
 
         final future = notifier.load();
 
+        await Future<void>.delayed(Duration.zero);
         expect(notifier.state.status, FeedStatus.loading);
         expect(notifier.state.posts, isEmpty);
 
@@ -313,6 +326,53 @@ void main() {
       expect(notifier.state.hasMore, isFalse);
       expect(notifier.state.nextCursor, isNull);
       expect(notifier.state.errorMessage, failure.message);
+    });
+
+    test('load ưu tiên cache rồi refresh remote mới nhất', () async {
+      final remoteCompleter = Completer<Either<Failure, PostPage>>();
+      final cachedPost = _post(
+        id: 'post-1',
+        mediaUrl: 'https://example.com/cached.jpg',
+        thumbnailUrl: 'https://example.com/cached-thumb.jpg',
+      );
+      final remotePost = _post(
+        id: 'post-1',
+        mediaUrl: 'https://example.com/remote.jpg',
+        thumbnailUrl: 'https://example.com/remote-thumb.jpg',
+      );
+      when(
+        () => getFeedPostsUseCase.cached(limit: any(named: 'limit')),
+      ).thenAnswer(
+        (_) async => Right(PostPage(items: [cachedPost], nextCursor: null)),
+      );
+      when(
+        () => getFeedPostsUseCase(
+          cursor: any(named: 'cursor'),
+          limit: any(named: 'limit'),
+        ),
+      ).thenAnswer((_) => remoteCompleter.future);
+
+      final future = notifier.load();
+
+      await Future<void>.delayed(Duration.zero);
+      expect(notifier.state.status, FeedStatus.loaded);
+      expect(notifier.state.isRefreshing, isTrue);
+      expect(
+        notifier.state.posts.single.imageUrl,
+        'https://example.com/cached-thumb.jpg',
+      );
+
+      remoteCompleter.complete(
+        Right(PostPage(items: [remotePost], nextCursor: null)),
+      );
+      await future;
+
+      expect(notifier.state.status, FeedStatus.loaded);
+      expect(notifier.state.isRefreshing, isFalse);
+      expect(
+        notifier.state.posts.single.imageUrl,
+        'https://example.com/remote-thumb.jpg',
+      );
     });
   });
 

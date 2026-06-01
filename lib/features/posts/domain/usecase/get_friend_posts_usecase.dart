@@ -27,6 +27,23 @@ class GetFriendPostsUseCase {
       limit: _normalizeLimit(limit),
     );
   }
+
+  Future<Either<Failure, PostPage>> cached({
+    required String friendId,
+    int? limit,
+  }) {
+    final normalizedFriendId = friendId.trim();
+    if (normalizedFriendId.isEmpty) {
+      return Future.value(
+        const Left(ValidationFailure(message: 'Bạn bè không hợp lệ')),
+      );
+    }
+
+    return _repository.getCachedFriendPosts(
+      friendId: normalizedFriendId,
+      limit: _normalizeLimit(limit),
+    );
+  }
 }
 
 String? _normalizeCursor(String? cursor) {

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/config/app_routes.dart';
 import '../../../../../core/providers/providers.dart';
+import '../../../../../core/providers/user_session_provider_reset.dart';
 import '../../../../../core/widgets/navigation/back_button.dart';
 import '../../controllers/auth_state.dart';
 import '../../widgets/login/login_brand_text.dart';
@@ -90,6 +91,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void _onSubmit() {
     if (!_formKey.currentState!.validate()) return;
 
+    resetUserSessionProviders(ref);
     ref
         .read(authNotifierProvider.notifier)
         .login(

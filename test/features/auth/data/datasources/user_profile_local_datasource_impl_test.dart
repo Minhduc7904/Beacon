@@ -22,6 +22,9 @@ class FakeAppDatabase implements AppDatabase {
   }
 
   @override
+  Future<void> clearAll() async {}
+
+  @override
   Future<void> close() async {}
 }
 
